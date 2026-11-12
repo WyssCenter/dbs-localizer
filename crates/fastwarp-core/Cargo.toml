@@ -1,0 +1,22 @@
+[package]
+name = "fastwarp-core"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "Shared math (affine, vectors) for FastWarp Rust crates"
+license = "Apache-2.0"
+
+[lib]
+name = "fastwarp_core"
+path = "src/lib.rs"
+
+[features]
+default = []
+nifti = ["dep:nifti"]
+
+[dependencies]
+nifti = { version = "0.18", optional = true }
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

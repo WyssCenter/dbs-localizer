@@ -1,0 +1,19 @@
+fastwarp-gpu — fastwarp GPU registration and N4 engine (wgpu / WGSL)
+Copyright 2026 Wyss Center for Bio and Neuroengineering
+
+Licensed under the Apache License, Version 2.0 (see LICENSE in this directory).
+
+This crate contains files derived from the Insight Toolkit (ITK) v5.4.4 and
+from ANTs (Advanced Normalization Tools) v2.6.5, both licensed under the
+Apache License, Version 2.0. Each derived file carries the upstream copyright
+line and the Apache header and names what was changed; the full list is
+docs/THIRD_PARTY_PORTS.md of the fastwarp repository.
+
+ITK Software Licenses
+The copyright of the Insight Toolkit (ITK) is held by:
+  Copyright 1999-2019    Insight Software Consortium
+  Copyright 2020-present NumFOCUS
+This software is distributed under the Apache 2.0 License.
+
+ANTs: Copyright the ANTs developers, https://github.com/ANTsX/ANTs,
+licensed under the Apache License, Version 2.0.

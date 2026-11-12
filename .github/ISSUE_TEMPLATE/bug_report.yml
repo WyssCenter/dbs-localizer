@@ -1,0 +1,55 @@
+name: Bug report
+description: Something does not work as the README says
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: FastWarp version
+      description: "python -c \"import fastwarp; print(fastwarp.__version__)\""
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: Ubuntu 24.04, macOS 15 arm64, Windows 11
+    validations:
+      required: true
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU and driver version
+    validations:
+      required: true
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Graphics backend
+      options:
+        - Vulkan
+        - Metal
+        - DX12
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: gpu-info
+    attributes:
+      label: Output of fastwarp.gpu_info()
+      description: "python -c \"import fastwarp; print(fastwarp.gpu_info())\""
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: The smallest code and input that show the problem, and what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Error or output
+      render: text

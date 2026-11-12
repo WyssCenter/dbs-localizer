@@ -1,0 +1,20 @@
+# GPU (wgpu) SyN registration from Wyss DBS Localizer, packaged as a Python extension.
+# crates/fastwarp-{core,niftiio,matfile,reg,gpu} come from Wyss DBS Localizer (engine revision 90c1df3, 2026-11-10)
+[workspace]
+resolver = "2"
+members = [
+    "crates/fastwarp-core",
+    "crates/fastwarp-niftiio",
+    "crates/fastwarp-matfile",
+    "crates/fastwarp-reg",
+    "crates/fastwarp-gpu",
+    "crates/fastwarp-py",
+]
+
+[workspace.package]
+version = "0.1.0"
+license = "Apache-2.0"
+
+[profile.release]
+# Same as a plain dbs-localizer release build; the wheel is built with --release.
+debug = false

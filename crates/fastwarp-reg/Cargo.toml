@@ -1,0 +1,26 @@
+[package]
+name = "fastwarp-reg"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "FastWarp registration engine: grids, volumes, ITK-compatible transform I/O and point mapping (CPU)"
+license = "Apache-2.0"
+
+[lib]
+name = "fastwarp_reg"
+path = "src/lib.rs"
+
+[dependencies]
+fastwarp-core = { path = "../fastwarp-core", features = ["nifti"] }
+fastwarp-niftiio = { path = "../fastwarp-niftiio" }
+fastwarp-matfile = { path = "../fastwarp-matfile" }
+nifti = "0.18"
+ndarray = "0.17"
+thiserror = "2"
+miniz_oxide = "0.9"
+flate2 = { version = "1", default-features = false, features = ["zlib-rs"] }
+rayon = "1.10"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

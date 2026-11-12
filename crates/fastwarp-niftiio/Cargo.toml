@@ -1,0 +1,24 @@
+[package]
+name = "fastwarp-niftiio"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "Fast NIfTI-1 reading (single pass, parallel decode) and writing (parallel single-member gzip) for FastWarp"
+license = "Apache-2.0"
+
+[lib]
+name = "fastwarp_niftiio"
+path = "src/lib.rs"
+
+[dependencies]
+bytemuck = "1"
+crc32fast = "1.4"
+flate2 = { version = "1", features = ["zlib-rs"] }
+ndarray = "0.17"
+nifti = "0.18"
+rayon = "1.10"
+thiserror = "2"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

@@ -1,0 +1,5 @@
+* text=auto
+*.mat -text
+*.h5 -text
+*.nii -text
+*.nii.gz -text
