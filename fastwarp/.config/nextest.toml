@@ -1,0 +1,13 @@
+# nextest runs every test in its own process. The copied fastwarp-niftiio tests share scratch
+# folders by name (compat.rs: "big"), which races under `cargo test`'s threads; upstream uses
+# nextest for the same reason.
+[profile.ci]
+fail-fast = false
+failure-output = "immediate-final"
+
+[[profile.ci.overrides]]
+filter = """
+    (binary_id(fastwarp-gpu::syn_parity) & test(=the_capacity_plan_bounds_the_pool_peak_of_a_two_level_run))
+  | (binary_id(fastwarp-gpu::n4_parity) & test(=gpu_n4_matches_the_cpu_reference_at_the_production_schedule))
+"""
+priority = 100

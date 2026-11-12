@@ -1,0 +1,41 @@
+cff-version: 1.2.0
+message: "If you use this engine, please cite it as below."
+title: "FastWarp: the GPU registration engine of Wyss DBS Localizer"
+type: software
+authors:
+  - family-names: "Köhler"
+    given-names: "Richard M."
+    affiliation: "Wyss Center for Bio and Neuroengineering"
+    orcid: "https://orcid.org/0000-0002-5219-1289"
+  - family-names: "Payonk"
+    given-names: "Jan Philipp"
+    affiliation: "Institute of General Electrical Engineering, University of Rostock"
+    orcid: "https://orcid.org/0009-0005-8213-8736"
+  - family-names: "Neumann"
+    given-names: "Wolf-Julian"
+    affiliation: "Wyss Center for Bio and Neuroengineering; Charité – Universitätsmedizin Berlin"
+    orcid: "https://orcid.org/0000-0002-6758-9708"
+version: "0.1.0"
+license: Apache-2.0
+repository-code: "https://github.com/WyssCenter/fastwarp"
+abstract: >-
+  A wgpu (Metal / Vulkan / DX12) port of the ANTs registration (Rigid, Affine, SyN) with
+  ANTs-compatible transform outputs.
+references:
+  - type: article
+    title: "Symmetric diffeomorphic image registration with cross-correlation: evaluating automated labeling of elderly and neurodegenerative brain"
+    authors:
+      - family-names: "Avants"
+        given-names: "Brian B."
+      - family-names: "Epstein"
+        given-names: "Charles L."
+      - family-names: "Grossman"
+        given-names: "Murray"
+      - family-names: "Gee"
+        given-names: "James C."
+    journal: "Medical Image Analysis"
+    volume: 12
+    issue: 1
+    start: 26
+    end: 41
+    year: 2008

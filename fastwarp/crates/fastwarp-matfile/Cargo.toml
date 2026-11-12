@@ -1,0 +1,21 @@
+[package]
+name = "fastwarp-matfile"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "FastWarp reader for MATLAB v7.3 (HDF5) .mat files: char, numeric, logical, cell and struct values with lazy reference dereferencing"
+license = "Apache-2.0"
+
+[lib]
+name = "fastwarp_matfile"
+path = "src/lib.rs"
+
+[dependencies]
+thiserror = "2"
+miniz_oxide = "0.9"
+flate2 = { version = "1", default-features = false, features = ["zlib-rs"] }
+rayon = "1.10"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

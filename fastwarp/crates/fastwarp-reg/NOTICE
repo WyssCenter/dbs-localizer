@@ -1,0 +1,56 @@
+fastwarp-reg — fastwarp registration engine (CPU reference, algorithms, transform I/O)
+Copyright 2026 Wyss Center for Bio and Neuroengineering
+
+Licensed under the Apache License, Version 2.0 (see LICENSE in this directory).
+
+This crate contains files derived from the Insight Toolkit (ITK) v5.4.4 and
+from ANTs (Advanced Normalization Tools) v2.6.5, both licensed under the
+Apache License, Version 2.0. Each derived file carries the upstream copyright
+line and the Apache header and names what was changed; the full list is
+docs/THIRD_PARTY_PORTS.md of the fastwarp repository.
+
+ITK Software Licenses
+The copyright of the Insight Toolkit (ITK) is held by:
+  Copyright 1999-2019    Insight Software Consortium
+  Copyright 2020-present NumFOCUS
+This software is distributed under the Apache 2.0 License.
+
+ANTs: Copyright the ANTs developers, https://github.com/ANTsX/ANTs,
+licensed under the Apache License, Version 2.0.
+
+Mersenne Twister (BSD-3-Clause)
+src/sampling.rs contains a random number generator derived from ITK's
+itkMersenneTwisterRandomVariateGenerator.h, which is itself derived from the
+Mersenne Twister code of Makoto Matsumoto, Takuji Nishimura, Shawn Cokus and
+Richard J. Wagner. The notice of that code:
+
+  Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
+  Copyright (C) 2000 - 2003, Richard J. Wagner
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+    1. Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+
+    2. Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+
+    3. The names of its contributors may not be used to endorse or promote
+       products derived from this software without specific prior written
+       permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

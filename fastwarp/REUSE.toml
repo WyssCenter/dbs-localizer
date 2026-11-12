@@ -1,0 +1,16 @@
+version = 1
+SPDX-PackageName = "fastwarp"
+SPDX-PackageSupplier = "Wyss Center for Bio and Neuroengineering"
+SPDX-PackageDownloadLocation = "https://github.com/WyssCenter/fastwarp"
+
+[[annotations]]
+path = "**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Wyss Center for Bio and Neuroengineering"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "CODE_OF_CONDUCT.md"
+precedence = "override"
+SPDX-FileCopyrightText = "Contributor Covenant, https://www.contributor-covenant.org"
+SPDX-License-Identifier = "CC-BY-4.0"

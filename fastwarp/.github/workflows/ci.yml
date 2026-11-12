@@ -1,0 +1,79 @@
+# Every push / PR: lint, Rust tests and the Python tests on Linux (Mesa lavapipe software Vulkan).
+# macOS and Windows build in wheels.yml (tags, manual runs), to keep the per-push checks short.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_PROFILE_DEV_OPT_LEVEL: "1"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: rustup toolchain install
+      - run: cargo fmt --all -- --check
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: Clippy workspace
+        run: cargo clippy --locked --workspace --all-targets --features fastwarp-gpu/dev-tools -- -D warnings
+      - name: Clippy fastwarp-gpu without the developer tools
+        run: cargo clippy --locked -p fastwarp-gpu --all-targets -- -D warnings
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.7"
+      - run: uv sync --locked --no-install-project
+      - run: uv run --no-sync ruff check python tests && uv run --no-sync ruff format --check python tests
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      # Mesa's lavapipe is the only adapter on the runner; the engine refuses software
+      # adapters unless this is set.
+      WGPU_FORCE_FALLBACK_ADAPTER: "1"
+      FASTWARP_GPU_ALLOW_SOFTWARE: "1"
+      FASTWARP_GPU_REQUIRE_ADAPTER: "1"
+      FASTWARP_REQUIRE_ANTSPY: "1"
+      UV_PYTHON: "3.13"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Mesa Vulkan software driver (lavapipe)
+        run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: dev-test
+          cache-on-failure: true
+      - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
+        with:
+          tool: cargo-nextest@0.9.150
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.7"
+      - run: uv sync --locked --no-install-project --group ants
+      - name: Rust tests (engine crates and the Python binding)
+        run: |
+          export PYO3_PYTHON="$PWD/.venv/bin/python"
+          cargo nextest run --locked --workspace --features fastwarp-gpu/dev-tools --profile ci
+      - name: Build and install the wheel
+        run: |
+          uv run --no-sync maturin build --locked --release -o dist
+          uv pip install --no-deps dist/*.whl
+      - name: Python tests
+        run: |
+          uv run --no-sync python -c "import fastwarp as g; print(g.gpu_info())"
+          uv run --no-sync pytest tests -v -rs

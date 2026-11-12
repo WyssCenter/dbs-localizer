@@ -1,0 +1,102 @@
+name: full
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "LICENSE"
+      - "NOTICE"
+  schedule:
+    - cron: "23 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  ANTS_DIR: /home/runner/ants-2.6.5
+
+jobs:
+  gate:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run=true
+          if [ "$GITHUB_EVENT_NAME" = schedule ]; then
+            last=$(gh run list -R "$GITHUB_REPOSITORY" -w "$GITHUB_WORKFLOW" -b main -s success -L 1 --json headSha -q '.[0].headSha') || last=
+            [ "$last" = "$GITHUB_SHA" ] && run=false
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
+  ants:
+    name: Engine against ANTs 2.6.5
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - id: ants-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.ANTS_DIR }}
+          key: ants-2.6.5-ubuntu-24.04-${{ hashFiles('.github/ants-2.6.5-ubuntu-24.04.sha256') }}
+
+      - name: Download ANTs 2.6.5
+        if: steps.ants-cache.outputs.cache-hit != 'true'
+        run: |
+          zip=ants-2.6.5-ubuntu-24.04-X64-gcc.zip
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/$zip" "https://github.com/ANTsX/ANTs/releases/download/v2.6.5/$zip"
+          (cd "$RUNNER_TEMP" && grep " $zip\$" "$GITHUB_WORKSPACE/.github/ants-2.6.5-ubuntu-24.04.sha256" | sha256sum -c -)
+          mkdir -p "$ANTS_DIR"
+          unzip -j "$RUNNER_TEMP/$zip" ants-2.6.5/bin/antsRegistration ants-2.6.5/bin/antsApplyTransforms ants-2.6.5/bin/N4BiasFieldCorrection -d "$ANTS_DIR"
+          rm "${RUNNER_TEMP:?}/${zip:?}"
+
+      - name: Check the ANTs programs
+        run: |
+          (cd "$ANTS_DIR" && grep -v '\.zip$' "$GITHUB_WORKSPACE/.github/ants-2.6.5-ubuntu-24.04.sha256" | sha256sum -c -)
+          chmod +x "$ANTS_DIR"/*
+          "$ANTS_DIR/antsRegistration" --version
+
+      - if: steps.ants-cache.outputs.cache-hit != 'true' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.ANTS_DIR }}
+          key: ${{ steps.ants-cache.outputs.cache-primary-key }}
+
+      - run: rustup toolchain install
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: dev-test
+
+      - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
+        with:
+          tool: cargo-nextest@0.9.150
+
+      - name: ANTs comparison tests
+        env:
+          CARGO_PROFILE_DEV_OPT_LEVEL: "1"
+          ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS: "4"
+        run: >-
+          FASTWARP_ANTS_DIR="$ANTS_DIR"
+          cargo nextest run --locked -p fastwarp-reg --profile ci --run-ignored only
+          -E 'binary_id(fastwarp-reg::ants_compat) | binary_id(fastwarp-reg::coreg_metric) | binary_id(fastwarp-reg::n4_ants)'
