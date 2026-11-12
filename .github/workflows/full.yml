@@ -1,0 +1,287 @@
+name: Full
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "specs/**"
+      - ".claude/**"
+      - ".vscode/**"
+      - "LICENSE"
+      - "NOTICE"
+  schedule:
+    - cron: '17 1 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  gate:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run=true
+          if [ "$GITHUB_EVENT_NAME" = schedule ]; then
+            last=$(gh run list -R "$GITHUB_REPOSITORY" -w "$GITHUB_WORKFLOW" -b main -s success -L 1 --json headSha -q '.[0].headSha') || last=
+            [ "$last" = "$GITHUB_SHA" ] && run=false
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build dbsloc and the extension
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+          python-version: "3.14"
+
+      - run: rustup toolchain install
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: release
+
+      - run: uv sync --locked
+
+      - name: Build the dbsloc binary (the end-user CLI)
+        run: cargo build --locked -p dbsloc-cli --release
+
+      - name: Build the extension wheel
+        run: uv run maturin build --locked --release -m crates/dbsloc-pipeline/Cargo.toml -o dist
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dbsloc-build
+          path: |
+            target/release/dbsloc
+            dist/*.whl
+          retention-days: 1
+
+  rust-extra:
+    name: Rust ANTs and wgpu tests
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DBSLOC_SKIP_EXT_BIN_PREREQ: "1"
+      WGPU_FORCE_FALLBACK_ADAPTER: "1"
+      DBSLOC_GPU_REQUIRE_ADAPTER: "1"
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      CARGO_PROFILE_DEV_OPT_LEVEL: "1"
+    steps:
+      - name: Free disk space
+        run: sudo nohup rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL >/dev/null 2>&1 &
+
+      - uses: actions/checkout@v7
+
+      - run: rustup toolchain install
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: dev-test
+          cache-on-failure: true
+
+      - uses: taiki-e/install-action@68a389c788b2cd04016ce8c80ee23b80d2ab3d68 # v2.88.1
+        with:
+          tool: cargo-nextest
+
+      - name: Install Mesa Vulkan software driver (lavapipe)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mesa-vulkan-drivers
+
+      - name: Cargo test fastwarp (bundled ANTs)
+        env:
+          DBSLOC_ANTS_DIR: ${{ github.workspace }}/resources/ants/linux
+        run: >-
+          cargo nextest run --locked --manifest-path fastwarp/Cargo.toml --target-dir target --workspace --exclude fastwarp-py --features fastwarp-gpu/dev-tools --profile ci
+          --run-ignored only
+          -E 'binary_id(fastwarp-reg::ants_compat) | binary_id(fastwarp-reg::coreg_metric) | binary_id(fastwarp-reg::n4_ants)'
+
+      - name: Cargo test (wgpu VAT engine on the software adapter)
+        env:
+          DBSLOC_GPU_ALLOW_SOFTWARE: "1"
+        run: >-
+          cargo nextest run --locked --workspace --profile ci
+          -E 'package(dbsloc-pipeline) & kind(lib) & test(=vat::stage::tests::the_wgpu_engine_matches_the_cpu_field_and_records_its_adapter)'
+
+  pytest:
+    name: Pytest with the extension and wgpu end-to-end
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DBSLOC_SKIP_EXT_BIN_PREREQ: "1"
+      WGPU_FORCE_FALLBACK_ADAPTER: "1"
+      ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS: "2"
+      DBSLOC_BIN: ${{ github.workspace }}/target/release/dbsloc
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+          python-version: "3.14"
+
+      - name: Install Mesa Vulkan software driver (lavapipe)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mesa-vulkan-drivers
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: dbsloc-build
+
+      - name: Sync Python deps and install the extension
+        run: |
+          chmod +x target/release/dbsloc
+          uv sync --locked
+          uv pip install dist/*.whl
+
+      - name: GPU probe (lavapipe, informational)
+        env:
+          DBSLOC_GPU_ALLOW_SOFTWARE: "1"
+        run: ./target/release/dbsloc gpu probe --json || true
+
+      - name: Pytest
+        run: uv run pytest --ignore=tests/test_e2e_synthetic.py
+
+      - name: Pytest GPU end-to-end (lavapipe)
+        env:
+          DBSLOC_GPU_ALLOW_SOFTWARE: "1"
+        run: uv run pytest tests/test_e2e_synthetic_wgpu.py
+
+  pytest-e2e:
+    name: Pytest synthetic end-to-end (shard ${{ matrix.shard }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    env:
+      DBSLOC_SKIP_EXT_BIN_PREREQ: "1"
+      ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS: "4"
+      DBSLOC_BIN: ${{ github.workspace }}/target/release/dbsloc
+      SHARDS: 2
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+          python-version: "3.14"
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: dbsloc-build
+
+      - name: Sync Python deps and install the extension
+        run: |
+          chmod +x target/release/dbsloc
+          uv sync --locked
+          uv pip install dist/*.whl
+
+      - name: Pytest synthetic end-to-end
+        run: |
+          uv run pytest tests/test_e2e_synthetic.py --collect-only -q | grep '::' > all.txt
+          sed -n "${{ matrix.shard }}~${SHARDS}p" all.txt > shard.txt
+          cat shard.txt
+          if [ "$(wc -l < all.txt)" -lt "$SHARDS" ]; then
+            echo "::error::fewer synthetic end-to-end tests than shards; lower SHARDS and the matrix"
+            exit 1
+          fi
+          mapfile -t tests < shard.txt
+          uv run pytest "${tests[@]}"
+
+  clippy-macos:
+    name: Rust clippy (macOS)
+    needs: gate
+    if: needs.gate.outputs.run == 'true' && vars.DBSLOC_MACOS == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: rustup toolchain install
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+
+      - name: Clippy workspace
+        run: cargo clippy --locked --workspace --all-targets -- -D warnings
+
+      - name: Clippy fastwarp workspace
+        run: cargo clippy --locked --manifest-path fastwarp/Cargo.toml --target-dir target --workspace --all-targets --features fastwarp-gpu/dev-tools -- -D warnings
+
+      - name: Clippy fastwarp fastwarp-gpu without the developer tools
+        run: cargo clippy --locked --manifest-path fastwarp/Cargo.toml --target-dir target -p fastwarp-gpu --all-targets -- -D warnings
+
+      - name: Clippy dbsloc-pipeline (PyO3 binding)
+        run: cargo clippy --locked -p dbsloc-pipeline --all-targets --features pyo3 -- -D warnings
+
+      - name: Clippy dbsloc-viz viewers
+        run: |
+          cargo clippy --locked -p dbsloc-viz --all-targets --features checkreg-viewer -- -D warnings
+          cargo clippy --locked -p dbsloc-viz --all-targets --features scene-viewer -- -D warnings
+
+  cargo-test-macos:
+    name: Rust tests (macOS)
+    needs: gate
+    if: needs.gate.outputs.run == 'true' && vars.DBSLOC_MACOS == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      DBSLOC_SKIP_EXT_BIN_PREREQ: "1"
+      CARGO_PROFILE_DEV_OPT_LEVEL: "1"
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: rustup toolchain install
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-on-failure: true
+
+      - uses: taiki-e/install-action@68a389c788b2cd04016ce8c80ee23b80d2ab3d68 # v2.88.1
+        with:
+          tool: cargo-nextest
+
+      - name: Build every binary
+        run: |
+          cargo build --locked --workspace --all-targets
+          cargo build --locked --manifest-path fastwarp/Cargo.toml --target-dir target --workspace --exclude fastwarp-py --all-targets --features fastwarp-gpu/dev-tools
+
+      - name: Cargo test
+        env:
+          DBSLOC_ATLAS_INDEX_MAT: "${{ github.workspace }}/resources/atlases/leaddbs/DISTAL Minimal (Ewert 2017)/atlas_index.mat"
+        run: |
+          cargo nextest run --locked --workspace --profile ci
+          cargo nextest run --locked --manifest-path fastwarp/Cargo.toml --target-dir target --workspace --exclude fastwarp-py --features fastwarp-gpu/dev-tools --profile ci

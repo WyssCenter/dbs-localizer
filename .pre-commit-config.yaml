@@ -1,0 +1,100 @@
+default_language_version:
+  python: python3
+
+default_install_hook_types: [pre-commit, pre-push]
+
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+        exclude: ^fastwarp/
+        stages: [pre-commit]
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        types: [python]
+        exclude: ^fastwarp/
+        stages: [pre-commit]
+      - id: cargo-fmt
+        name: cargo fmt
+        entry: cargo fmt --all
+        language: system
+        types: [rust]
+        pass_filenames: false
+        stages: [pre-commit]
+      - id: cargo-fmt-fastwarp
+        name: cargo fmt (fastwarp)
+        entry: cargo fmt --manifest-path fastwarp/Cargo.toml --all
+        language: system
+        types: [rust]
+        files: ^fastwarp/
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: ty
+        name: ty
+        entry: uv run ty check dbsloc
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]
+      - id: cargo-clippy
+        name: cargo clippy
+        entry: cargo clippy --workspace --all-targets -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+        stages: [pre-push]
+      - id: cargo-clippy-fastwarp
+        name: cargo clippy (fastwarp, with developer tools)
+        entry: cargo clippy --manifest-path fastwarp/Cargo.toml --target-dir target --workspace --all-targets --features fastwarp-gpu/dev-tools -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+        stages: [pre-push]
+      - id: cargo-clippy-pyo3
+        name: cargo clippy dbsloc-pipeline (pyo3)
+        entry: cargo clippy -p dbsloc-pipeline --all-targets --features pyo3 -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+        stages: [pre-push]
+      - id: cargo-clippy-viz
+        name: cargo clippy dbsloc-viz (viewers)
+        entry: bash -c 'cargo clippy -p dbsloc-viz --all-targets --features checkreg-viewer -- -D warnings && cargo clippy -p dbsloc-viz --all-targets --features scene-viewer -- -D warnings'
+        language: system
+        types: [rust]
+        pass_filenames: false
+        stages: [pre-push]
+
+      # Slow: run on demand with `uv run pre-commit run --hook-stage manual --all-files`.
+      # cargo test skips #[ignore]; CI runs the bundled-ANTs ignored tests by name (full.yml).
+      - id: pytest
+        name: pytest (excludes slow)
+        entry: uv run pytest -q tests/ -m "not slow"
+        language: system
+        pass_filenames: false
+        stages: [manual]
+      - id: cargo-test
+        name: cargo test
+        entry: cargo test --workspace
+        language: system
+        pass_filenames: false
+        stages: [manual]
+      - id: cargo-test-fastwarp
+        name: cargo test (fastwarp; set DBSLOC_ATLAS_INDEX_MAT to include the DISTAL test)
+        entry: cargo test --manifest-path fastwarp/Cargo.toml --target-dir target --workspace --exclude fastwarp-py --features fastwarp-gpu/dev-tools
+        language: system
+        pass_filenames: false
+        stages: [manual]
+      - id: uv-audit
+        name: uv audit
+        entry: uv audit --frozen
+        language: system
+        pass_filenames: false
+        stages: [manual]

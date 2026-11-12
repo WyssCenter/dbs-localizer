@@ -1,0 +1,18 @@
+[package]
+name = "dbsloc-reports"
+version.workspace = true
+edition = "2021"
+publish = false
+description = "Vendor session-report PDFs (Medtronic Percept, later Boston Scientific / Abbott): positioned PDF text and geometry, the vendor-neutral session record, anonymisation"
+license = "GPL-3.0-only"
+
+[dependencies]
+fastwarp-core = { path = "../../fastwarp/crates/fastwarp-core" }
+lopdf = { version = "0.46", default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
+jiff = "0.2"
+thiserror = "2"
+
+[dev-dependencies]
+flate2 = "1"

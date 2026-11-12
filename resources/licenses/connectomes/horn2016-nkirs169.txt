@@ -1,0 +1,49 @@
+catalogue_ids: horn2016-nkirs169
+source_url: https://fcon_1000.projects.nitrc.org/indi/pro/eNKI_RS_TRT/NKI_Rockland_nifti_dl.html
+fetched: 2026-10-23
+title: NKI-Rockland Sample (INDI) data usage statement; INDI Data Access Policy; NITRC "Gibbsconnectome" project licence
+attribution: none prescribed for the derived connectome; cite Horn A, Blankenburg F. NeuroImage 124 (2016) 310-322. The enhanced NKI-RS pages list funding (NIMH BRAINS R01MH094639-01, PI Milham) without a mandatory wording.
+licence_status: lead-dbs.org states no licence. The same 169-subject Gibbs connectome released by A. Horn on NITRC (project "gibbsconnectome", registered 2015-11-08, files posted 2016-04-07) carries the NITRC project licence "GNU GPL v2". No primary INDI / NKI page found that names "Creative Commons Attribution-NonCommercial"; that label appears only in third-party registries (e.g. RRID SCR_005361). The primary wording is "unrestricted ... for non-commercial (research) purposes" after registration.
+
+========================================================================
+source_url: https://fcon_1000.projects.nitrc.org/indi/pro/eNKI_RS_TRT/NKI_Rockland_nifti_dl.html
+fetched: 2026-10-23
+title: NKI-Rockland download page, usage statement (verbatim)
+
+Consistent with the policies of the 1000 Functional Connectome Project, data usage is unrestricted for non-commercial research purposes. As per INDI protocol, we simply require that user register with the NITRC and 1000 Functional Connectomes Project to gain access.
+
+========================================================================
+source_url: https://fcon_1000.projects.nitrc.org/indi/req_access.html
+fetched: 2026-10-23
+title: INDI Data Access Policy (verbatim)
+
+INDI Data Access Policy
+
+Given the increased amount of information provided in the INDI datasets, we are requiring that individuals register with the 1000 Functional Connectomes Project website on NITRC to gain access to the INDI datasets.
+Upon successful registration, users will have full access to the datasets, and the right to unrestricted usage of the datasets for non-commercial purposes, just as before.
+
+========================================================================
+source_url: https://fcon_1000.projects.nitrc.org/indi/enhanced/access.html
+fetched: 2026-10-23
+title: Enhanced NKI-RS data access, Neuroimaging Release (verbatim)
+
+Neuroimaging Release
+
+- Contains imaging data, physiological data acquired during scan acquisition (cardiac and respiratory), and limited phenotyping (age, sex, and handedness).
+
+- No psychiatric, cognitive, or behavioral information is included.
+
+- Immediately available to users (does not require a data usage agreement)
+
+- Data is downloadable through Amazon Web Services or NITRC.
+
+========================================================================
+source_url: https://www.nitrc.org/projects/gibbsconnectome/
+fetched: 2026-10-23
+title: NITRC project "Gibbsconnectome", Specifications, License field (verbatim)
+note: full GPL-2.0 text: https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt (not reproduced)
+
+License:
+GNU GPL v2
+GNU GENERAL PUBLIC LICENSE
+Version 2, June 1991

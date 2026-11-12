@@ -1,0 +1,12 @@
+Third-party terms reproduced for display
+
+The files under resources/licenses/connectomes/ reproduce data use terms,
+licences and statements published by the owners of the normative connectome
+datasets (and by the hosts of the download packages). Each file starts with its
+source URL and the date it was fetched.
+
+The texts are the property of their respective owners. Wyss DBS Localizer
+reproduces them unchanged, apart from re-flowed line breaks, only to show a
+user the terms that apply to a dataset before it is downloaded, and to record
+which version of the terms was accepted. No licence to the texts themselves is
+granted or implied.

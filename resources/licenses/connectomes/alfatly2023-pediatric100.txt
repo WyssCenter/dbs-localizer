@@ -1,0 +1,33 @@
+catalogue_ids: alfatly2023-pediatric100
+source_url: https://fcon_1000.projects.nitrc.org/indi/req_access.html
+fetched: 2026-10-23
+title: INDI Data Access Policy (applies to CoRR) and CoRR data citation procedure
+attribution: CoRR "Data Citation Procedure": "Please cite the consortium paper, and where applicable the site specific paper (if available)." Consortium paper: Zuo X.N., et al., An Open Science Resource for Establishing Reliability and Reproducibility in Functional Connectomics (published as Sci Data 1 (2014) 140049). Dataset DOI NYU 2: http://dx.doi.org/10.15387/fcp_indi.corr.nyu2. Also cite Al-Fatly B, et al. NeuroImage: Clinical (2023), doi:10.1016/j.nicl.2023.103449.
+licence_status: lead-dbs.org states no licence for Pediatric_rsfMRI.zip. Source cohort: INDI policy "unrestricted usage of the datasets for non-commercial purposes" after NITRC / INDI registration; no Creative Commons licence text found on the CoRR pages. Note: the CoRR NYU 2 page describes "187 neurotypical adults", while lead-dbs.org describes the connectome as 100 children (6-18 yrs) from the NYU 2 sub-cohort; the source cohort should be confirmed with the authors.
+
+========================================================================
+source_url: https://fcon_1000.projects.nitrc.org/indi/req_access.html
+fetched: 2026-10-23
+title: INDI Data Access Policy (verbatim)
+
+INDI Data Access Policy
+
+Given the increased amount of information provided in the INDI datasets, we are requiring that individuals register with the 1000 Functional Connectomes Project website on NITRC to gain access to the INDI datasets.
+Upon successful registration, users will have full access to the datasets, and the right to unrestricted usage of the datasets for non-commercial purposes, just as before.
+
+========================================================================
+source_url: https://fcon_1000.projects.nitrc.org/indi/CoRR/html/download.html
+fetched: 2026-10-23
+title: CoRR Downloads, NITRC access note (verbatim)
+
+Note: In order to access the CoRR datasets through NITRC, users must be logged into NITRC at the time of download and registered with the 1000 Functional Connectomes Project / INDI website. A permission error message will occur if you are not logged in and properly registered. If you do not have an account you can register here. Once registered you can request to join the INDI group.
+
+========================================================================
+source_url: https://fcon_1000.projects.nitrc.org/indi/CoRR/html/data_citation.html
+fetched: 2026-10-23
+title: CoRR Data Citation Procedure (verbatim)
+
+Data Citation Procedure
+Please cite the consortium paper, and where applicable the site specific paper (if available). See below:
+Consortium Paper
+Zuo, X.N., et al., An Open Science Resource for Establishing Reliability and Reproducibility in Functional Connectomics, (In Press)

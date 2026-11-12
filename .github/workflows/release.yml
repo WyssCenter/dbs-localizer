@@ -1,0 +1,233 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions: {}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check-version:
+    name: Tag matches the workspace version
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.platforms.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Compare the tag with Cargo.toml and pyproject.toml
+        env:
+          REF: ${{ github.ref }}
+          TAG: ${{ github.ref_name }}
+        run: python3 scripts/check_release_version.py --tag "$TAG" --ref "$REF"
+
+      - name: Extract the release notes from CHANGELOG.md
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          TAG: ${{ github.ref_name }}
+        run: python3 scripts/release_notes.py "$TAG" --out release-notes.md
+
+      - uses: actions/upload-artifact@v7
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: release-notes
+          path: release-notes.md
+          overwrite: true
+          retention-days: 7
+
+      # The macOS archive is built only when the repository variable DBSLOC_MACOS is
+      # "true" (macOS runner minutes count ten times where minutes are billed).
+      - name: Choose the platforms
+        id: platforms
+        env:
+          MACOS: ${{ vars.DBSLOC_MACOS }}
+        run: |
+          win='{"os":"windows-latest","platform":"win","assets":"dist/dbs-localizer-setup.exe dist/dbs-localizer-setup.exe.sha256"}'
+          linux='{"os":"ubuntu-latest","platform":"linux","assets":"dist/dbsloc-linux.tar.gz dist/dbsloc-linux.tar.gz.sha256 dist/dbs-localizer_*_amd64.deb dist/dbs-localizer_*_amd64.deb.sha256"}'
+          mac='{"os":"macos-latest","platform":"mac","assets":"dist/dbsloc-mac.tar.gz dist/dbsloc-mac.tar.gz.sha256"}'
+          if [ "$MACOS" = "true" ]; then
+            echo "matrix={\"include\":[$win,$linux,$mac]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "matrix={\"include\":[$win,$linux]}" >> "$GITHUB_OUTPUT"
+          fi
+
+  create-release:
+    name: Create the draft release
+    needs: check-version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: release-notes
+
+      # The release stays a draft (invisible to `releases/latest`) until every
+      # platform has built its assets; the publish job below uploads them and
+      # makes it public.
+      - name: Create the draft release for this tag if it does not exist
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          prerelease=()
+          case "$TAG" in *-*) prerelease=(--prerelease) ;; esac
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --draft "${prerelease[@]}" --title "Wyss DBS Localizer $TAG" --notes-file release-notes.md --verify-tag
+
+  package:
+    name: Package ${{ matrix.platform }}
+    needs: [check-version, create-release]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.check-version.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+          python-version: "3.14"
+
+      - name: Install Rust toolchain (rust-toolchain.toml)
+        run: rustup toolchain install
+
+      # A tag run restores only caches saved on main; the Linux release build shares its key
+      # with the release build of dbsloc-cli in full.yml, which the nightly run saves on main.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: release
+          cache-on-failure: true
+
+      - name: Sync Python deps
+        run: uv sync --locked
+
+      # Runners have no GPU and no display: the archive is built and tested without the
+      # GUI screenshot smoke test; `dbsloc gpu probe` reports UNAVAILABLE there. The
+      # Windows job compiles the icon resource of dbs-localizer with rc.exe from the
+      # Windows SDK of the windows-latest image.
+      - name: Build, package and test the archive
+        run: uv run python scripts/package_release.py --no-gui-smoke
+
+      # WiX 7 runs only once its Open Source Maintenance Fee EULA is accepted
+      # (error WIX7015); Wyss DBS Localizer is non-commercial.
+      # Terms: https://docs.firegiant.com/wix/osmf/
+      - name: Install WiX
+        if: matrix.platform == 'win'
+        shell: bash
+        run: |
+          dotnet tool install --global wix --version 7.0.0
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          cygpath -w "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+          wix eula accept wix7
+          wix extension add -g WixToolset.BootstrapperApplications.wixext/7.0.0
+
+      - name: Build and test the Windows installer
+        if: matrix.platform == 'win'
+        run: uv run python scripts/build_installer.py --test
+
+      - name: Build and test the Debian package
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          uv run python scripts/build_deb.py --test
+
+      - name: List the release assets
+        id: assets
+        shell: bash
+        env:
+          ASSETS: ${{ matrix.assets }}
+        run: |
+          files=$(ls $ASSETS)
+          echo "$files"
+          {
+            echo "files<<EOF"
+            echo "$files"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dbsloc-${{ matrix.platform }}
+          path: ${{ steps.assets.outputs.files }}
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+
+  publish:
+    name: Publish the release
+    needs: [check-version, package]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: dbsloc-*
+          path: assets
+
+      - name: Check the assets and upload them to the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+          MATRIX: ${{ needs.check-version.outputs.matrix }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          export LC_ALL=C
+          fail() { echo "::error::$*" >&2; exit 1; }
+          want_dirs=$(jq -r '.include[].platform | "dbsloc-" + .' <<<"$MATRIX" | sort)
+          have_dirs=$(ls -A assets | sort)
+          [ -n "$want_dirs" ] || fail "the platform matrix is empty"
+          [ "$have_dirs" = "$want_dirs" ] || fail "artifacts: expected ${want_dirs//$'\n'/ }, found ${have_dirs//$'\n'/ }"
+          files=()
+          for dir in $want_dirs; do
+            case "$dir" in
+              dbsloc-win) main=(dbs-localizer-setup.exe) ;;
+              dbsloc-linux)
+                debs=("assets/$dir"/dbs-localizer_*_amd64.deb)
+                [ ${#debs[@]} -eq 1 ] || fail "$dir: expected one .deb, found ${#debs[@]}"
+                main=(dbsloc-linux.tar.gz "$(basename "${debs[0]}")") ;;
+              dbsloc-mac) main=(dbsloc-mac.tar.gz) ;;
+              *) fail "unexpected platform $dir" ;;
+            esac
+            want=$(for f in "${main[@]}"; do echo "$f"; echo "$f.sha256"; done | sort)
+            have=$(ls -A "assets/$dir" | sort)
+            [ "$have" = "$want" ] || fail "$dir: expected ${want//$'\n'/ }, found ${have//$'\n'/ }"
+            (cd "assets/$dir" && sha256sum --strict -c -- *.sha256)
+            for f in $want; do files+=("assets/$dir/$f"); done
+          done
+          dups=$(for f in "${files[@]}"; do basename "$f"; done | sort | uniq -d)
+          [ -z "$dups" ] || fail "duplicate file names: ${dups//$'\n'/ }"
+          gh release upload "$TAG" "${files[@]}" --clobber
+
+      - name: Publish the draft once every platform has been uploaded
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          case "$TAG" in
+            *-*) gh release edit "$TAG" --draft=false ;;
+            *) gh release edit "$TAG" --draft=false --latest ;;
+          esac

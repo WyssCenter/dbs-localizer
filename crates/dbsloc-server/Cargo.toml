@@ -1,0 +1,43 @@
+[package]
+name = "dbsloc-server"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "Wyss DBS Localizer GPU server: axum + tokio REST/SSE front end over the Rust pipeline (WP2 + WP3)"
+license = "GPL-3.0-only"
+
+[lib]
+name = "dbsloc_server"
+path = "src/lib.rs"
+
+[[bin]]
+name = "dbsloc_server"
+path = "src/main.rs"
+
+[dependencies]
+dbsloc-pipeline = { path = "../dbsloc-pipeline" }
+dbsloc-api = { path = "../dbsloc-api" }
+dbsloc-protocol = { path = "../dbsloc-protocol" }
+
+axum = { version = "0.8", features = ["json", "tokio", "http1"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "sync", "signal", "time", "fs", "io-util"] }
+rusqlite = { version = "0.41", features = ["bundled"] }
+toml = "1"
+tokio-stream = { version = "0.1", features = ["sync"] }
+futures = "0.3"
+tokio-util = { version = "0.7", features = ["io"] }
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+nifti = "0.18"
+flate2 = "1"
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"
+http = "1"
+tempfile = "3"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

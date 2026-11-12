@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=DBS Localizer
+GenericName=DBS electrode localization
+Comment=Localize deep brain stimulation electrodes in MRI and CT images
+Exec=@EXEC@
+Icon=dbs-localizer
+Terminal=false
+Categories=Science;MedicalSoftware;Graphics;
+StartupWMClass=dbsloc_app

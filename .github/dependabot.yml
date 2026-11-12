@@ -1,0 +1,28 @@
+version: 2
+multi-ecosystem-groups:
+  dependencies:
+    schedule:
+      interval: monthly
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    multi-ecosystem-group: dependencies
+    patterns: ["*"]
+    cooldown:
+      default-days: 7
+  - package-ecosystem: cargo
+    directories:
+      - /
+      - /crates/dbsloc-web
+    multi-ecosystem-group: dependencies
+    patterns: ["*"]
+    cooldown:
+      default-days: 7
+    versioning-strategy: lockfile-only
+  - package-ecosystem: uv
+    directory: /
+    multi-ecosystem-group: dependencies
+    patterns: ["*"]
+    cooldown:
+      default-days: 7
+    versioning-strategy: lockfile-only

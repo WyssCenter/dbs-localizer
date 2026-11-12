@@ -1,0 +1,53 @@
+[package]
+name = "dbsloc-app"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "Single-binary egui pipeline GUI — wraps dbsloc-pipeline + dbsloc-viz, no Python required"
+license = "GPL-3.0-only"
+build = "build.rs"
+
+[[bin]]
+name = "dbs-localizer"
+path = "src/main.rs"
+
+[dependencies]
+dbsloc-connectome = { path = "../dbsloc-connectome" }
+dbsloc-pipeline = { path = "../dbsloc-pipeline" }
+dbsloc-ui = { path = "../dbsloc-ui" }
+dbsloc-viz = { path = "../dbsloc-viz", features = ["scene-viewer", "checkreg-viewer", "refine-embed"] }
+eframe = { version = "0.36", default-features = false, features = [
+    "default_fonts",
+    "wgpu",
+    "wayland",
+    "x11",
+    "accesskit",
+    # Required for `eframe::App::save` to be called, and to keep window geometry.
+    "persistence",
+] }
+egui = "0.36"
+egui_dock = { version = "0.21", features = ["serde"] }
+rfd = "0.17"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+    "Win32_Devices_DeviceAndDriverInstallation",
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_System_Console",
+    "Win32_System_Diagnostics_Debug",
+    "Win32_Storage_Xps",
+    "Win32_System_Kernel",
+    "Win32_System_Threading",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

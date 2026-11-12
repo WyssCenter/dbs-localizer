@@ -1,0 +1,74 @@
+[package]
+name = "dbsloc-web"
+version = "0.1.0"
+edition = "2021"
+description = "Wyss DBS Localizer browser client (wasm32, eframe WebRunner) - SERVER_CLIENT_PLAN.md WP4"
+license = "GPL-3.0-only"
+publish = false
+
+# Detached workspace: dbsloc-web is wasm-only and must NOT be a member of the root workspace,
+# so a native `cargo build --workspace` at the repo root stays green. The root Cargo.toml
+# excludes this directory explicitly. See docs/SERVER_CLIENT_PLAN.md §2.
+[workspace]
+
+[lib]
+name = "dbsloc_web"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "dbsloc-web"
+path = "src/main.rs"
+
+# Every dependency is under the wasm32 target table: a native `cargo check` builds only the
+# stub `main` and an empty lib, so the crate is never "silently broken" natively and the
+# wasm build never pulls a native-only backend. `eframe` has no `web` feature in 0.36 - the
+# web backend is selected automatically on the `wasm32` target; the relevant features are
+# `wgpu` (WebGPU painter) and `persistence` (localStorage). `glow` is deliberately absent.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+eframe = { version = "0.36", default-features = false, features = [
+    "default_fonts",
+    "wgpu",
+    "persistence",
+] }
+egui = "0.36"
+log = "0.4"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = [
+    "console",
+    "Window",
+    "Location",
+    "Document",
+    "Element",
+    "Node",
+    "HtmlElement",
+    "HtmlCanvasElement",
+    "HtmlInputElement",
+    "Event",
+    "EventTarget",
+    "EventSource",
+    "MessageEvent",
+    "File",
+    "FileList",
+    "Blob",
+] }
+ehttp = "0.7"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# sha256 of each uploaded file (the server requires it in `UploadFileRequest.sha256`).
+sha2 = "0.11"
+image = { version = "0.25", default-features = false, features = ["png"] }
+dbsloc-ui = { path = "../dbsloc-ui" }
+dbsloc-api = { path = "../dbsloc-api" }
+dbsloc-viz = { path = "../dbsloc-viz", features = ["web"] }
+
+# Native unit tests of the pure modules (`logic`, `track`); the wasm build uses the target table.
+[dev-dependencies]
+dbsloc-api = { path = "../dbsloc-api" }
+dbsloc-ui = { path = "../dbsloc-ui" }
+sha2 = "0.11"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

@@ -1,0 +1,111 @@
+version = 1
+SPDX-PackageName = "Wyss DBS Localizer"
+SPDX-PackageSupplier = "Wyss Center for Bio and Neuroengineering"
+
+# Licensing of files that cannot carry a header (data, images, binaries,
+# documentation, manifests). Source files (.rs, .wgsl, .py, .sh, .cmd) state
+# their licence in an SPDX header instead, which takes precedence. When several
+# annotations match a file, the last one wins, so the default comes first.
+# Map and rules: docs/LICENSING.md. Checked by tests/test_licensing.py.
+
+[[annotations]]
+path = "**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Wyss Center for Bio and Neuroengineering"
+SPDX-License-Identifier = "GPL-3.0-only"
+
+[[annotations]]
+path = "fastwarp/**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Wyss Center for Bio and Neuroengineering"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "crates/dbsloc-viz/assets/fonts/**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2017 IBM Corp."
+SPDX-License-Identifier = "OFL-1.1"
+
+[[annotations]]
+path = [
+    "crates/dbsloc-viz/assets/brand/wyss-center-icon-256.png",
+    "crates/dbsloc-viz/assets/brand/wyss-center-icon-inverse-256.png",
+]
+precedence = "closest"
+SPDX-FileCopyrightText = "Wyss Center for Bio and Neuroengineering"
+SPDX-License-Identifier = "GPL-3.0-only"
+SPDX-FileComment = "Wyss Center logo. The image files are under the GPL like the software; the logo and the name are trademarks, and the licence grants no trademark rights (GPL section 7(e)). See TRADEMARKS.md."
+
+[[annotations]]
+path = "resources/ants/**"
+precedence = "closest"
+SPDX-FileCopyrightText = [
+    "ANTs developers (ANTs v2.6.5 binaries)",
+    "1999-2019 Insight Software Consortium",
+    "2020-present NumFOCUS",
+]
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "resources/dcm2niix/**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2014-2025 Chris Rorden"
+SPDX-License-Identifier = "LicenseRef-dcm2niix"
+
+[[annotations]]
+path = ["resources/ants/win/*.dll", "resources/dcm2niix/win/*.dll"]
+precedence = "closest"
+SPDX-FileCopyrightText = "Microsoft Corporation"
+SPDX-License-Identifier = "LicenseRef-Microsoft-VCRedist"
+
+[[annotations]]
+path = "resources/atlases/leaddbs/**"
+precedence = "closest"
+SPDX-FileCopyrightText = [
+    "2017 Siobhan Ewert, Andreas Horn and co-authors (DISTAL atlas)",
+    "2014-present Lead-DBS developers",
+]
+SPDX-License-Identifier = "GPL-3.0-only AND LicenseRef-LeadDBS-Atlas-Terms"
+SPDX-FileComment = "Verbatim copy of the DISTAL Minimal (Ewert 2017) atlas folder of the Lead-DBS data package leaddbs_data.zip (installed with Lead-DBS git 5b1008d). Research-only data until the atlas terms are settled; see NOTICE and docs/ATLAS_DISTAL.md."
+
+[[annotations]]
+path = "resources/atlases/leaddbs_download.json"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Wyss Center for Bio and Neuroengineering"
+SPDX-License-Identifier = "GPL-3.0-only"
+SPDX-FileComment = "Pinned file list (names, sizes, SHA-256) of the atlas folders in the Lead-DBS data package leaddbs_data.zip, written by scripts/pin_leaddbs_atlases.py; holds no atlas data."
+
+[[annotations]]
+path = "resources/atlases/ahead/structures_mni09b/**"
+precedence = "closest"
+SPDX-FileCopyrightText = [
+    "2020 Alkemade, Mulder, Groot, Isaacs, van Berendonk, Lute et al. (AHEAD)",
+    "2026 Wyss Center for Bio and Neuroengineering (precomputed surface meshes)",
+]
+SPDX-License-Identifier = "CC-BY-4.0"
+SPDX-FileComment = "Structure masks of the AHEAD structures_mni09b set (doi:10.21942/uva.10007840.v2); precomputed_obj/ holds surface meshes computed from them by Wyss DBS Localizer."
+
+[[annotations]]
+path = [
+    "resources/templates/space/MNI152NLin2009bAsym/res-1mm/t1.nii.gz",
+    "resources/templates/space/MNI152NLin2009bAsym/res-1mm/t2.nii.gz",
+    "resources/templates/space/MNI152NLin2009bAsym/res-1mm/brainmask.nii.gz",
+    "resources/templates/space/MNI152NLin2009bAsym/res-1mm/LICENSE",
+]
+precedence = "closest"
+SPDX-FileCopyrightText = "1993-2004 Louis Collins, McConnell Brain Imaging Centre, Montreal Neurological Institute, McGill University"
+SPDX-License-Identifier = "LicenseRef-MNI-ICBM2009"
+SPDX-FileComment = "ICBM 2009b T1w / T2w templates subsampled to 1.0 mm and the ICBM 2009c brain mask carried onto that grid (scripts/build_shipped_template.py)."
+
+[[annotations]]
+path = "resources/licenses/connectomes/**"
+precedence = "closest"
+SPDX-FileCopyrightText = "The respective dataset owners named in each file"
+SPDX-License-Identifier = "LicenseRef-Third-Party-Terms"
+
+[[annotations]]
+path = "tests/fixtures/reports/synthetic/**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Wyss Center for Bio and Neuroengineering"
+SPDX-License-Identifier = "GPL-3.0-only"
+SPDX-FileComment = "Session reports with invented content, written by scripts/make_synthetic_session_report.py; no file from vendor software."

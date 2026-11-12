@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+  <Bundle
+      Name="Wyss DBS Localizer"
+      Manufacturer="Wyss Center for Bio and Neuroengineering"
+      Version="$(var.ProductVersion)"
+      UpgradeCode="07441E21-51ED-41E1-BFAF-D9D558E7D9BC"
+      IconSourceFile="$(var.IconPath)">
+    <BootstrapperApplication>
+      <bal:WixStandardBootstrapperApplication
+          Theme="rtfLicense"
+          LicenseFile="$(var.LicensePath)"
+          LogoFile="$(sys.SOURCEFILEDIR)logo-64.png" />
+    </BootstrapperApplication>
+    <Chain>
+      <MsiPackage SourceFile="$(var.MsiPath)" />
+    </Chain>
+  </Bundle>
+</Wix>

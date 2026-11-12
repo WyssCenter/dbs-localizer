@@ -1,0 +1,16 @@
+Additional terms for the standard space atlases distributed with Lead-DBS
+
+Source: the "The Standard Space Atlases" section of the Lead-DBS LICENSE.md
+(Lead-DBS git 5b1008d, 2026-03-02), reproduced verbatim below. The complete
+Lead-DBS LICENSE.md is shipped beside the atlas folders as
+resources/atlases/leaddbs/LICENSE.md.
+
+-------------------------------------------------------------------
+
+The Standard Space Atlases
+
+The standard space atlases included in the repository,
+are released under the terms of the main Lead-DBS License above, 
+at the request of their owners with the exception of the Hammers_mith atlas (see below). These atlases should therefore not be used for commercial purposes; for such
+purposes please contact the primary co-ordinator for the relevant
+atlas.

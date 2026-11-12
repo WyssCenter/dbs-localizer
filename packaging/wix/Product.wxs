@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+      Name="Wyss DBS Localizer"
+      Manufacturer="Wyss Center for Bio and Neuroengineering"
+      Version="$(var.ProductVersion)"
+      UpgradeCode="7635DF26-493E-4223-B1B8-04658D39B78C"
+      Scope="perUser">
+    <SummaryInformation Description="Wyss DBS Localizer" />
+    <!-- AllowSameVersionUpgrades: without it, re-running the installer with an
+         unchanged version is a no-op and the previously installed files stay
+         on disk, which looks like the installer installed an old build. -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+                  DowngradeErrorMessage="A newer Wyss DBS Localizer is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Property Id="ARPURLINFOABOUT" Value="https://www.wysscenter.ch" />
+    <Property Id="ARPHELPLINK" Value="$(var.RepoUrl)" />
+
+    <Icon Id="DbsLocIcon" SourceFile="$(var.IconPath)" />
+    <Property Id="ARPPRODUCTICON" Value="DbsLocIcon" />
+
+    <!-- ProgramFiles64Folder is not remapped for a per-user package (it stays C:\Program Files),
+         so the per-user programs folder is spelled out. -->
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="UserProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="Wyss DBS Localizer">
+          <Files Include="$(var.StageDir)\**" />
+          <Component Id="PathEnvironment" Guid="{02C5631C-9401-43E5-B66F-B72DED9673EB}" Bitness="always64">
+            <!-- per-user PATH (HKCU\Environment) so `dbsloc` works in a new terminal -->
+            <Environment Id="PathEnv"
+                         Name="PATH"
+                         Value="[INSTALLFOLDER]"
+                         Action="set"
+                         Part="last"
+                         System="no"
+                         Permanent="no"
+                         Separator=";" />
+            <RegistryValue Root="HKCU"
+                           Key="Software\Wyss Center\DBS Localizer"
+                           Name="PathEntry"
+                           Type="integer"
+                           Value="1"
+                           KeyPath="yes" />
+          </Component>
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="StartMenuShortcut" Guid="{027BD4CE-2ECF-4AEB-AF72-6669FE4FACE0}" Bitness="always64">
+        <Shortcut Id="StartMenuShortcutLink"
+                  Name="DBS Localizer"
+                  Target="[INSTALLFOLDER]dbs-localizer.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="DbsLocIcon" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\Wyss Center\DBS Localizer"
+                       Name="StartMenuShortcut"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="{9F2B70B0-72D1-4B24-B722-9A0BB2A1897F}" Bitness="always64">
+        <Shortcut Id="DesktopShortcutLink"
+                  Name="DBS Localizer"
+                  Target="[INSTALLFOLDER]dbs-localizer.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="DbsLocIcon" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\Wyss Center\DBS Localizer"
+                       Name="DesktopShortcut"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+  </Package>
+</Wix>

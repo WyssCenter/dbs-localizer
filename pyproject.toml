@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dbsloc"
+version = "0.1.0"
+description = "Clean-room DBS imaging pipeline (Rust pipeline and CLI; Python development tooling)"
+requires-python = ">=3.14"
+license = "GPL-3.0-only"
+license-files = ["LICENSE", "NOTICE", "LICENSES/*.txt"]
+dependencies = [
+    "numpy",
+    "nibabel",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["dbsloc"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "integration: local Lead-Tutor BIDS (HPDATA_LEADTUTOR)",
+    "network: test hits the network (opt-in; not for CI by default)",
+    "slow: long external/binary workload; excluded from pre-commit (full run in pytest / CI)",
+]
+
+[dependency-groups]
+dev = [
+    "maturin>=1.4",
+    "pre-commit>=4.6.0",
+    "pre-commit-uv>=4.2.1",
+    "pytest",
+    "ruff>=0.15.11",
+    "scipy>=1.18.1",
+    "ty>=0.0.32",
+]
+
+[tool.uv]
+exclude-newer = "7 days"
+
+# ty: nibabel union types are imprecise; optional native module not in env by default.
+[tool.ty.rules]
+unresolved-attribute = "ignore"
+
+[tool.ty.analysis]
+allowed-unresolved-imports = ["dbsloc_reconstruct", "dbsloc_reconstruct.**"]

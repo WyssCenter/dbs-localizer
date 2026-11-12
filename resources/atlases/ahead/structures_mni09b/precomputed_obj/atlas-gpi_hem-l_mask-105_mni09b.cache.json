@@ -1,0 +1,14 @@
+{
+  "version": 6,
+  "src_sha256": "6c118ee467a725c9efef8b1c11cc9e177bb7e331d9bef10ec9c16e27a97f2d74",
+  "template_sha256": null,
+  "resample_to_template": false,
+  "source_ijk_subtract": 0.0,
+  "native_vertex_ijk_shift": 0.0,
+  "preblur_iters": 6,
+  "morph_close_iters": 0,
+  "weld_eps_mm": 0.05,
+  "taubin_iters": 10,
+  "taubin_lambda": 0.5,
+  "taubin_mu": -0.53
+}

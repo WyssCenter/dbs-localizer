@@ -1,0 +1,25 @@
+[package]
+name = "dbsloc-vat-gpu"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "wgpu E-field solver for the VAT stage"
+license = "GPL-3.0-only"
+
+[lib]
+name = "dbsloc_vat_gpu"
+path = "src/lib.rs"
+
+[dev-dependencies]
+dbsloc-reconstruct = { path = "../dbsloc-reconstruct" }
+
+[dependencies]
+fastwarp-gpu = { path = "../../fastwarp/crates/fastwarp-gpu" }
+dbsloc-vat = { path = "../dbsloc-vat" }
+wgpu = "30"
+bytemuck = { version = "1.14", features = ["derive"] }
+thiserror = "2"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

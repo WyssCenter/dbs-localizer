@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.eggs/
+*.egg-info/
+dist/
+build/
+crates/**/uv.lock
+
+# Rust
+target/
+**/*.rs.bk
+
+# IDE / OS
+.DS_Store
+.idea/
+.cursor_artifacts/
+.vscode/
+*.swp
+*~
+
+# Local env
+.env
+.env.*
+!.env.example
+
+# Large MNI / template NIfTIs (local copy; not in repo)
+/templates/
+/resources/templates/*
+!/resources/templates/space/
+/resources/templates/space/*
+!/resources/templates/space/MNI152NLin2009bAsym/
+/resources/templates/space/MNI152NLin2009bAsym/*
+!/resources/templates/space/MNI152NLin2009bAsym/res-1mm/
+
+# Local/agent smoke renders under `artifacts/` (JSON manifests may be committed)
+artifacts/**/*.png
+artifacts/**/*.jpg
+artifacts/**/*.webp
+
+# Ad-hoc pipeline logs from local runs
+lead*.log
+
+
+# AHEAD upstream archive (masks live in structures_mni09b/; use download script)
+resources/atlases/ahead/*.tar.gz
+
+# Claude Code agent worktrees
+.claude/
+
+# Apache-2.0 ITK/ANTs reference sources for ports (fastwarp/docs/THIRD_PARTY_PORTS.md)
+third_party/itk_ref/
+
+# Local Lead-Tutor cohort runs (scripts/leadtutor_cohort.py)
+hpdbs_runs/

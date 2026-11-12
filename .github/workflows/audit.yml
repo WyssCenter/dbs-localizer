@@ -1,0 +1,89 @@
+name: Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "uv.lock"
+      - "pyproject.toml"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "crates/*/Cargo.toml"
+      - "crates/*/Cargo.lock"
+      - "fastwarp/Cargo.lock"
+      - "fastwarp/Cargo.toml"
+      - "fastwarp/crates/*/Cargo.toml"
+      - "fastwarp/deny.toml"
+      - "deny.toml"
+      - "rust-toolchain.toml"
+      - ".github/workflows/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "uv.lock"
+      - "pyproject.toml"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "crates/*/Cargo.toml"
+      - "crates/*/Cargo.lock"
+      - "fastwarp/Cargo.lock"
+      - "fastwarp/Cargo.toml"
+      - "fastwarp/crates/*/Cargo.toml"
+      - "fastwarp/deny.toml"
+      - "deny.toml"
+      - "rust-toolchain.toml"
+      - ".github/workflows/**"
+  schedule:
+    - cron: "23 5 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: uv audit
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+          version: "0.13.6"
+
+      - run: uv audit --frozen --preview-features audit-command
+
+  rust:
+    name: cargo deny
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Workspace
+        uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+        with:
+          command: check advisories bans licenses sources
+          arguments: --locked --config deny.toml --all-features
+
+      - name: Browser client (own lockfile)
+        if: ${{ !cancelled() }}
+        uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+        with:
+          manifest-path: crates/dbsloc-web/Cargo.toml
+          command: check advisories bans licenses sources
+          arguments: --locked --config deny.toml --all-features
+
+      - name: fastwarp subtree (own lockfile)
+        if: ${{ !cancelled() }}
+        uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+        with:
+          manifest-path: fastwarp/Cargo.toml
+          command: check advisories bans licenses sources
+          arguments: --locked --config fastwarp/deny.toml --all-features

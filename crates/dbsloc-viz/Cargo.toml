@@ -1,0 +1,112 @@
+[package]
+name = "dbsloc-viz"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "2D/3D visualization — WebGPU (wgpu) primary; optional future CUDA; see specs/08_visualization.md Addendum A"
+license = "GPL-3.0-only"
+
+[lib]
+name = "dbsloc_viz"
+path = "src/lib.rs"
+
+[features]
+# Default: wgpu + NIfTI/Reco + checkreg CPU PNG (no eframe in default — keeps CI light).
+default = ["wgpu-renderer", "data-mni", "checkreg"]
+wgpu-renderer = ["dep:wgpu", "dep:bytemuck"]
+# NIfTI volume + Reco v2 JSON loaders.
+# Enables nifti I/O and serde-based JSON parsing on top of wgpu-renderer.
+data-mni = [
+    "wgpu-renderer",
+    "dep:nifti",
+    "dep:fastwarp-core",
+    "dep:dbsloc-checkreg",
+    "dep:serde",
+    "dep:serde_json",
+]
+# CPU checkreg PNG (`gencheckregpair`-class): moving grey + fixed edges, axial montage.
+checkreg = ["data-mni", "dbsloc-checkreg/pair"]
+# Interactive `ea_checkreg`-style review (eframe + egui + wgpu); optional: heavy vs CI.
+checkreg-embed = ["checkreg", "interactive-eframe"]
+# Embeddable expert correction view of the lead markers and roll (`specs/08` §11.1.6); library only.
+refine-embed = ["interactive-eframe", "data-mni", "dep:dbsloc-reconstruct"]
+# `dbs-localizer checkreg` mode: the embeddable panel plus the command-line parser.
+checkreg-viewer = ["checkreg-embed", "dep:clap"]
+# Shared eframe stack (wgpu backend — same as egui custom 3D path).
+interactive-eframe = [
+    "data-mni",
+    "dep:eframe",
+    "dep:egui",
+    # Brand assets (`brand.rs`): the embedded Wyss avatar PNG is decoded at start-up.
+    "dep:image",
+]
+# Interactive 3D scene: template MRI slice + Reco + atlas meshes (`specs/08` §4).
+scene-viewer = [
+    "interactive-eframe",
+    "dep:clap",
+    "dep:glam",
+    "dep:rayon",
+    "dep:mcubes",
+    "dep:lin_alg",
+    "dep:image",
+    "dep:dbsloc-reconstruct",
+]
+# Browser (`wasm32`) viewer surface — `docs/SERVER_CLIENT_PLAN.md` §6.
+# Byte-based loaders (NIfTI / Reco v2 JSON / Wavefront OBJ) plus the precomputed-AHEAD mesh
+# loader, so the web build reads fetched bytes instead of files and never re-meshes. It must
+# not drag native-only deps into a `wasm32` build: `rayon` / `std::thread` are enabled only by
+# `scene-viewer` (native) and every thread / rayon use in the viewer is `cfg(not(wasm32))`.
+# `flate2` uses the pure-Rust `miniz_oxide` backend (`rust_backend`) so gzip decoding works in
+# the browser.
+web = [
+    "data-mni",
+    "checkreg",
+    "dbsloc-checkreg/web",
+    "dep:glam",
+    "dep:flate2",
+]
+
+[dependencies]
+thiserror = "2"
+# Uniform / vertex pack for the scene viewer (layout-safe pads).
+bytemuck = { version = "1.14", features = ["derive"], optional = true }
+
+# Cross-platform: Vulkan, Metal, DX12. GPU when drivers exist; env WGPU_FORCE_FALLBACK_ADAPTER=1 for CPU SW where available.
+wgpu = { version = "30", optional = true }
+# NIfTI-1 I/O (data-mni feature).
+nifti = { version = "0.18", optional = true }
+fastwarp-core = { path = "../../fastwarp/crates/fastwarp-core", optional = true, features = ["nifti"] }
+dbsloc-checkreg = { path = "../dbsloc-checkreg", optional = true }
+# Electrode catalogue geometry for procedural lead meshes (`scene-viewer`). Clean-room data only.
+dbsloc-reconstruct = { path = "../dbsloc-reconstruct", optional = true }
+# JSON: Reco v2 (data-mni) + checkreg viewer manifest.
+serde = { version = "1", features = ["derive"], optional = true }
+serde_json = { version = "1", optional = true }
+# PNG for the brand logo and scene screenshots (interactive viewers).
+image = { version = "0.25", optional = true, default-features = false, features = ["png"] }
+# Interactive viewers (checkreg-viewer, scene-viewer). WGPU backend (no OpenGL glow).
+eframe = { version = "0.36", optional = true, default-features = false, features = [
+    "default_fonts",
+    "wgpu",
+    "wayland",
+    "x11",
+    "accesskit",
+] }
+egui = { version = "0.36", optional = true }
+clap = { version = "4.5", optional = true, features = ["derive", "std"] }
+glam = { version = "0.33", optional = true, features = ["bytemuck"] }
+rayon = { version = "1.10", optional = true }
+mcubes = { version = "0.1.7", optional = true }
+lin_alg = { version = "1.4", optional = true }
+# Pure-Rust gzip for the byte loaders (`web`); `rust_backend` = `miniz_oxide`, no C, wasm-safe.
+flate2 = { version = "1", optional = true, default-features = false, features = [
+    "rust_backend",
+] }
+
+[dev-dependencies]
+tempfile = "3"
+dbsloc-checkreg = { path = "../dbsloc-checkreg", features = ["test-support"] }
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

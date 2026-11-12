@@ -1,0 +1,20 @@
+[package]
+name = "dbsloc-vat"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "E-field engine (CPU reference) and analytical VTA models (specs/07)"
+license = "GPL-3.0-only"
+
+[lib]
+name = "dbsloc_vat"
+path = "src/lib.rs"
+
+[dependencies]
+dbsloc-reconstruct = { path = "../dbsloc-reconstruct" }
+rayon = "1.10"
+thiserror = "2"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

@@ -1,0 +1,22 @@
+[package]
+name = "dbsloc-ui"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "UI state machines shared by dbsloc-app (desktop) and dbsloc-web (browser)"
+license = "GPL-3.0-only"
+
+[lib]
+name = "dbsloc_ui"
+path = "src/lib.rs"
+
+[dependencies]
+dbsloc-protocol = { path = "../dbsloc-protocol" }
+serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+serde_json = "1"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

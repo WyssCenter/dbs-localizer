@@ -1,0 +1,252 @@
+Wyss DBS Localizer
+Copyright 2026 Wyss Center for Bio and Neuroengineering
+
+Wyss DBS Localizer is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License, version 3 only, as published by the Free
+Software Foundation. It is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See ``LICENSE`` (the GNU General Public License, version 3).
+
+Licences of this repository: ``LICENSE`` (GPL-3.0-only, everything not listed below),
+``LICENSES/`` (full texts), ``REUSE.toml`` (data and binaries), ``docs/LICENSING.md`` (map
+and rules). Each source file states its licence in an ``SPDX-License-Identifier`` header.
+
+  Apache-2.0             ``fastwarp/`` (the registration and N4 engine, a git subtree of
+                         https://github.com/WyssCenter/fastwarp). Parts are derived from ITK and ANTs.
+  Third-party licences   bundled binaries, templates, atlases, fonts and terms under
+                         ``resources/`` and ``crates/dbsloc-viz/assets/fonts/`` (below).
+
+The Wyss Center name and logo are trademarks (``TRADEMARKS.md``; last section).
+
+Lead-DBS
+================================================================================
+
+Wyss DBS Localizer is a new implementation of the processing pipeline of Lead-DBS
+(https://www.lead-dbs.org, https://github.com/netstim/leaddbs; Copyright (c) 2014-present
+the Lead-DBS developers; GNU General Public License, version 3). Its behaviour, defaults
+and file formats are modelled on Lead-DBS. The specifications in ``specs/`` were written
+from a study of Lead-DBS, its source code and its behaviour; the code outside
+``fastwarp/`` was written from those specifications, not by copying Lead-DBS code.
+Where a part of Wyss DBS Localizer is nonetheless derived from Lead-DBS, the Lead-DBS
+developers keep their copyright in it, it was modified for Wyss DBS Localizer from April
+2026 on, and it is distributed under the GNU GPL version 3 like Lead-DBS. Atlas data
+copied from Lead-DBS is listed under "Lead-DBS atlas folders" below.
+
+Source code derived from ITK and ANTs (Apache-2.0)
+================================================================================
+
+The registration engine in ``fastwarp/crates/fastwarp-reg`` and ``fastwarp/crates/fastwarp-gpu`` (Apache-2.0)
+contains files derived from the Insight Toolkit (ITK) v5.4.4 and from ANTs v2.6.5, both
+under the Apache License, Version 2.0. Each derived file carries the upstream copyright
+line and the Apache header; ``fastwarp/docs/THIRD_PARTY_PORTS.md`` lists every derived file with
+its upstream file and the changes made. The NOTICE of ITK reads:
+
+  ITK Software Licenses
+  The copyright of the Insight Toolkit (ITK) is held by:
+    Copyright 1999-2019    Insight Software Consortium
+    Copyright 2020-present NumFOCUS
+  This software is distributed under the Apache 2.0 License.
+
+ANTs (Advanced Normalization Tools): Copyright the ANTs developers,
+https://github.com/ANTsX/ANTs, licensed under the Apache License, Version 2.0
+(``COPYING.txt`` of ANTs v2.6.5; the text is ``LICENSES/Apache-2.0.txt``).
+
+The sample-point generator of the engine (``fastwarp/crates/fastwarp-reg/src/sampling.rs``)
+is derived, through ITK, from the Mersenne Twister code of Makoto Matsumoto, Takuji
+Nishimura, Shawn Cokus and Richard J. Wagner (BSD-3-Clause); its notice, conditions and
+disclaimer are reproduced in ``fastwarp/crates/fastwarp-reg/NOTICE``.
+
+Third-party components shipped or downloaded at run time
+================================================================================
+
+The Wyss DBS Localizer pipeline runs these programs; the bundled copies are used first,
+copies on ``PATH`` are the fallback:
+
+ANTs (Advanced Normalization Tools) — shipped as binaries under resources/ants/{linux,mac,win}/
+  Version: v2.6.5 (antsRegistration, antsApplyTransforms, N4BiasFieldCorrection)
+  License: Apache License, Version 2.0
+  Upstream: https://github.com/ANTsX/ANTs
+  License text: https://github.com/ANTsX/ANTs/blob/master/COPYING.txt
+  The Windows binaries import the Microsoft Visual C++ runtime (msvcp140.dll,
+  vcruntime140.dll, vcruntime140_1.dll); the copies beside them in resources/ants/win/
+  are the ones the dcm2niix upstream release zip contains (see dcm2niix below), and the
+  same vcruntime140 DLLs ship beside the Wyss DBS Localizer executables in the Windows
+  release archive. Microsoft permits redistributing these runtime files with applications
+  built with Visual Studio.
+
+dcm2niix (DICOM to NIfTI converter) — shipped as binaries under resources/dcm2niix/{linux,mac,win}/
+  Version: v1.0.20260724 (release zips dcm2niix_lnx.zip / dcm2niix_mac.zip / dcm2niix_win.zip)
+  License: BSD-style, 2-clause (Copyright (c) 2014-2025 Chris Rorden); full text with the
+  third-party notices of its optional codecs (OpenJPEG, CharLS, zlib, miniz, ujpeg) in
+  resources/dcm2niix/LICENSE. Upstream notes the software is developed for research purposes
+  and is not a clinical tool. The Windows build ships with the Microsoft Visual C++ runtime
+  DLLs that the upstream release zip contains.
+  Upstream: https://github.com/rordenlab/dcm2niix
+
+Insight Toolkit (ITK) — implementation library behind many ANTs binaries
+  License: Apache License, Version 2.0
+  Upstream: https://itk.org/
+  The ANTs binaries are statically linked against ITK, which bundles third-party
+  libraries under their own permissive licences (ITK ``Modules/ThirdParty``; the list is
+  ITK ``Documentation/docs/licenses.md``). ANTs v2.6.5 builds against ITK v5.4.5; that
+  file of ITK v5.4.5 is reproduced unchanged as
+  ``resources/ants/ITK_THIRD_PARTY_LICENSES.md`` and ships with the binaries. It lists
+  every library ITK bundles; the binaries contain the subset their build links.
+
+Incorporating or redistributing *source code* derived from ANTs or ITK
+----------------------------------------------------------------------
+You must comply with the Apache License, Version 2.0, including: retain copyright
+and license notices; mark significant changes in modified files; and include a copy
+of the license in applicable distributions. A file-header template for new
+derivative files lives in the "Header template for ported files" section of ``fastwarp/docs/THIRD_PARTY_PORTS.md``. Files in this repository derived from ANTs or ITK are listed, with the upstream file and the changes, in the same document.
+
+The full Apache-2.0 text: ``LICENSES/Apache-2.0.txt``.
+
+See also ``AGENTS.md`` §9 (Copyright & IP Rules) in this repository.
+
+Microsoft Visual C++ runtime
+----------------------------
+``msvcp140*.dll``, ``vcruntime140*.dll`` and ``concrt140.dll`` under ``resources/ants/win/``
+and ``resources/dcm2niix/win/`` are Microsoft Visual C++ Redistributable files, copied
+unmodified from the dcm2niix release archives (``LICENSES/LicenseRef-Microsoft-VCRedist.txt``).
+
+Atlas data (DISTAL, Allen, etc.)
+---------------------------------
+Atlas data shipped with Wyss DBS Localizer installers or committed to this repo is listed below with the terms it is shipped under; an atlas is added only by an owner decision recorded in ``docs/ATLAS_DISTAL.md`` (policy and DISTAL citation). Other Lead-DBS atlases are read from the user's Lead-DBS directory or downloaded by the user from the Lead-DBS host (``specs/11_atlases.md`` §10), never shipped.
+
+Lead-DBS atlas folders (``resources/atlases/leaddbs/``)
+-------------------------------------------------------
+Decision of 2026-10-22 (product owner): the atlas folders under
+``resources/atlases/leaddbs/<name>/`` are verbatim copies of the atlas DATA
+folders distributed with Lead-DBS (``templates/space/MNI152NLin2009bAsym/atlases/``
+of the Lead-DBS data package ``leaddbs_data.zip``, installed beside Lead-DBS git
+``5b1008d``, 2026-03-02; the git repository itself ignores ``atlases/``): per-structure NIfTI masks, ``atlas_index.mat``
+(names, colours, presets, citation) and ``gm_mask.nii.gz``. No Lead-DBS code is
+included. SPDX: ``GPL-3.0-only AND LicenseRef-LeadDBS-Atlas-Terms`` (``REUSE.toml``); the
+data is read at run time and is not compiled into any program. Lead-DBS's ``LICENSE.md`` (GNU GPL v3; copied beside the folders as
+``resources/atlases/leaddbs/LICENSE.md``) states that the standard-space atlases "included
+in the repository" are released under that licence at their owners' request and should not
+be used for commercial purposes; commercial users should contact the primary coordinator of
+the atlas. The data package holds no licence file, and the Lead-DBS maintainers stated on
+2026-11-11 that the atlas packages carry no licence. Owner decision of 2026-11-11: the bundled
+folders keep the GPL label and the non-commercial request as Lead-DBS's ``LICENSE.md`` states
+them. The software itself is GPL-3.0-only since 2026-11-10, so the GPL label of the data fits;
+the owners' request not to use the atlases commercially stays as stated, and the bundled
+atlas folders are to be treated as research-only data.
+
+  DISTAL Minimal (Ewert 2017)
+    Citation: Ewert S, Plettig P, Li N, Chakravarty MM, Collins DL, Herrington TM,
+      et al. (2017). Toward defining deep brain stimulation targets in MNI space:
+      A subcortical atlas based on multimodal MRI, histology and structural
+      connectivity. NeuroImage. Also: Chakravarty MM, Bertrand G, Hodge CP,
+      Sadikot AF, Collins DL (2006). The creation of a brain atlas for image guided
+      neurosurgery using serial histological data. NeuroImage 30(2):359-376.
+
+Any other Lead-DBS atlas folder can be used without copying it: point the
+3D viewer at a Lead-DBS ``atlases`` directory (``DBSLOC_LEADDBS_ATLASES_DIR`` or
+the GUI setting), see ``specs/11_atlases.md`` and ``docs/ATLAS_DISTAL.md``.
+
+AHEAD atlas (Alkemade et al. 2020)
+----------------------------------
+The Wyss DBS Localizer default redistributable subcortical atlas is the AHEAD MNI09b
+structure mask set when installed under ``resources/atlases/ahead/``.
+
+  Dataset: The Amsterdam Ultra-high field adult lifespan database (AHEAD)
+  Citation: Alkemade, J.M.; Mulder, M.J.; Groot, J.M.; Isaacs, B.R.;
+    van Berendonk, N.; Lute, N.; et al. (2020). The Amsterdam Ultra-high field
+    adult lifespan database (AHEAD): A freely available multimodal 7 Tesla
+    submillimeter magnetic resonance imaging database.
+  DOI: https://doi.org/10.21942/uva.10007840.v2
+  File: structures_mni09b.tar.gz (Figshare file id 21209229)
+  License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+  License text: https://creativecommons.org/licenses/by/4.0/
+
+Redistribution requires attribution, a license link, and indication of changes.
+See ``docs/ATLAS_AHEAD.md`` and ``resources/atlases/ahead/manifest.json``.
+
+MNI ICBM 2009 nonlinear templates (Fonov et al.)
+------------------------------------------------
+``resources/templates/space/MNI152NLin2009bAsym/res-1mm/{t1,t2}.nii.gz`` are the
+MNI ICBM 2009b nonlinear asymmetric T1w and T2w templates, reduced to a 1.0 mm
+grid by taking every second voxel of the original 0.5 mm image (no interpolation,
+no change of the stored intensities). ``brainmask.nii.gz`` beside them is the
+ICBM 2009c brain mask carried onto that grid through the cached 2009c -> 2009b
+template registration (linear, threshold 0.5). ``scripts/build_shipped_template.py``
+documents the derivation and ``template.json`` beside the files records the
+checksums. The other ICBM 2009 variants offered for download are not
+redistributed with Wyss DBS Localizer.
+
+  Source: https://www.bic.mni.mcgill.ca/~vfonov/icbm/2009/mni_icbm152_nlin_asym_09b_nifti.zip
+  Atlas page: https://nist.mni.mcgill.ca/icbm-152-nonlinear-atlases-2009/
+
+  Copyright (C) 1993-2004 Louis Collins, McConnell Brain
+  Imaging Centre, Montreal Neurological Institute, McGill University.
+  Permission to use, copy, modify, and distribute this software and
+  its documentation for any purpose and without fee is hereby granted,
+  provided that the above copyright notice appear in all copies.  The
+  authors and McGill University make no representations about the
+  suitability of this software for any purpose.  It is provided "as
+  is" without express or implied warranty.  The authors are not
+  responsible for any data loss, equipment damage, property loss, or
+  injury to subjects or patients resulting from the use or misuse of
+  this software package.
+
+The notice is shipped verbatim as ``resources/templates/space/MNI152NLin2009bAsym/res-1mm/LICENSE``
+and must accompany every copy.
+
+Normative connectome terms (``resources/licenses/connectomes/``)
+-----------------------------------------------------------------
+The connectome catalogue shows the data owners' terms verbatim before a download and
+records their SHA-256 with the acceptance. The texts are compiled into ``dbsloc-pipeline``
+and kept as plain files: ``elias2024-dtor985.txt`` (WU-Minn HCP Open Access Data Use Terms of
+2013-04-26 and the CC0 1.0 legal code; the three dTOR-985 entries), ``horn2017-mghusc-hcp32.txt``
+(MGH-USC HCP Data Use Agreement, 2014), ``ppmi.txt`` (PPMI Data Use Agreement Version 5.0,
+April 2026, Publication Policy, funding partners; both PPMI entries), ``cohen2023-gsp1000v2.txt``
+(GSP Open Access Data Use Terms 2014-Apr-22 from the Harvard Dataverse record; the copy with
+corrected quotation marks is shipped, the byte-exact copy with double-encoded quotes is not),
+``loh2020-torpd75.txt`` (CC BY 4.0 of the Zenodo record), ``horn2013-gibbs19.txt``,
+``horn2016-nkirs169.txt`` and ``alfatly2023-pediatric100.txt`` (the statements of the Data in Brief
+article, INDI / NKI and CoRR; these sources state no licence text, see each file) and
+``leaddbs-hosting.txt`` (what lead-dbs.org states about the hosted packages: nothing; plus a
+summary of the Lead-DBS maintainers' e-mail of 2026-11-11: the packages carry no licence, and
+their use by other software is not explicitly forbidden).
+Each file starts with its source URL and the fetch date (2026-10-23) and was copied from the
+owner's website, except the e-mail summary in ``leaddbs-hosting.txt`` (no URL, 2026-11-11, our
+summary, not a copy); PDF texts were re-flowed (line breaks only). The PPMI agreement may change
+"effective immediately upon posting", so these texts are re-checked at every release; a
+changed text makes an earlier acceptance count as not accepted. The files are the property
+of their owners and are reproduced only to show the terms that apply to the data.
+
+IBM Plex Sans (typeface bundled in the interactive windows)
+-----------------------------------------------------------
+``crates/dbsloc-viz/assets/fonts/IBMPlexSans-{Regular,Medium,SemiBold}.ttf``
+are compiled into ``dbs-localizer`` (the application and its viewer windows).
+
+  Copyright © 2017 IBM Corp. with Reserved Font Name "Plex".
+  License: SIL Open Font License, Version 1.1
+  License text: ``crates/dbsloc-viz/assets/fonts/OFL.txt``
+  Upstream: https://github.com/IBM/plex
+
+The OFL permits bundling the fonts with software under any license as long as
+the font files are not sold by themselves and the copyright and license notice
+stay with them; the Reserved Font Name must not be used for a modified font.
+
+Rust libraries built into the programs
+--------------------------------------
+``dbs-localizer`` and ``dbsloc`` statically link third-party Rust libraries (mostly MIT
+and Apache-2.0, also BSD, ISC, Zlib and others). Release packages carry the licence
+expression, the copyright notice and the licence text of each of them in
+``THIRD_PARTY_LICENSES.md`` beside this file. In the source tree, generate the same
+document with ``uv run python scripts/third_party_licenses.py --out THIRD_PARTY_LICENSES.md``.
+
+Wyss Center logo
+----------------
+``crates/dbsloc-viz/assets/brand/wyss-center-icon-256.png`` and
+``wyss-center-icon-inverse-256.png`` show the logo of the Wyss Center for Bio and
+Neuroengineering, a trademark used here in its own software. The image files are licensed
+under GPL-3.0-only like the software, so they may be copied and modified under that
+licence. The licence grants no trademark rights to the logo or to the names "Wyss Center"
+and "Wyss Center for Bio and Neuroengineering" (GNU GPL version 3, section 7(e)); what
+that means for modified versions is in ``TRADEMARKS.md``. The application tile
+(``dbs-loc-icon*`` beside them, ``packaging/wix/logo-64.png``) was made by a Wyss Center
+employee, is part of the software and GPL-3.0-only.

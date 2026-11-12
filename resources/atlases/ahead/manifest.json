@@ -1,0 +1,14 @@
+{
+  "name": "AHEAD basal ganglia structures in MNI09b",
+  "dataset": "The Amsterdam Ultra-high field adult lifespan database (AHEAD)",
+  "doi": "10.21942/uva.10007840.v2",
+  "figshare_article_id": 10007840,
+  "figshare_file_id": 21209229,
+  "archive_name": "structures_mni09b.tar.gz",
+  "archive_md5": "024d96847765af480dfd69612011684c",
+  "download_url": "https://ndownloader.figshare.com/files/21209229",
+  "license": "CC BY 4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "citation": "Alkemade, J.M.; Mulder, M.J.; Groot, J.M.; Isaacs, B.R.; van Berendonk, N.; Lute, N.; et al. (2020). The Amsterdam Ultra-high field adult lifespan database (AHEAD): A freely available multimodal 7 Tesla submillimeter magnetic resonance imaging database. University of Amsterdam / Amsterdam University of Applied Sciences. Dataset. https://doi.org/10.21942/uva.10007840.v2",
+  "install_dir": "resources/atlases/ahead/structures_mni09b"
+}

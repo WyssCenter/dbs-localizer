@@ -1,0 +1,2309 @@
+{
+  "file": "directional_percept_rc.pdf",
+  "patient": {
+    "name": "Example Person",
+    "patient_id": "SYN:0002",
+    "diagnosis": "Essential Tremor",
+    "sex": "male",
+    "date_of_birth": "1955-11-02",
+    "clinician_notes": "Second invented record."
+  },
+  "session": {
+    "date": "2026-10-14T09:40",
+    "printed_at": "2026-10-14T10:15",
+    "programmer_version": "0.0.2",
+    "stimulation_initial": "off",
+    "stimulation_final": "on",
+    "battery_reminder": "off",
+    "close_communication_required": true
+  },
+  "diagnostics": {
+    "contact_sum_warnings": 12,
+    "interleaved_hemispheres": 2,
+    "voltage_programs": 0
+  },
+  "device": {
+    "model": "Percept RC",
+    "rechargeable": true,
+    "serial": "SYN_RC_0002",
+    "model_number": "TEST-RC-02",
+    "implanted": "2026-02-03",
+    "location": "right chest",
+    "battery_percent": 64.0,
+    "feature_code": "2c3d",
+    "firmware": {
+      "product_application_id": "0000",
+      "product_version": "01.02.03",
+      "core_application_id": "0000",
+      "core_version": "00.01.00",
+      "device_application_id": "0000",
+      "device_version": "00.02.00"
+    },
+    "device_name": "Unit B",
+    "battery_estimate": null,
+    "eri_date": "2041-02-28"
+  },
+  "leads": [
+    {
+      "hemisphere": "left",
+      "vendor_model": "B33005",
+      "target": "STN",
+      "tip_offset": 0.0,
+      "last_contact": 7,
+      "orientation_deg": 60.0,
+      "contacts": [
+        "0",
+        "1a",
+        "1b",
+        "1c",
+        "2a",
+        "2b",
+        "2c",
+        "3"
+      ]
+    },
+    {
+      "hemisphere": "right",
+      "vendor_model": "B33005",
+      "target": "STN",
+      "tip_offset": 8.0,
+      "last_contact": 15,
+      "orientation_deg": 300.0,
+      "contacts": [
+        "8",
+        "9a",
+        "9b",
+        "9c",
+        "10a",
+        "10b",
+        "10c",
+        "11"
+      ]
+    }
+  ],
+  "snapshots": {
+    "initial": {
+      "stimulation": "off",
+      "active": "A",
+      "groups": [
+        {
+          "id": "A",
+          "name": "Reach",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 2.9,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 130,
+                "cathodes": [
+                  "1a",
+                  "1b",
+                  "1c"
+                ],
+                "anodes": [],
+                "currents": {
+                  "1a": 1.0,
+                  "1b": 1.0,
+                  "1c": 1.0
+                },
+                "sensing": [],
+                "case": "anode"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 3.4,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 130,
+                "cathodes": [
+                  "8",
+                  "9a",
+                  "9b",
+                  "9c"
+                ],
+                "anodes": [],
+                "currents": {
+                  "8": 1.2,
+                  "9a": 1.0,
+                  "9b": 1.0,
+                  "9c": 1.0
+                },
+                "sensing": [],
+                "case": "anode"
+              }
+            ]
+          },
+          "active": true,
+          "soft_start_stop": {
+            "enabled": true,
+            "duration_s": 4.0
+          },
+          "cycling": {
+            "enabled": false
+          },
+          "programmer": {
+            "mode": "Advanced Adjust",
+            "left": {
+              "lower": 2.5,
+              "upper": 3.3,
+              "value_ma": 2.9
+            },
+            "right": {
+              "lower": 3.0,
+              "upper": 3.8,
+              "value_ma": 3.4
+            }
+          }
+        },
+        {
+          "id": "B",
+          "name": "Stand",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 2.2,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "1a",
+                  "1c"
+                ],
+                "anodes": [],
+                "currents": {
+                  "1a": 1.5,
+                  "1c": 0.7
+                },
+                "sensing": [],
+                "case": "anode"
+              },
+              {
+                "amplitude": 0.9,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "2b"
+                ],
+                "anodes": [],
+                "currents": {
+                  "2b": 0.9
+                },
+                "sensing": [],
+                "case": "anode"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 2.0,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "10b"
+                ],
+                "anodes": [],
+                "currents": {
+                  "10b": 2.0
+                },
+                "sensing": [],
+                "case": "anode"
+              }
+            ]
+          },
+          "active": false,
+          "soft_start_stop": {
+            "enabled": false
+          },
+          "cycling": {
+            "enabled": false
+          },
+          "programmer": {
+            "mode": "Advanced Adjust",
+            "left": {
+              "lower": 1.8,
+              "upper": 2.6,
+              "value_ma": 2.2
+            }
+          }
+        },
+        {
+          "id": "C",
+          "name": "Imaging",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 1.3,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 150,
+                "cathodes": [
+                  "1a",
+                  "1b",
+                  "1c"
+                ],
+                "anodes": [
+                  "2a",
+                  "2b",
+                  "2c"
+                ],
+                "currents": {
+                  "1a": 0.4,
+                  "1b": 0.4,
+                  "1c": 0.4
+                },
+                "sensing": [],
+                "case": "off"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 1.3,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 100,
+                "cathodes": [
+                  "10a",
+                  "10b",
+                  "10c"
+                ],
+                "anodes": [
+                  "9a",
+                  "9b",
+                  "9c"
+                ],
+                "currents": {
+                  "10a": 0.4,
+                  "10b": 0.4,
+                  "10c": 0.4
+                },
+                "sensing": [],
+                "case": "off"
+              }
+            ]
+          },
+          "active": false,
+          "soft_start_stop": {
+            "enabled": false
+          },
+          "cycling": {
+            "enabled": false
+          },
+          "programmer": {
+            "mode": "Advanced View"
+          }
+        },
+        {
+          "id": "D",
+          "name": "Sense",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 2.3,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "1a",
+                  "1b"
+                ],
+                "anodes": [],
+                "currents": {
+                  "1a": 1.0,
+                  "1b": 0.6
+                },
+                "sensing": [
+                  "0",
+                  "2a",
+                  "2b",
+                  "2c"
+                ],
+                "case": "anode",
+                "bs_mode": "adaptive",
+                "bs_status": "adapting",
+                "adaptive": {
+                  "lfp_hz": 24.41,
+                  "limits": {
+                    "lower": 2.2,
+                    "upper": 3.2
+                  },
+                  "threshold_mode": "Dual Threshold",
+                  "paused_amplitude_ma": 2.6,
+                  "transition_up_min": 2.3,
+                  "transition_down_min": 5.0,
+                  "upper_lfp_threshold": 50.0,
+                  "upper_lfp_captured": 30.0,
+                  "lower_lfp_threshold": 20.0,
+                  "lower_lfp_captured": 18.0
+                }
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 2.2,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "10a",
+                  "10c"
+                ],
+                "anodes": [],
+                "currents": {
+                  "10a": 0.9,
+                  "10c": 0.7
+                },
+                "sensing": [
+                  "8",
+                  "11"
+                ],
+                "case": "anode",
+                "bs_mode": "adaptive",
+                "bs_status": "adapting",
+                "adaptive": {
+                  "lfp_hz": 19.53,
+                  "limits": {
+                    "lower": 2.0,
+                    "upper": 3.0
+                  },
+                  "threshold_mode": "Single Threshold",
+                  "paused_amplitude_ma": 2.4,
+                  "transition_up_min": 1.5,
+                  "transition_down_min": 4.0,
+                  "upper_lfp_threshold": 45.0,
+                  "upper_lfp_captured": 28.0,
+                  "lower_lfp_threshold": 15.0,
+                  "lower_lfp_captured": 12.0
+                }
+              }
+            ]
+          },
+          "active": false,
+          "soft_start_stop": {
+            "enabled": true,
+            "duration_s": 2.0
+          },
+          "cycling": {
+            "enabled": false
+          },
+          "programmer": {
+            "mode": "Adaptive Therapy",
+            "left": {
+              "paused_amplitude_ma": 2.6,
+              "maximum_limit_ma": 3.2,
+              "minimum_limit_ma": 2.2
+            },
+            "right": {
+              "paused_amplitude_ma": 2.4,
+              "maximum_limit_ma": 3.0,
+              "minimum_limit_ma": 2.0
+            }
+          },
+          "sensing_settings": {
+            "left": {
+              "high_pass_filter_hz": 1.0,
+              "averaging_duration_s": 1.2,
+              "sensing_blanking_ms": 1.4,
+              "onset_upper_s": 1.2,
+              "onset_lower_s": 1.2,
+              "detection_blanking_s": 2.0,
+              "adaptive_startup_delay_s": 10.0
+            },
+            "right": {
+              "high_pass_filter_hz": 1.0,
+              "averaging_duration_s": 3.0,
+              "sensing_blanking_ms": 1.1,
+              "onset_upper_s": 0.8,
+              "onset_lower_s": 1.6,
+              "detection_blanking_s": 2.5,
+              "adaptive_startup_delay_s": 8.0
+            }
+          }
+        }
+      ]
+    },
+    "final": {
+      "stimulation": "on",
+      "active": "B",
+      "groups": [
+        {
+          "id": "A",
+          "name": "Reach",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 3.2,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 130,
+                "cathodes": [
+                  "1a",
+                  "1b",
+                  "1c"
+                ],
+                "anodes": [],
+                "currents": {
+                  "1a": 1.0,
+                  "1b": 1.0,
+                  "1c": 1.0
+                },
+                "sensing": [],
+                "case": "anode"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 3.4,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 130,
+                "cathodes": [
+                  "8",
+                  "9a",
+                  "9b",
+                  "9c"
+                ],
+                "anodes": [],
+                "currents": {
+                  "8": 1.2,
+                  "9a": 1.0,
+                  "9b": 1.0,
+                  "9c": 1.0
+                },
+                "sensing": [],
+                "case": "anode"
+              }
+            ]
+          },
+          "active": false,
+          "soft_start_stop": {
+            "enabled": true,
+            "duration_s": 4.0
+          },
+          "cycling": {
+            "enabled": false
+          },
+          "programmer": {
+            "mode": "Advanced Adjust",
+            "left": {
+              "lower": 2.8,
+              "upper": 3.6,
+              "value_ma": 3.2
+            },
+            "right": {
+              "lower": 3.0,
+              "upper": 3.8,
+              "value_ma": 3.4
+            }
+          }
+        },
+        {
+          "id": "B",
+          "name": "Stand",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 2.2,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "1a",
+                  "1c"
+                ],
+                "anodes": [],
+                "currents": {
+                  "1a": 1.5,
+                  "1c": 0.7
+                },
+                "sensing": [],
+                "case": "anode"
+              },
+              {
+                "amplitude": 0.9,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "2b"
+                ],
+                "anodes": [],
+                "currents": {
+                  "2b": 0.9
+                },
+                "sensing": [],
+                "case": "anode"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 2.4,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "10a",
+                  "10b",
+                  "10c"
+                ],
+                "anodes": [],
+                "currents": {
+                  "10a": 0.8,
+                  "10b": 0.8,
+                  "10c": 0.8
+                },
+                "sensing": [],
+                "case": "anode"
+              }
+            ]
+          },
+          "active": true,
+          "soft_start_stop": {
+            "enabled": true,
+            "duration_s": 4.0
+          },
+          "cycling": {
+            "enabled": false
+          },
+          "programmer": {
+            "mode": "Advanced Adjust",
+            "left": {
+              "lower": 1.8,
+              "upper": 2.6,
+              "value_ma": 2.2
+            }
+          }
+        },
+        {
+          "id": "C",
+          "name": "Imaging",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 1.3,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 150,
+                "cathodes": [
+                  "1a",
+                  "1b",
+                  "1c"
+                ],
+                "anodes": [
+                  "2a",
+                  "2b",
+                  "2c"
+                ],
+                "currents": {
+                  "1a": 0.4,
+                  "1b": 0.4,
+                  "1c": 0.4
+                },
+                "sensing": [],
+                "case": "off"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 1.3,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 100,
+                "cathodes": [
+                  "10a",
+                  "10b",
+                  "10c"
+                ],
+                "anodes": [
+                  "9a",
+                  "9b",
+                  "9c"
+                ],
+                "currents": {
+                  "10a": 0.4,
+                  "10b": 0.4,
+                  "10c": 0.4
+                },
+                "sensing": [],
+                "case": "off"
+              }
+            ]
+          },
+          "active": false,
+          "soft_start_stop": {
+            "enabled": false
+          },
+          "cycling": {
+            "enabled": false
+          },
+          "programmer": {
+            "mode": "Advanced View"
+          }
+        },
+        {
+          "id": "D",
+          "name": "Sense",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 2.6,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "1a",
+                  "1b"
+                ],
+                "anodes": [],
+                "currents": {
+                  "1a": 1.0,
+                  "1b": 0.6
+                },
+                "sensing": [
+                  "0",
+                  "2a",
+                  "2b",
+                  "2c"
+                ],
+                "case": "anode",
+                "bs_mode": "adaptive",
+                "bs_status": "adapting",
+                "adaptive": {
+                  "lfp_hz": 24.41,
+                  "limits": {
+                    "lower": 2.2,
+                    "upper": 3.2
+                  },
+                  "threshold_mode": "Dual Threshold",
+                  "paused_amplitude_ma": 2.6,
+                  "transition_up_min": 2.3,
+                  "transition_down_min": 5.0,
+                  "upper_lfp_threshold": 50.0,
+                  "upper_lfp_captured": 30.0,
+                  "lower_lfp_threshold": 20.0,
+                  "lower_lfp_captured": 18.0
+                }
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 2.2,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "10a",
+                  "10c"
+                ],
+                "anodes": [],
+                "currents": {
+                  "10a": 0.9,
+                  "10c": 0.7
+                },
+                "sensing": [
+                  "8",
+                  "11"
+                ],
+                "case": "anode",
+                "bs_mode": "adaptive",
+                "bs_status": "adapting",
+                "adaptive": {
+                  "lfp_hz": 19.53,
+                  "limits": {
+                    "lower": 2.0,
+                    "upper": 3.0
+                  },
+                  "threshold_mode": "Single Threshold",
+                  "paused_amplitude_ma": 2.4,
+                  "transition_up_min": 1.5,
+                  "transition_down_min": 4.0,
+                  "upper_lfp_threshold": 45.0,
+                  "upper_lfp_captured": 28.0,
+                  "lower_lfp_threshold": 15.0,
+                  "lower_lfp_captured": 12.0
+                }
+              }
+            ]
+          },
+          "active": false,
+          "soft_start_stop": {
+            "enabled": true,
+            "duration_s": 2.0
+          },
+          "cycling": {
+            "enabled": false
+          },
+          "programmer": {
+            "mode": "Adaptive Therapy",
+            "left": {
+              "paused_amplitude_ma": 2.6,
+              "maximum_limit_ma": 3.2,
+              "minimum_limit_ma": 2.2
+            },
+            "right": {
+              "paused_amplitude_ma": 2.4,
+              "maximum_limit_ma": 3.0,
+              "minimum_limit_ma": 2.0
+            }
+          },
+          "sensing_settings": {
+            "left": {
+              "high_pass_filter_hz": 1.0,
+              "averaging_duration_s": 1.2,
+              "sensing_blanking_ms": 1.4,
+              "onset_upper_s": 1.2,
+              "onset_lower_s": 1.2,
+              "detection_blanking_s": 2.0,
+              "adaptive_startup_delay_s": 10.0
+            },
+            "right": {
+              "high_pass_filter_hz": 1.0,
+              "averaging_duration_s": 3.0,
+              "sensing_blanking_ms": 1.1,
+              "onset_upper_s": 0.8,
+              "onset_lower_s": 1.6,
+              "detection_blanking_s": 2.5,
+              "adaptive_startup_delay_s": 8.0
+            }
+          }
+        }
+      ]
+    }
+  },
+  "history": [
+    {
+      "date": "2026-10-14",
+      "groups": [
+        {
+          "id": "A",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 3.2,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 130,
+                "cathodes": [
+                  "1a",
+                  "1b",
+                  "1c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 3.4,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 130,
+                "cathodes": [
+                  "8",
+                  "9a",
+                  "9b",
+                  "9c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ]
+          }
+        },
+        {
+          "id": "B",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 2.2,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "1a",
+                  "1c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              },
+              {
+                "amplitude": 0.9,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "2b"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 2.4,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "10a",
+                  "10b",
+                  "10c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ]
+          }
+        },
+        {
+          "id": "C",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 1.3,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 150,
+                "cathodes": [
+                  "1a",
+                  "1b",
+                  "1c"
+                ],
+                "anodes": [
+                  "2a",
+                  "2b",
+                  "2c"
+                ],
+                "currents": {},
+                "sensing": [],
+                "case": "off"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 1.3,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 100,
+                "cathodes": [
+                  "10a",
+                  "10b",
+                  "10c"
+                ],
+                "anodes": [
+                  "9a",
+                  "9b",
+                  "9c"
+                ],
+                "currents": {},
+                "sensing": [],
+                "case": "off"
+              }
+            ]
+          }
+        },
+        {
+          "id": "D",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 2.6,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "1a",
+                  "1b"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [
+                  "0",
+                  "2a",
+                  "2b",
+                  "2c"
+                ],
+                "case": "anode",
+                "bs_mode": "adaptive",
+                "bs_status": "adapting"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 2.2,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "10a",
+                  "10c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [
+                  "8",
+                  "11"
+                ],
+                "case": "anode",
+                "bs_mode": "adaptive",
+                "bs_status": "adapting"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-07-02",
+      "groups": [
+        {
+          "id": "A",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 3.1,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 130,
+                "cathodes": [
+                  "1a",
+                  "1b",
+                  "1c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 3.3,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 130,
+                "cathodes": [
+                  "8",
+                  "9a",
+                  "9b",
+                  "9c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ]
+          }
+        },
+        {
+          "id": "B",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 2.1,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "1a",
+                  "1c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              },
+              {
+                "amplitude": 0.8,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "2b"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 2.3,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "10a",
+                  "10b",
+                  "10c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ]
+          }
+        },
+        {
+          "id": "C",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 1.2,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 150,
+                "cathodes": [
+                  "1a",
+                  "1b",
+                  "1c"
+                ],
+                "anodes": [
+                  "2a",
+                  "2b",
+                  "2c"
+                ],
+                "currents": {},
+                "sensing": [],
+                "case": "off"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 1.2,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 100,
+                "cathodes": [
+                  "10a",
+                  "10b",
+                  "10c"
+                ],
+                "anodes": [
+                  "9a",
+                  "9b",
+                  "9c"
+                ],
+                "currents": {},
+                "sensing": [],
+                "case": "off"
+              }
+            ]
+          }
+        },
+        {
+          "id": "D",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 2.5,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "1a",
+                  "1b"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [
+                  "0",
+                  "2a",
+                  "2b",
+                  "2c"
+                ],
+                "case": "anode",
+                "bs_mode": "adaptive",
+                "bs_status": "adapting"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 2.1,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "10a",
+                  "10c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [
+                  "8",
+                  "11"
+                ],
+                "case": "anode",
+                "bs_mode": "adaptive",
+                "bs_status": "adapting"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-06-02",
+      "groups": [
+        {
+          "id": "A",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 3.0,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 130,
+                "cathodes": [
+                  "1a",
+                  "1b",
+                  "1c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 3.2,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 130,
+                "cathodes": [
+                  "8",
+                  "9a",
+                  "9b",
+                  "9c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ]
+          }
+        },
+        {
+          "id": "B",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 2.0,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "1a",
+                  "1c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              },
+              {
+                "amplitude": 0.7,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "2b"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 2.2,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "10a",
+                  "10b",
+                  "10c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ]
+          }
+        },
+        {
+          "id": "C",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 1.1,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 150,
+                "cathodes": [
+                  "1a",
+                  "1b",
+                  "1c"
+                ],
+                "anodes": [
+                  "2a",
+                  "2b",
+                  "2c"
+                ],
+                "currents": {},
+                "sensing": [],
+                "case": "off"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 1.1,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 100,
+                "cathodes": [
+                  "10a",
+                  "10b",
+                  "10c"
+                ],
+                "anodes": [
+                  "9a",
+                  "9b",
+                  "9c"
+                ],
+                "currents": {},
+                "sensing": [],
+                "case": "off"
+              }
+            ]
+          }
+        },
+        {
+          "id": "D",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 2.4,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "1a",
+                  "1b"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [
+                  "0",
+                  "2a",
+                  "2b",
+                  "2c"
+                ],
+                "case": "anode",
+                "bs_mode": "adaptive",
+                "bs_status": "adapting"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 2.0,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "10a",
+                  "10c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [
+                  "8",
+                  "11"
+                ],
+                "case": "anode",
+                "bs_mode": "adaptive",
+                "bs_status": "adapting"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-03",
+      "groups": [
+        {
+          "id": "A",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 2.9,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 130,
+                "cathodes": [
+                  "1a",
+                  "1b",
+                  "1c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 3.1,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 130,
+                "cathodes": [
+                  "8",
+                  "9a",
+                  "9b",
+                  "9c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ]
+          }
+        },
+        {
+          "id": "B",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 1.9,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "1a",
+                  "1c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              },
+              {
+                "amplitude": 0.6,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "2b"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 2.1,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "10a",
+                  "10b",
+                  "10c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [],
+                "case": "anode"
+              }
+            ]
+          }
+        },
+        {
+          "id": "C",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 1.0,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 150,
+                "cathodes": [
+                  "1a",
+                  "1b",
+                  "1c"
+                ],
+                "anodes": [
+                  "2a",
+                  "2b",
+                  "2c"
+                ],
+                "currents": {},
+                "sensing": [],
+                "case": "off"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 1.0,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 100,
+                "cathodes": [
+                  "10a",
+                  "10b",
+                  "10c"
+                ],
+                "anodes": [
+                  "9a",
+                  "9b",
+                  "9c"
+                ],
+                "currents": {},
+                "sensing": [],
+                "case": "off"
+              }
+            ]
+          }
+        },
+        {
+          "id": "D",
+          "hemispheres": {
+            "left": [
+              {
+                "amplitude": 2.3,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "1a",
+                  "1b"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [
+                  "0",
+                  "2a",
+                  "2b",
+                  "2c"
+                ],
+                "case": "anode",
+                "bs_mode": "adaptive",
+                "bs_status": "adapting"
+              }
+            ],
+            "right": [
+              {
+                "amplitude": 1.9,
+                "unit": "mA",
+                "pulse_width_us": 60,
+                "frequency_hz": 125,
+                "cathodes": [
+                  "10a",
+                  "10c"
+                ],
+                "anodes": [],
+                "currents": {},
+                "sensing": [
+                  "8",
+                  "11"
+                ],
+                "case": "anode",
+                "bs_mode": "adaptive",
+                "bs_status": "adapting"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "impedances": [
+    {
+      "hemisphere": "left",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "3",
+      "ohm": 1182.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "2c",
+      "ohm": 1393.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "2b",
+      "ohm": 1604.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "2a",
+      "ohm": 10000.0,
+      "bound": ">"
+    },
+    {
+      "hemisphere": "left",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "1c",
+      "ohm": 2026.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "1b",
+      "ohm": 2237.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "1a",
+      "ohm": 2448.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "0",
+      "ohm": 759.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "0",
+      "b": "3",
+      "ohm": 2030.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1a",
+      "b": "3",
+      "ohm": 2367.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1b",
+      "b": "3",
+      "ohm": 2704.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1c",
+      "b": "3",
+      "ohm": 3041.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "2a",
+      "b": "3",
+      "ohm": 3378.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "2b",
+      "b": "3",
+      "ohm": 1115.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "2c",
+      "b": "3",
+      "ohm": 1452.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "0",
+      "b": "2c",
+      "ohm": 1789.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1a",
+      "b": "2c",
+      "ohm": 2126.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1b",
+      "b": "2c",
+      "ohm": 2463.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1c",
+      "b": "2c",
+      "ohm": 2800.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "2a",
+      "b": "2c",
+      "ohm": 3137.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "2b",
+      "b": "2c",
+      "ohm": 3474.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "0",
+      "b": "2b",
+      "ohm": 1211.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1a",
+      "b": "2b",
+      "ohm": 1548.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1b",
+      "b": "2b",
+      "ohm": 1885.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1c",
+      "b": "2b",
+      "ohm": 2222.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "2a",
+      "b": "2b",
+      "ohm": 2559.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "0",
+      "b": "2a",
+      "ohm": 2896.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1a",
+      "b": "2a",
+      "ohm": 3233.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1b",
+      "b": "2a",
+      "ohm": 3570.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1c",
+      "b": "2a",
+      "ohm": 1307.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "0",
+      "b": "1c",
+      "ohm": 1644.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1a",
+      "b": "1c",
+      "ohm": 1981.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1b",
+      "b": "1c",
+      "ohm": 2318.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "0",
+      "b": "1b",
+      "ohm": 2655.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "1a",
+      "b": "1b",
+      "ohm": 2992.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "left",
+      "kind": "bipolar",
+      "a": "0",
+      "b": "1a",
+      "ohm": 3329.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "11",
+      "ohm": 1818.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "10c",
+      "ohm": 2029.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "10b",
+      "ohm": 2240.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "10a",
+      "ohm": 2451.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "9c",
+      "ohm": 762.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "9b",
+      "ohm": 973.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "9a",
+      "ohm": 1184.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "monopolar",
+      "a": "case",
+      "b": "8",
+      "ohm": 1395.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "8",
+      "b": "11",
+      "ohm": 2882.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9a",
+      "b": "11",
+      "ohm": 3219.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9b",
+      "b": "11",
+      "ohm": 3556.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9c",
+      "b": "11",
+      "ohm": 1293.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "10a",
+      "b": "11",
+      "ohm": 1630.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "10b",
+      "b": "11",
+      "ohm": 1967.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "10c",
+      "b": "11",
+      "ohm": 2304.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "8",
+      "b": "10c",
+      "ohm": 2641.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9a",
+      "b": "10c",
+      "ohm": 2978.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9b",
+      "b": "10c",
+      "ohm": 3315.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9c",
+      "b": "10c",
+      "ohm": 3652.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "10a",
+      "b": "10c",
+      "ohm": 1389.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "10b",
+      "b": "10c",
+      "ohm": 1726.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "8",
+      "b": "10b",
+      "ohm": 2063.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9a",
+      "b": "10b",
+      "ohm": 2400.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9b",
+      "b": "10b",
+      "ohm": 2737.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9c",
+      "b": "10b",
+      "ohm": 3074.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "10a",
+      "b": "10b",
+      "ohm": 3411.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "8",
+      "b": "10a",
+      "ohm": 1148.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9a",
+      "b": "10a",
+      "ohm": 1485.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9b",
+      "b": "10a",
+      "ohm": 1822.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9c",
+      "b": "10a",
+      "ohm": 2159.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "8",
+      "b": "9c",
+      "ohm": 2496.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9a",
+      "b": "9c",
+      "ohm": 2833.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9b",
+      "b": "9c",
+      "ohm": 3170.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "8",
+      "b": "9b",
+      "ohm": 3507.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "9a",
+      "b": "9b",
+      "ohm": 1244.0,
+      "bound": null
+    },
+    {
+      "hemisphere": "right",
+      "kind": "bipolar",
+      "a": "8",
+      "b": "9a",
+      "ohm": 1581.0,
+      "bound": null
+    }
+  ],
+  "annotations": [
+    {
+      "date": "2026-05-11",
+      "hemisphere": "left",
+      "program": {
+        "amplitude": 2.4,
+        "unit": "mA",
+        "pulse_width_us": 60,
+        "frequency_hz": 130,
+        "cathodes": [
+          "1a",
+          "1b",
+          "1c"
+        ],
+        "anodes": [],
+        "currents": {},
+        "sensing": []
+      },
+      "symptoms": {
+        "tremor": 2,
+        "bradykinesia": 1,
+        "mood alteration": 0,
+        "muscle contractions": null
+      }
+    },
+    {
+      "date": "2026-06-15",
+      "hemisphere": "left",
+      "program": {
+        "amplitude": 1.95,
+        "unit": "mA",
+        "pulse_width_us": 60,
+        "frequency_hz": 130,
+        "cathodes": [
+          "0"
+        ],
+        "anodes": [],
+        "currents": {},
+        "sensing": []
+      },
+      "symptoms": {
+        "tremor": 1,
+        "bradykinesia": null,
+        "mood alteration": 2,
+        "muscle contractions": 3
+      }
+    },
+    {
+      "date": "2026-07-21",
+      "hemisphere": "right",
+      "program": {
+        "amplitude": 2.65,
+        "unit": "mA",
+        "pulse_width_us": 60,
+        "frequency_hz": 125,
+        "cathodes": [
+          "10a",
+          "10c"
+        ],
+        "anodes": [],
+        "currents": {},
+        "sensing": []
+      },
+      "symptoms": {
+        "tremor": null,
+        "bradykinesia": 0,
+        "mood alteration": 1,
+        "muscle contractions": 2
+      }
+    }
+  ],
+  "group_usage": {
+    "groups": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "months": [
+      {
+        "month_start": "2026-07-01",
+        "total_percent": 88.0
+      },
+      {
+        "month_start": "2026-08-01",
+        "total_percent": 100.0
+      },
+      {
+        "month_start": "2026-09-01",
+        "total_percent": 95.0
+      },
+      {
+        "month_start": "2026-10-01",
+        "total_percent": 100.0
+      }
+    ]
+  },
+  "survey": [],
+  "identifier": null,
+  "patient_events": {
+    "initial": [
+      {
+        "name": "Medication taken",
+        "additional_behavior": "Early dose"
+      }
+    ],
+    "final": [
+      {
+        "name": "Fall",
+        "additional_behavior": null
+      }
+    ]
+  },
+  "event_summary": {
+    "events": [
+      {
+        "name": "Medication taken",
+        "count": 12
+      },
+      {
+        "name": "Tremor episode",
+        "count": 4
+      },
+      {
+        "name": "Fall",
+        "count": 1
+      }
+    ],
+    "lfp": {
+      "left": {
+        "above": 41,
+        "between": 30,
+        "below": 29,
+        "average": 2.62,
+        "reduction": 12,
+        "running": 87
+      },
+      "right": {
+        "above": 35,
+        "between": 40,
+        "below": 25,
+        "average": 2.41,
+        "reduction": 9,
+        "running": 91
+      }
+    }
+  },
+  "recharge": {
+    "sessions": [
+      {
+        "date": "2026-10-02",
+        "start_percent": 35.0,
+        "end_percent": 72.0,
+        "duration_min": 42.0,
+        "coupling": "Excellent"
+      },
+      {
+        "date": "2026-10-06",
+        "start_percent": 28.0,
+        "end_percent": 64.0,
+        "duration_min": 66.0,
+        "coupling": "Good"
+      },
+      {
+        "date": "2026-10-09",
+        "start_percent": 41.0,
+        "end_percent": 80.0,
+        "duration_min": 38.0,
+        "coupling": "Fair"
+      },
+      {
+        "date": "2026-10-12",
+        "start_percent": 30.0,
+        "end_percent": 58.0,
+        "duration_min": 60.0,
+        "coupling": "Excellent"
+      }
+    ],
+    "metrics": {
+      "coupling": "Excellent",
+      "average_ending_percent": 68.0,
+      "average_recharge_time_min": 45.0,
+      "average_recharge_interval_days": 3.4
+    }
+  },
+  "pages": 21
+}

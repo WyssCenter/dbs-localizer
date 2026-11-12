@@ -1,0 +1,15 @@
+[build-system]
+requires = ["maturin>=1.4,<2"]
+build-backend = "maturin"
+
+[project]
+name = "dbsloc-reconstruct"
+version = "0.2.0"
+requires-python = ">=3.14"
+dependencies = ["numpy>=1.26"]
+description = "Optional PyO3 extension dbsloc_reconstruct for research tooling and library tests (not used by the dbsloc CLI or the GUI)"
+
+[tool.maturin]
+bindings = "pyo3"
+features = ["pyo3"]
+module-name = "dbsloc_reconstruct"

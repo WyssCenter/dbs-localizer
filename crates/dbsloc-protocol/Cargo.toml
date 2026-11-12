@@ -1,0 +1,19 @@
+[package]
+name = "dbsloc-protocol"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "Wasm-safe shared protocol types (Stage, RunEvent, StageOutcome, RegBackend, grid default) for the Wyss DBS Localizer client and server"
+license = "GPL-3.0-only"
+
+[lib]
+name = "dbsloc_protocol"
+path = "src/lib.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

@@ -1,0 +1,43 @@
+# Rust workspace (Wyss DBS Localizer). Crates to be added under `crates/`.
+[workspace]
+resolver = "2"
+# `dbsloc-web` is a wasm-only client with its own `[workspace]` (detached); keep it out of the
+# root workspace so a native `cargo build --workspace` stays green. See SERVER_CLIENT_PLAN.md §2.
+exclude = ["crates/dbsloc-web", "fastwarp"]
+members = [
+    "crates/dbsloc-reconstruct",
+    "crates/dbsloc-viz",
+    "crates/dbsloc-vat-gpu",
+    "crates/dbsloc-pipeline",
+    "crates/dbsloc-protocol",
+    "crates/dbsloc-app",
+    "crates/dbsloc-api",
+    "crates/dbsloc-ui",
+    "crates/dbsloc-server",
+    "crates/dbsloc-cli",
+    "crates/dbsloc-connectome",
+    "crates/dbsloc-vat",
+    "crates/dbsloc-reports",
+    "crates/dbsloc-checkreg",
+]
+
+[workspace.package]
+version = "0.1.0"
+
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
+[profile.debugging]
+inherits = "dev"
+debug = true
+
+[profile.debugging.package."*"]
+debug = true
+
+[profile.release-dev]
+inherits = "release"
+incremental = true
+codegen-units = 256

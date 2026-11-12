@@ -1,0 +1,50 @@
+catalogue_ids: all entries with source LeadDbs (download.php -> uni-koeln.sciebo.de public share 8s7cxAWA4PA5GZq)
+source_url: https://www.lead-dbs.org/helpsupport/knowledge-base/atlasesresources/normative-connectomes/
+fetched: 2026-10-23
+title: What lead-dbs.org states about licences / terms for the connectome packages it hosts
+attribution: none prescribed by lead-dbs.org beyond citing the publications listed per connectome.
+finding: No licence, terms of use or redistribution statement for the connectome packages was found on the Normative Connectomes page, the Download page, the "Data & Code inclusion philosophy" page, the Lead-DBS GitHub README or the Lead-DBS GitBook manual (page "Using Normative Connectomes"). The only licence statement on lead-dbs.org covers the software (GPL). The public sciebo share holds no licence or README file next to the archives (WebDAV PROPFIND listing, depth 1). download.php answered 302 with a sciebo Location for all eight catalogue ids checked on 2026-10-23 (group2013, group2016, group2017, group2017_ppmi, dTOR985_Quarter, fgroup2017_ppmi, TorPD, PedrsfMRI); no archive was downloaded.
+
+========================================================================
+source_url: https://www.lead-dbs.org/download/
+fetched: 2026-10-23
+title: Download page (verbatim)
+
+By downloading Lead-DBS, you acknowledge that it is not intended for clinical use but instead purely academic (research) software.
+
+By downloading Lead-DBS, you automatically subscribe to our newsletter, which is being sent out rarely but will notify you about crucial updates or bugs/issues. Given that Lead-DBS is research software, we think it is important to stay informed about crucial updates. Still, of course, you can single-click opt-out from the subscription very easily and we won’t share your contact details with anyone else.
+
+========================================================================
+source_url: https://www.lead-dbs.org/download-lead-dbs/
+fetched: 2026-10-23
+title: Download Lead-DBS page, licence bullets (verbatim)
+
+- Lead-DBS and its toolboxes are free but copyright software, distributed under the terms of the GNU General Public Licence as published by the Free Software Foundation. Further details on “copyleft” can be found under http://www.gnu.org/copyleft/.
+- Lead-DBS comes with absolutely no warranty whatsoever. It is especially not intended for any clinical or diagnostic use.
+
+========================================================================
+source_url: https://www.lead-dbs.org/about/data-code-inclusion-philosophy/
+fetched: 2026-10-23
+title: Data & Code inclusion philosophy, user responsibility (verbatim excerpt)
+
+What does this mean for me as a user?
+
+The above has consequences for you in case you use Lead-DBS or included datasets. In brief, they defer to you the responsibility of knowing what you are doing and knowing the origins & limitations of datasets you use, in detail. If you are uncertain about data or code, please don’t blindly use or apply them. Instead, read up the papers that led to those assets and/or contact the helpline if in doubt.
+
+We try our best to help users in understanding what Lead-DBS does in each step. However, again, we are a small team and our capacities are limited. Moreover, we are researchers ourselves, not software-developers. In our view, Lead-DBS is not much more than code that we use and build for ourselves that is shared with the community for i) reproducibility and transparency reasons and ii) to avoid unnecessary double work funded by the public.
+
+Thus, please see Lead-DBS and included data as “unapproved” assets that you may either find helpful, or not. Inclusion of datasets or code does not mean that these are “foolproof” and may be applied carelessly to any scientific question that should emerge. Some of the code is quite complex and from the outside, it is sometimes not easy to exactly understand what the code does with the data. Thus, please constantly ask yourself: Do I really understand what is happening here? If not, please ask.
+
+========================================================================
+source_url: https://www.lead-dbs.org/helpsupport/knowledge-base/atlasesresources/normative-connectomes/
+fetched: 2026-10-23
+title: Normative Connectomes page, availability sentence (verbatim)
+
+Most normative connectomes are available for direct download within the Lead-DBS.
+
+========================================================================
+source_url: none (e-mail from the Lead-DBS maintainers to the Wyss Center)
+fetched: 2026-11-11
+title: Licence of the hosted data packages (summary, not verbatim)
+
+The data packages hosted for Lead-DBS, connectomes and atlases included, carry no licence. The Lead-DBS maintainers do not explicitly forbid their use by other software.

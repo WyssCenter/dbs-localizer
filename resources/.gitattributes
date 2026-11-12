@@ -1,0 +1,12 @@
+# Ensure binary files are treated as binary
+*.exe binary
+*.dll binary
+
+# ANTs binaries should be tracked (they're essential for single-executable distribution)
+/resources/ants/**/* linguist-generated=true
+
+# Bundled atlas resources are binary/generated data.
+/resources/atlases/**/* linguist-generated=true
+*.nii binary
+*.nii.gz binary
+*.tar.gz binary

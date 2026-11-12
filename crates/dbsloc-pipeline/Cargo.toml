@@ -1,0 +1,56 @@
+[package]
+name = "dbsloc-pipeline"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "The Wyss DBS Localizer pipeline: RunOptions, stage dispatch, locks, checkreg QC; behind the GUI, the runner and the dbsloc CLI"
+license = "GPL-3.0-only"
+
+[lib]
+name = "dbsloc_pipeline"
+path = "src/lib.rs"
+crate-type = ["rlib"]
+
+[[bin]]
+name = "dbsloc_pipeline_runner"
+path = "src/bin/dbsloc_pipeline_runner.rs"
+required-features = []
+
+[features]
+default = []
+pyo3 = ["dep:pyo3"]
+
+[dependencies]
+dbsloc-protocol = { path = "../dbsloc-protocol" }
+fastwarp-core = { path = "../../fastwarp/crates/fastwarp-core", features = ["nifti"] }
+fastwarp-niftiio = { path = "../../fastwarp/crates/fastwarp-niftiio" }
+dbsloc-reconstruct = { path = "../dbsloc-reconstruct" }
+fastwarp-reg = { path = "../../fastwarp/crates/fastwarp-reg" }
+fastwarp-matfile = { path = "../../fastwarp/crates/fastwarp-matfile" }
+dbsloc-vat = { path = "../dbsloc-vat" }
+dbsloc-reports = { path = "../dbsloc-reports" }
+dbsloc-connectome = { path = "../dbsloc-connectome" }
+fastwarp-gpu = { path = "../../fastwarp/crates/fastwarp-gpu" }
+dbsloc-vat-gpu = { path = "../dbsloc-vat-gpu" }
+dbsloc-checkreg = { path = "../dbsloc-checkreg", features = ["pair"] }
+rayon = "1.10"
+memmap2 = "0.9"
+nifti = "0.18"
+ndarray = "0.17"
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
+pyo3 = { version = "0.30", optional = true, features = ["extension-module", "abi3-py312"] }
+ureq = "3"
+zip = { version = "9", default-features = false, features = ["deflate"] }
+flate2 = { version = "1", default-features = false, features = ["zlib-rs"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("gil-refs"))'] }
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

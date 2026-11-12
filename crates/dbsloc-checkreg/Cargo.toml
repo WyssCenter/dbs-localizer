@@ -1,0 +1,29 @@
+[package]
+name = "dbsloc-checkreg"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "Checkreg NIfTI volume loading and the CPU gencheckregpair PNG (specs/03_coregistration.md §12.2)"
+license = "GPL-3.0-only"
+
+[lib]
+name = "dbsloc_checkreg"
+path = "src/lib.rs"
+
+[features]
+default = []
+pair = ["dep:png"]
+web = []
+test-support = []
+
+[dependencies]
+thiserror = "2"
+nifti = "0.18"
+png = { version = "0.18", optional = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+fastwarp-niftiio = { path = "../../fastwarp/crates/fastwarp-niftiio" }
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

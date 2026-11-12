@@ -1,0 +1,16 @@
+Microsoft Visual C++ Redistributable runtime files
+
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+The Microsoft Visual C++ runtime DLLs in resources/ants/win/ and
+resources/dcm2niix/win/ (msvcp140*.dll, vcruntime140*.dll, concrt140.dll) are
+"Distributable Code" under the Microsoft Software License Terms of Microsoft
+Visual Studio, which permit redistributing them unmodified together with an
+application that depends on them. They are the copies contained in the
+upstream dcm2niix release archives and are redistributed unmodified.
+
+The terms are published by Microsoft:
+https://learn.microsoft.com/en-us/visualstudio/releases/2022/redistribution
+https://visualstudio.microsoft.com/license-terms/
+
+This file is a pointer to those terms, not a copy of them.

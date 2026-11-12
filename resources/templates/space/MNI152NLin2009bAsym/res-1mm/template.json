@@ -1,0 +1,56 @@
+{
+  "space": "MNI152NLin2009bAsym",
+  "res_mm": 1.0,
+  "entry_id": "MNI152NLin2009bAsym_res-1mm",
+  "source_url": "https://www.bic.mni.mcgill.ca/~vfonov/icbm/2009/mni_icbm152_nlin_asym_09b_nifti.zip",
+  "zip_sha256": "5759d292e531ad600dafd988955b014dead3156643361bec624793c41611c1ab",
+  "members": {
+    "t1": {
+      "member": "mni_icbm152_nlin_asym_09b/mni_icbm152_t1_tal_nlin_asym_09b_hires.nii",
+      "sha256": "654ee15b0ba284ff2967299bdf471327f67e04fdb936fe141fd95f2885950ca8"
+    },
+    "t2": {
+      "member": "mni_icbm152_nlin_asym_09b/mni_icbm152_t2_tal_nlin_asym_09b_hires.nii",
+      "sha256": "5dd59240822f2aaa0719d0f8d0438c3b19e178789c84fdac14395f6dbc3c9cb5"
+    },
+    "licence": {
+      "member": "COPYING",
+      "sha256": "5915d16f84d99c3cedc8290b09da72f6f92e5dde1ba1c9859ee186aa952b66a4"
+    },
+    "mask": {
+      "member": "mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_mask.nii",
+      "sha256": "7d80b651fc5f11bae015f28577b9e9b4211d11910b4d215f6a8fb47fc2ab2b40"
+    }
+  },
+  "files": {
+    "t1.nii.gz": {
+      "sha256": "7af32a75f2d73de6a5dd897416ecb169e30cc8a0514e29d51e0a8f0382644e13",
+      "shape": [
+        197,
+        233,
+        189
+      ]
+    },
+    "t2.nii.gz": {
+      "sha256": "b69697655a2ba23596ca1caf04d85d42eeeca5e2826daca69f8bca695127d752",
+      "shape": [
+        197,
+        233,
+        189
+      ]
+    },
+    "LICENSE": {
+      "sha256": "5915d16f84d99c3cedc8290b09da72f6f92e5dde1ba1c9859ee186aa952b66a4"
+    },
+    "brainmask.nii.gz": {
+      "sha256": "8101d4e34d33a58085b3b7fcfbee659a04c09bf1a385ea823cb24be3a19c34aa",
+      "shape": [
+        197,
+        233,
+        189
+      ]
+    }
+  },
+  "method": "decimation by 2 on the stored int16 grid (identical to resample.rs at 1.0 mm)",
+  "mask_method": "MNI152NLin2009cAsym brain mask (zip sha256 804382e5d68a42ff8096ee845a7600b6658434da762fa67840a149eb25d48bd4) resampled onto the MNI152NLin2009bAsym 1.0 mm grid with antsApplyTransforms through the bridge from-MNI152NLin2009bAsym_InverseComposite.h5 (bridge.json sha256 dd4508d33e5a0c94c069f9e3ea412491da9d4df3219af84594b0c838ad03a93a), linear interpolation, threshold 0.5, uint8 0/1"
+}

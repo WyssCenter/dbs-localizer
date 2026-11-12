@@ -1,0 +1,14 @@
+catalogue_ids: horn2013-gibbs19
+source_url: https://doi.org/10.1016/j.dib.2015.08.035 (full text read via Europe PMC, PMC4589797)
+fetched: 2026-10-23
+title: Horn A, et al. A structural group-connectome in standard stereotactic (MNI) space. Data in Brief 5 (2015) 292-296 - data accessibility statement
+attribution: none prescribed; cite Horn A, Ostwald D, Reisert M, Blankenburg F. NeuroImage 102 (2014) 142-151 and the Data in Brief article.
+licence_status: No licence is stated for the data by lead-dbs.org or in the article. The article itself is CC BY 4.0 ("This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/)."), which covers the article, not the dataset.
+
+========================================================================
+source_url: https://europepmc.org/article/PMC/PMC4589797
+fetched: 2026-10-23
+title: Data in Brief specifications table, "Data accessibility" row (verbatim)
+
+Data accessibility
+Data is downloadable without restriction using the following URL: www.lead-dbs.org/?page_id=23

@@ -1,0 +1,29 @@
+# Ensure other files in resources are not tracked with LFS
+/resources/** !filter !diff !merge text
+
+# Bundled ANTs binaries are stored as existing Git blobs; keep them opaque.
+/resources/ants/**/*.exe !filter !diff !merge -text
+/resources/ants/**/antsRegistration !filter !diff !merge -text
+/resources/ants/**/antsApplyTransforms !filter !diff !merge -text
+/resources/ants/**/N4BiasFieldCorrection !filter !diff !merge -text
+/resources/ants/**/*.dll !filter !diff !merge -text
+
+# Shipped template images are gzip blobs: no text conversion, no LFS filter.
+/resources/templates/**/*.nii.gz !filter !diff !merge -text
+/resources/templates/**/LICENSE !filter !diff !merge -text
+
+# Bundled dcm2niix binaries (and the MSVC runtime DLLs beside the Windows build): opaque blobs.
+/resources/dcm2niix/**/*.exe !filter !diff !merge -text
+/resources/dcm2niix/**/*.dll !filter !diff !merge -text
+/resources/dcm2niix/**/dcm2niix !filter !diff !merge -text
+
+# Bundled Lead-DBS atlases: MAT v7.3 (HDF5) index + gzip masks are binary; the resources/** text rule must not touch them.
+/resources/atlases/**/*.mat !filter !diff !merge -text
+/resources/atlases/**/*.nii.gz !filter !diff !merge -text
+
+# MAT fixtures are binary.
+/tests/fixtures/**/*.mat -text
+/resources/licenses/connectomes/** text eol=lf
+
+# Session report fixtures: the generated PDFs are compared byte for byte.
+/tests/fixtures/reports/**/*.pdf -text
