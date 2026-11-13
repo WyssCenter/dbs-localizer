@@ -2,7 +2,7 @@
 
 > **Living document.** Update this file whenever decisions are made, modules are specced, or status changes.  
 > **Licence (2026-11-10):** the project is being prepared for an open-source release under **GPL-3.0-only** (`docs/LICENSING.md`; open items before publication in `docs/PHASE_HISTORY.md`, entry of 2026-11-10 (b)).  
-> **State (2026-10-16):** Phases A–B **complete**; **Phase C** clean-room on `phase-c`; full-codebase review, fixes and follow-up decisions of 2026-10-16 in `docs/PHASE_HISTORY.md`. Module status: **§12**. **Phase D** (validation) after Phase C scope closed for target milestone.
+> **State (2026-10-16):** Phases A–B **complete**; **Phase C** independent implementation on `phase-c`; full-codebase review, fixes and follow-up decisions of 2026-10-16 in `docs/PHASE_HISTORY.md`. Module status: **§12**. **Phase D** (validation) after Phase C scope closed for target milestone.
 
 **Chat style (all agents):** use **caveman `full`** for chat in this repo unless the user switches level (`lite` / `ultra` / …) or says "stop caveman" / "normal mode". Drop articles, filler, pleasantries and hedging; fragments OK; short synonyms; technical terms, code and error strings exact. Pattern: `[thing] [action] [reason]. [next step].` Switch to full prose for security warnings, irreversible actions, or when the user is confused, then resume. Commits, PRs, and formal spec text stay normal / professional.
 
@@ -10,7 +10,7 @@
 
 | Rule file | Applies to |
 | --------- | ---------- |
-| `docs/agent-rules/phase-c-subagents.md` | `dbsloc/**`, `crates/**`, `tests/**` — clean-room subagent contract + mandatory prompt block |
+| `docs/agent-rules/phase-c-subagents.md` | `dbsloc/**`, `crates/**`, `tests/**` — independent-implementation subagent contract + mandatory prompt block |
 | `docs/agent-rules/rust-safety.md` | `crates/**` |
 | `docs/agent-rules/rust-gpu-perf.md` | `crates/dbsloc-viz/**` |
 | `docs/agent-rules/gui-ux.md` | `crates/dbsloc-viz/**`, `crates/dbsloc-app/**` |
@@ -36,11 +36,11 @@
 | GPU engine cohort results | CT → anchor coreg cohort result `docs/gpu_coreg_report.md`; SyN cohort `docs/gpu_syn_cohort_report.md`; in-process N4 cohort result `docs/gpu_n4_report.md`; cross-API / vendor validation (DX12, NVIDIA, Metal) `docs/gpu_vendor_report.md` |
 | Registration execution backend `--reg-backend auto\|wgpu\|ants` (behaviour, records, locks, deviations from ANTs) | `specs/04_normalization.md` §5.4 |
 | Manual correction of a reconstruction (expert moves head / tail, sets the roll; pipeline writer, CLI, *Refine localization* view, lock rules, decisions 2026-10-14) | `specs/05` §9a, `specs/08` §11.1.6, `specs/12` |
-| Agent rules (chat style, clean-room subagents, Rust / GUI standards) | `docs/agent-rules/` (index at top of this file) |
+| Agent rules (chat style, independent-implementation subagents, Rust / GUI standards) | `docs/agent-rules/` (index at top of this file) |
 | Licensing (which licence per directory, SPDX / REUSE rules, Lead-DBS and the GPL, publishing the Apache-2.0 engine) | `docs/LICENSING.md`, `LICENSE`, `LICENSES/`, `REUSE.toml`, `NOTICE`, `fastwarp/docs/THIRD_PARTY_PORTS.md` |
 | Brand (IBM Plex Sans, Wyss palette tokens, logo / window icon assets) | `docs/BRAND.md` |
 | Server–client stack plan (GPU server runs the pipeline, browser client = viewer + upload + QC; API, crates, work packages) | `docs/SERVER_CLIENT_PLAN.md` |
-| User-facing docs, written for outside readers and the JOSS review checklist: overview (statement of need, install, first run, shortcuts), user guide (every application area, command line, outputs, troubleshooting, Lead-Tutor self-check), contributor guide (build, test, checks, clean-room rule, pull requests), code of conduct. Keep the guide's labels in step with the GUI | `README.md`, `docs/USER_GUIDE.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` |
+| User-facing docs, written for outside readers and the JOSS review checklist: overview (statement of need, install, first run, shortcuts), user guide (every application area, command line, outputs, troubleshooting, Lead-Tutor self-check), contributor guide (build, test, checks, independent-implementation rule, pull requests), code of conduct. Keep the guide's labels in step with the GUI | `README.md`, `docs/USER_GUIDE.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` |
 | Implementation status | **§12** below (one line per module); per-module detail `docs/STATUS.md` |
 | Phase A/B/D task lists, progress tracker, dated change log | `docs/PHASE_HISTORY.md` |
 | Releases (tag-driven workflow, version bump, release notes, installing a release) and the user-facing change history | `docs/RELEASING.md`, `CHANGELOG.md` (Keep a Changelog 1.1.0) |
@@ -56,13 +56,13 @@
 
 - **Up stack first:** BIDS + subject resolution, preprocess / coreg / norm, locks + `RunOptions` / CLI, reconstruction (and brainshift honesty). Errors, logging, and prerequisite checks matter more than new surface area.
 - **Not the focus right now:** VAT and visualization—keep placeholders/MVP; extend only when upstream pipeline is stable (see **§12**).
-- **Implementation vehicle:** new code and tests should **run in subagents** (see **§5 Phase C — Subagents**). Main chat orchestrates, reviews, pastes the clean-room block, handles commits, and only implements **after** subagent failure + retries (same section).
+- **Implementation vehicle:** new code and tests should **run in subagents** (see **§5 Phase C — Subagents**). Main chat orchestrates, reviews, pastes the independent-implementation block, handles commits, and only implements **after** subagent failure + retries (same section).
 
 ---
 
 ## 1. What is Wyss DBS Localizer?
 
-`Wyss DBS Localizer` is a clean-room, high-performance reimplementation of the **Lead-DBS** pipeline.
+`Wyss DBS Localizer` is an independent, high-performance reimplementation of the **Lead-DBS** pipeline.
 Lead-DBS is a MATLAB toolbox for localizing and visualizing deep brain stimulation (DBS) electrodes in MRI/CT images of human patients.
 
 The original source (a local checkout of [netstim/leaddbs](https://github.com/netstim/leaddbs), written `<leaddbs>` below) is **read-only reference material** — it must never be copied verbatim into this repo (see §9 Copyright Rules).
@@ -76,7 +76,7 @@ The original source (a local checkout of [netstim/leaddbs](https://github.com/ne
 | ----- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1     | **Eliminate MATLAB dependency**     | MATLAB is closed-source and expensive. Target must run without any MATLAB license.                                                                                                                                             |
 | 2     | **Drastically improve performance** | Use compiled code; exploit CPU parallelism (multi-core) and GPU acceleration where applicable (VAT modelling, normalization).                                                                                                  |
-| 3     | **Open source, GPL-3.0-only (Wyss)** | Decision of 2026-11-10: Wyss DBS Localizer is free software under the **GNU GPL version 3 only** (`LICENSE`; it was proprietary before); copyright rests with the **Wyss Center for Bio and Neuroengineering**, whose name and logo stay trademarks. The clean-room implementation from specs stays the rule, so that the code is the Wyss Center's own work. **Exception (2026-11-09):** the registration engine crates `fastwarp-core`, `fastwarp-niftiio`, `fastwarp-matfile`, `fastwarp-reg`, `fastwarp-gpu` are **Apache-2.0** (ITK / ANTs ports) and live in `fastwarp/` (git subtree of https://github.com/WyssCenter/fastwarp); map and rules `docs/LICENSING.md`. |
+| 3     | **Open source, GPL-3.0-only (Wyss)** | Decision of 2026-11-10: Wyss DBS Localizer is free software under the **GNU GPL version 3 only** (`LICENSE`; it was proprietary before); copyright rests with the **Wyss Center for Bio and Neuroengineering**, whose name and logo stay trademarks. The independent implementation from specs stays the rule, so that the code is the Wyss Center's own work. **Exception (2026-11-09):** the registration engine crates `fastwarp-core`, `fastwarp-niftiio`, `fastwarp-matfile`, `fastwarp-reg`, `fastwarp-gpu` are **Apache-2.0** (ITK / ANTs ports) and live in `fastwarp/` (git subtree of https://github.com/WyssCenter/fastwarp); map and rules `docs/LICENSING.md`. |
 
 
 ### Non-goals (for now)
@@ -144,7 +144,7 @@ The original source (a local checkout of [netstim/leaddbs](https://github.com/ne
 
 ### Phase B — Write Specifications — **✅ complete** (`specs/00`–`10`; task list: `docs/PHASE_HISTORY.md`)
 
-### Phase C — Clean-Room Implementation
+### Phase C — Independent Implementation
 
 **Objective:** Implement Wyss DBS Localizer from specs only, with zero reference to MATLAB source.
 
@@ -156,7 +156,7 @@ Rules (see §9):
 
 **Implementation branch:** `phase-c` — do Phase C work here; merge to `main` via PR when ready. (`main` = stable specs / docs; optional policy.)
 
-**Subagents — default for implementation:** **Do not** implement feature work in the main agent by default. Spawn **subagents** (mandatory block in `docs/agent-rules/phase-c-subagents.md`) for **code and test changes**; use **readonly** explore/review subagents for discovery. Main session: planning, spec edits, gluing, git, and **fallback only** (see next sentence). In each subagent: paste the **mandatory** clean-room **prompt block**; read-only tools unless the task is an explicit file write; **no network** in the prompt; disable **networked** MCPs / prefer **offline** for that session. **Contracts** are `specs/*.md`. **If a subagent fails** (timeout, API limit, or tool error), **retry** at least once (narrower prompt, fewer files, or split). If retries still fail, **continue in the main session** so work does not stall. A similarity check (MOSS or similar) against Lead-DBS is **not required** (owner decision 2026-11-12: both are GPL-3, and `NOTICE` credits Lead-DBS).
+**Subagents — default for implementation:** **Do not** implement feature work in the main agent by default. Spawn **subagents** (mandatory block in `docs/agent-rules/phase-c-subagents.md`) for **code and test changes**; use **readonly** explore/review subagents for discovery. Main session: planning, spec edits, gluing, git, and **fallback only** (see next sentence). In each subagent: paste the **mandatory** independent-implementation **prompt block**; read-only tools unless the task is an explicit file write; **no network** in the prompt; disable **networked** MCPs / prefer **offline** for that session. **Contracts** are `specs/*.md`. **If a subagent fails** (timeout, API limit, or tool error), **retry** at least once (narrower prompt, fewer files, or split). If retries still fail, **continue in the main session** so work does not stall. A similarity check (MOSS or similar) against Lead-DBS is **not required** (owner decision 2026-11-12: both are GPL-3, and `NOTICE` credits Lead-DBS).
 
 Order of implementation (dependency-driven):
 
@@ -181,7 +181,7 @@ Not started: numerical / side-by-side checks vs Lead-DBS on fixtures; task list 
 
 > **This section is mandatory reading before any Phase C work.**
 
-Lead-DBS is licensed **GPL-3.0**. Wyss DBS Localizer is **GPL-3.0-only** since 2026-11-10 (it was proprietary before); see repository `LICENSE`. The clean-room rules below stay in force: code that is not derived from Lead-DBS is the Wyss Center's own copyright, which keeps the licence of every part clear (the Lead-DBS bundle also contains material under non-GPL, non-commercial terms).
+Lead-DBS is licensed **GPL-3.0**. Wyss DBS Localizer is **GPL-3.0-only** since 2026-11-10 (it was proprietary before); see repository `LICENSE`. The independent-implementation rules below stay in force: code that is not derived from Lead-DBS is the Wyss Center's own copyright, which keeps the licence of every part clear (the Lead-DBS bundle also contains material under non-GPL, non-commercial terms).
 
 To keep the code free of material derived from Lead-DBS:
 
@@ -191,7 +191,7 @@ To keep the code free of material derived from Lead-DBS:
   - Specifications in `specs/`
   - Referenced academic papers
   - Independent knowledge of algorithms
-4. Any code that was written after reading MATLAB source is contaminated and must be discarded and rewritten.
+4. Code written after reading MATLAB source must be discarded and rewritten from the sources in rule 3.
 5. External tools invoked as subprocesses (ANTs, FSL, SynthMorph) are fine — they have their own compatible licenses.
 6. Bundled data (electrode model geometries, atlas ROIs) must be checked individually for license compatibility before inclusion.
 7. **ANTs/ITK source code in-tree:** Vendored or modified ANTs/ITK (Apache-2.0) must keep notices and document changes, and may only live in an Apache-2.0 crate (under `fastwarp/`). See the repository `NOTICE` file (ported GPU / parity decisions) and the header template in `fastwarp/docs/THIRD_PARTY_PORTS.md`.

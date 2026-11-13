@@ -1,6 +1,6 @@
 # 16 — Vendor session reports: import of programming data from manufacturer PDFs
 
-**Status:** normative draft (2026-10-23). Owner decisions in §11. Clean-room: this module reads vendor documents, not Lead-DBS; the only reference material is the vendor PDFs themselves and their vendor JSON exports used as test ground truth. No code from third-party extractors is reused.
+**Status:** normative draft (2026-10-23). Owner decisions in §11. Sources: this module reads vendor documents, not Lead-DBS; the only reference material is the vendor PDFs themselves and their vendor JSON exports used as test ground truth. No code from third-party extractors is reused.
 
 ## 1. Purpose and scope
 

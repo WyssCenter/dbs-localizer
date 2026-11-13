@@ -77,7 +77,7 @@ wgpu = { version = "30", optional = true }
 nifti = { version = "0.18", optional = true }
 fastwarp-core = { path = "../../fastwarp/crates/fastwarp-core", optional = true, features = ["nifti"] }
 dbsloc-checkreg = { path = "../dbsloc-checkreg", optional = true }
-# Electrode catalogue geometry for procedural lead meshes (`scene-viewer`). Clean-room data only.
+# Electrode catalogue geometry for procedural lead meshes (`scene-viewer`). Geometry from `specs/09_electrode_models.md` and the catalogue data only.
 dbsloc-reconstruct = { path = "../dbsloc-reconstruct", optional = true }
 # JSON: Reco v2 (data-mni) + checkreg viewer manifest.
 serde = { version = "1", features = ["derive"], optional = true }

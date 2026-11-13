@@ -18,7 +18,7 @@ Deliver a **reusable** interactive 2D viewer so operators can verify registratio
 
 - **DICOM PS3.3** — Attributes **Window Center** (0028,1050) and **Window Width** (0028,1051) define clinical window/level semantics on **stored values**; v1 viewer applies the same **linear mapping** on NIfTI voxel values (may be HU, arbitrary float, or pre-scaled—**user adjusts** until tissue of interest is visible).
 - **IHE Radiology** — *Basic Image Review* profile: expectations for pan, zoom, scroll, window/level in review workflows (feature categories only).
-- **Clean-room** ([`AGENTS.md`](../AGENTS.md) §9): specification and public algorithms only—no copying from GPL applications (e.g. ITK-SNAP). Permissive stacks (e.g. MIT web viewers) are **not** v1 dependencies; optional **later** profile.
+- **Independent implementation** ([`AGENTS.md`](../AGENTS.md) §9): specification and public algorithms only—no copying from GPL applications (e.g. ITK-SNAP). Permissive stacks (e.g. MIT web viewers) are **not** v1 dependencies; optional **later** profile.
 
 ---
 

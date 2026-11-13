@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "dbsloc"
 version = "0.1.0"
-description = "Clean-room DBS imaging pipeline (Rust pipeline and CLI; Python development tooling)"
+description = "DBS imaging pipeline (Rust pipeline and CLI; Python development tooling)"
 requires-python = ">=3.14"
 license = "GPL-3.0-only"
 license-files = ["LICENSE", "NOTICE", "LICENSES/*.txt"]

@@ -1,6 +1,6 @@
 # 17 — Import of data from an existing Lead-DBS installation
 
-**Status:** normative draft (2026-11-10, owner request of the same date). Clean-room: this module reads **data folders** that a Lead-DBS user already has on disk (atlas folders, connectome folders); it reads no Lead-DBS code. Folder layouts are those of `specs/11` §1–§2 and `specs/15` §3.
+**Status:** normative draft (2026-11-10, owner request of the same date). Sources: this module reads **data folders** that a Lead-DBS user already has on disk (atlas folders, connectome folders); it reads no Lead-DBS code. Folder layouts are those of `specs/11` §1–§2 and `specs/15` §3.
 
 ## 1. Purpose
 

@@ -1,4 +1,4 @@
-# Phase C — subagent contract (clean-room)
+# Phase C — subagent contract (independent implementation)
 
 **Applies to:** `dbsloc/**`, `crates/**`, `tests/**`
 
@@ -7,7 +7,7 @@ Applies when the **orchestrator** (human or lead agent) spawns **subagents** for
 ## Mandatory prompt block (paste into every subagent)
 
 ```
-CLEAN-ROOM (GPL firewall):
+INDEPENDENT IMPLEMENTATION (allowed sources):
 - Read and write ONLY this repository: `specs/`, `dbsloc/`, `crates/`, `tests/`, `AGENTS.md`, `pyproject.toml`, `Cargo.toml` — not sibling repos.
 - FORBIDDEN: any on-disk or remote path to Lead-DBS MATLAB (e.g. a local `leaddbs` checkout, clone, or download).
 - FORBIDDEN: web search, HTTP fetch, URL open, "look up on GitHub", package registry browse, or any action that could retrieve Lead-DBS or MATLAB reference source online.

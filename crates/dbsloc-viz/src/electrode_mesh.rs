@@ -14,7 +14,7 @@
 //! `x` / `y` markers. Those four markers are the model fiducials (`electrode_catalog`), so the
 //! mapping is exact; no new geometry has to be inferred.
 //!
-//! Clean-room: derived only from `specs/09_electrode_models.md` and the catalogue data, not from
+//! Derived only from `specs/09_electrode_models.md` and the catalogue data, not from
 //! any Lead-DBS source or mesh file.
 
 use dbsloc_reconstruct::ElectrodeGeometry;

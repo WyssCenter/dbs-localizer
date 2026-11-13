@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
 # SPDX-License-Identifier: GPL-3.0-only
 
-"""Wyss DBS Localizer Python package: Lead-DBS–class pipeline (clean-room from specs)."""
+"""Wyss DBS Localizer Python package: Lead-DBS–class pipeline (written from the specifications)."""
 
 __version__ = "0.1.0"
 
