@@ -1,8 +1,7 @@
 # Spec 03 — Coregistration (Wyss DBS Localizer)
 
-**Status:** Phase B  
-**Depends on:** `01_bids.md`, `02_preprocessing.md`, `00_overview.md`  
-**Phase A (archived):** the Phase A archive (removed 2026-10-23, in git history) — section `specs/phase_a_coregistration_report.md`
+**Status:** Phase B; §4 (Wyss DBS Localizer items), §5.1, §5.2 and §12.4a are normative and describe the implemented behaviour; the method tables of §5, the tone-map and the other Lead-DBS design text are not implemented (marked where they occur)  
+**Depends on:** `01_bids.md`, `02_preprocessing.md`, `00_overview.md`
 
 ---
 
@@ -23,13 +22,13 @@ Register all subject anatomies into one **anchor native** space: **fixed** = pre
 
 ## 3. Inputs / outputs
 
-**Inputs:** `Subject.coreg.*` path slots, `Prefs.coreg_ct_method`, `Prefs.coreg_mr_method`, `Subject.coreg.anat.preop` (all in **preproc** space before coreg), post-op preproc paths, anchor modality key.
+**Inputs:** `Subject.coreg.*` path slots, the coregistration method (fixed in code: `ants_rigid_multistart` for CT, `ants_rigid` for post-op MR and the T2w; there is no per-run method option), `Subject.coreg.anat.preop` (all in **preproc** space before coreg), post-op preproc paths, anchor modality key.
 
 **Outputs:**
 
 - Updated `Subject.coreg.anat.*.coreg` paths.
 - **Transform files:** per pair, BIDS `forwardBaseName` / `inverseBaseName` + engine-specific extension (`.mat` ANTs/SPM, FLIRT `.mat`, etc.) — see `01_bids`.
-- `**coreg.log.method`:** JSON { method, version, parameters hash optional }.
+- **Method log** `coregistration/log/sub-<id>_desc-coregmethod.json` (§12.4a): JSON with `method` (`ants_rigid_multistart` or `ants_rigid`), `engine`, `version` (application version), `custom`, `approval` and one record per image (`method`, `backend`, `image`, `transform`); no parameters hash.
 - **QC:** PNG mosaics under `coregistration/checkreg/`.
 
 ---
@@ -38,8 +37,8 @@ Register all subject anatomies into one **anchor native** space: **fixed** = pre
 
 1. **Precoreg** — anchor → template reheader (§02). Skip if `coreg` file exists and not invalidated.
 2. **Pre-op MR (non-anchor) → anchor** if `coreg_mr_enabled`. **Wyss DBS Localizer:** implemented for the **T2w** only, and run by the `normalize` stage when it uses the T2w as a second SyN channel (`specs/04` §5.2 steps 1–2): rigid, the argv of §5.2 with the centre-of-mass initialiser, no mask, no multi-start; moving = raw T2w, fixed = the anchor in use; outputs (names per `01` §7a) the T2w in anchor space `coregistration/anat/<raw T2w entities>_space-anchorNative_desc-preproc_T2w.nii.gz` and `coregistration/transformations/sub-<id>_ses-preop[_acq-<a>]_from-T2w_to-anchorNative_mode-image_xfm.mat`. Other pre-op contrasts are not coregistered.
-3. **Post-op MR → anchor** if post-op is MRI and `coreg_mr_enabled` (method may differ from 2; reference allows ANTs-NonLinear fallback to linear). **Wyss DBS Localizer (normative):** run by the `coreg` stage for **every** post-op MR key the subject has (`ax_MRI`, `cor_MRI`, `sag_MRI`, in that order), whether or not a post-op CT is also present (the CT path of §5.1–5.2 runs too when it is). Rigid, the argv of the T2w coregistration (step 2: centre-of-mass initialiser, no mask, no multi-start), engine per `RunOptions.reg_backend` (`04` §5.4; `wgpu` = the in-process rigid MI used for the T2w). Moving = the raw post-op MR, fixed = the anchor in use (`02` §6.1 / §4.3). Outputs (staged, `00` §5.2), named per `01` §7a: the post-op MR in anchor space and its `from-<suffix>_to-anchorNative` transform; same empty-warp post-condition as the CT (`coreg: warped <key> is empty …`). **One commit set:** the CT outputs (§5.2), the outputs of every post-op MR key and the coreg method log are staged together and renamed into place only when every image of the stage succeeded; a failure in any of them (or a cancel) keeps every previous output, the previous method log and the lock (`00` §5.2). Result token: the CT token when a CT was coregistered, else `ok:coreg:<first coregistered MR image stem>`. `coreg` fails with `no postop CT or MR` only when neither exists. `normalize` then applies the SyN composite to every coregistered post-op image (CT and MR alike) onto the template grid, writing each post-op image in template space under its `01` §7a name, linear interpolation. `reconstruct` with post-op modality `MRI` uses the template-space TRAC/CORE path (`05` §3) on the normalized `ax_MRI`, else `cor_MRI`, else `sag_MRI`.
-4. **Post-op CT → anchor** if post-op is CT and `coreg_ct_enabled`; then **tone-map** CT copy (`tonemap` — spec detail in `04` or imaging).
+3. **Post-op MR → anchor** if post-op is MRI and `coreg_mr_enabled` (method may differ from 2; reference allows ANTs-NonLinear fallback to linear). **Wyss DBS Localizer (normative):** run by the `coreg` stage for **every** post-op MR key the subject has (`ax_MRI`, `cor_MRI`, `sag_MRI`, in that order), whether or not a post-op CT is also present (the CT path of §5.1–5.2 runs too when it is). Rigid, the argv of the T2w coregistration (step 2: centre-of-mass initialiser, no mask, no multi-start), engine per `RunOptions::backend_for(Stage::Coregister)` (the `--coregister-backend` override, else `reg_backend`; `04` §5.4; `wgpu` = the in-process rigid MI used for the T2w). Moving = the raw post-op MR, fixed = the anchor in use (`02` §6.1 / §4.3). Outputs (staged, `00` §5.2), named per `01` §7a: the post-op MR in anchor space and its `from-<suffix>_to-anchorNative` transform; same empty-warp post-condition as the CT (`coreg: warped <key> is empty …`). **One commit set:** the CT outputs (§5.2), the outputs of every post-op MR key and the coreg method log are staged together and renamed into place only when every image of the stage succeeded; a failure in any of them (or a cancel) keeps every previous output, the previous method log and the lock (`00` §5.2). Result token: the CT token when a CT was coregistered, else `ok:coreg:<first coregistered MR image stem>`. `coreg` fails with `no postop CT or MR` only when neither exists. `normalize` then applies the SyN composite to every coregistered post-op image (CT and MR alike) onto the template grid, writing each post-op image in template space under its `01` §7a name, linear interpolation. `reconstruct` with post-op modality `MRI` uses the template-space TRAC/CORE path (`05` §3) on the normalized `ax_MRI`, else `cor_MRI`, else `sag_MRI`.
+4. **Post-op CT → anchor** if post-op is CT and `coreg_ct_enabled`. The tone-mapped CT copy of the original design is not implemented.
 
 **After any step materializes new coreg:** `gencheckreg(coreg)`.
 
@@ -48,6 +47,8 @@ Register all subject anatomies into one **anchor native** space: **fixed** = pre
 ---
 
 ## 5. Method dispatch (normative enums)
+
+Implemented: only the method ids `ants_rigid_multistart` (CT, §5.1–5.2) and `ants_rigid` (post-op MR, T2w); the enums below are the original Lead-DBS design and none of their ids is accepted by the code.
 
 **CT** (`coregpostopct` class):
 
@@ -92,7 +93,7 @@ A single rigid MI run started from the intensity centre of mass converges to a w
 1. **Head centroids** (world RAS mm, then LPS for ITK = `diag(-1,-1,1)·RAS`). Fixed: mean position of finite voxels `> 0.15 × p99` (99th percentile of finite voxels). Moving CT: mean position of finite voxels `> −300 HU`. Non-finite voxels (NaN, ±inf) are ignored. If either mask is empty: error.
 2. **Starts:** pitch `θ ∈ {−40, −20, 0, +20, +40}°`, i.e. rotations about the LPS *x* (left–right) axis. Each start is an ITK text transform (`#Insight Transform File V1.0`, `AffineTransform_double_3_3`) that maps fixed physical points to moving ones: `T(p) = R_x(θ)·(p − c_f) + c_m`. Write it as `Parameters:` = the 9 row-major entries of `R_x(θ)` followed by translation `c_m − c_f`, and `FixedParameters:` = `c_f`.
 3. **Coarse rigid per start:** `Rigid[0.1]`, `MI[fixed,moving,1,32,Regular,0.25]`, `--convergence [200x100,1e-6,10]`, `--shrink-factors 8x4`, `--smoothing-sigmas 3x2vox`, the fixed `--random-seed`, `--verbose 1`, `--initial-moving-transform <start file>`, no warped image (`--output [<work prefix>]`). Any other flags the full stage uses (e.g. winsorize) apply here too. Score = metric value on the **last** `…DIAGNOSTIC,` iteration line on stdout (ANTs reports MI negated: **lower is better**). A start whose process fails, or whose stdout has no parseable metric, scores `+inf`; on the `wgpu` engine a registration error inside one start is a failed start too (`+inf`), not a stage failure. Each failed start is logged with its reason (`[coregister] start pitch <θ>°: failed: <reason>`, or `failed (no metric)`). If every start scores `+inf`: error `coreg multistart: every multi-start coarse rigid start failed; last failure: <reason of the last failed start>` (without the `; last failure` part when no start reported a reason). A cancel is not a failed start: it stops the stage.
-4. **Full rigid:** the stage of §5 (4 levels) with `--initial-moving-transform <best start's 0GenericAffine.mat>` replacing the centre-of-mass initialiser, and a **fixed-image mask** `--masks [<fixed mask>,NULL]`. Ties in step 3 go to the start listed first in step 2. The run writes the outputs to the usual prefix (`…_postopCT_to_<anchor>0GenericAffine.mat`, `…_Warped.nii.gz`).
+4. **Full rigid:** the stage of §5 (4 levels) with `--initial-moving-transform <best start's 0GenericAffine.mat>` replacing the centre-of-mass initialiser, and a **fixed-image mask** `--masks [<fixed mask>,NULL]`. Ties in step 3 go to the start listed first in step 2. The run writes the outputs to the usual prefix (`…_postopCT_to_<anchor>0GenericAffine.mat`, `…_Warped.nii.gz`); the external tool receives short `.partial-*` work names in the target directory and the results are committed under the `01` §7a names (`00` §5.2).
    - **Fixed mask** = voxels of the fixed image that are finite and `≠ 0`, eroded by 2 voxels: a voxel stays only if every voxel within ±2 along each of the three grid axes is also in the mask, and voxels outside the volume count as outside the mask. Write it as `uint8` NIfTI with the fixed image's affine, at `coregistration/log/multistart/fixed_mask.nii.gz` (the work directory of step 5). If the mask is empty: error.
    - Why: defaced MR anchors carry exact zeros where the face was cut away (15–31 % of every Lead-Tutor T1), and the CT still shows the face. Unmasked, MI also scores how CT air lines up with that blank region.
    - The coarse runs of step 3 stay **unmasked**; that is the combination measured below.
@@ -126,7 +127,7 @@ One implementation: `crates/dbsloc-pipeline/src/ants_argv.rs` (`build_ants_ct_co
 - **Post-condition:** a `_Warped.nii.gz` whose voxels are all non-finite or all `|v| < 1e-6` fails the stage (`coreg: warped CT is empty …`): the headers put the CT outside the anchor's field of view.
 - Moving image: the raw post-op CT (`postop_anat["CT"]`); fixed image: the anchor of `specs/02` §4.3 (N4 output when present). Outputs are committed under the `01` §7a names (CT in anchor space, `from-CT_to-anchorNative` transform). Result token `ok:coreg:<coregistered CT image stem>`.
 
-The argv snapshot tests in `ants_argv.rs` pin these vectors against the Python builders they replaced.
+The argv snapshot tests in `ants_argv.rs` pin these vectors against frozen snapshots.
 
 ---
 
@@ -165,7 +166,7 @@ After each successful coregistration:
 
 ## 10. Acceptance criteria
 
-- ANTs+FLIRT+SPM one fixture each: output affine matches fixed (≤ float ε).  
+- ANTs: one fixture, output affine matches fixed (≤ float ε). FLIRT and SPM are not implemented.  
 - Lock prevents overwrite without `overwrite_approved`.  
 - Conform: RMSE in mm at **identity** voxels = 0.  
 - JSON `coreg.log.method` round-trip.
@@ -187,7 +188,7 @@ After each successful coregistration:
 **Interactive volume viewer (NIfTI, window/level, zoom):** `specs/08_addendum_interactive_volume_viewer.md` (extends `dbs-localizer checkreg` / manifest JSON).
 
 **Parent specs:** this document; `specs/04_normalization.md`  
-**Reference implementation (GPL):** Lead-DBS MATLAB: `ea_checkreg.m`, `ea_gencheckregfigs.m`, `ea_gencheckregpair.m`, `ea_show_coregistration.m`, `ea_show_normalization.m`, `ea_imshowpair.m` under a local `leaddbs` tree.
+**Behaviour reference (GPL):** the Lead-DBS check-registration functions `ea_checkreg`, `ea_gencheckregfigs`, `ea_gencheckregpair`, `ea_show_coregistration`, `ea_show_normalization` and `ea_imshowpair`; this section records their observable behaviour only.
 
 ### 12.1 Figure generation (batch, no window): `ea_gencheckregfigs(options, type)`
 
@@ -221,7 +222,7 @@ After each successful coregistration:
 
 ### 12.2 Single-pair PNG: `ea_gencheckregpair(moving, fixed, outfn, preproc, lbound, ubound)` (visual contract)
 
-**Parameters (reference defaults):** `preproc` default true; `lbound=0.2`, `ubound=99.7` (percentile ranks on sorted nonzero intensities — see the Phase A archive (removed 2026-10-23, in git history) section `specs/phase_a_coregistration_report.md` §11.2).
+**Parameters (reference defaults):** `preproc` default true; `lbound=0.2`, `ubound=99.7` (percentile ranks on sorted nonzero intensities).
 
 **When `preproc==true`:** Intensity windowing on **moving** volume → temp NIfTI; then **FSL `slicer`** invoked with:
 
@@ -253,7 +254,7 @@ After each successful coregistration:
 #### 12.3.1 Build order of `checkregImages` (only files that exist and are not “reg locked” in reference)
 
 1. All **coreg preop** non-anchor volumes (all modalities in `coreg.anat.preop` except first/anchor — implemented as `struct2cell` **excluding duplicate anchor** in reference).
-2. **Postop:** if modality CT → one path `tonemapCT`; if MRI → all `struct2cell(postop)`.
+2. **Postop:** if modality CT → one path `tonemapCT` (the tone-mapped CT is not implemented); if MRI → all `struct2cell(postop)`.
 3. **Norm anchor in template space:** `norm.anat.preop.(AnchorModality)`.
 4. **Brain shift SCRF** image if field present: `brainshift.anat.scrf`.
 5. **fMRI rest / b0:** optional rows from prefs (`rest_searchstring`, `b0` filename patterns) with extra locking rules.
@@ -352,8 +353,10 @@ Implemented once, in Rust (`crates/dbsloc-pipeline/src/checkreg.rs`), drawing th
 
 ### 12.5 Wyss DBS Localizer implementation checklist
 
+Status of the checklist: all items except re-compute are implemented in the *Registration review* tab (§12.4a); re-compute is not implemented (the *Recompute* button was removed, `08` addendum).
+
 - [ ] **State machine** for ordered review list + `activevolume` + last-slide Close labels.  
-- [ ] **Approval** JSON structure aligned with the Phase A archive (removed 2026-10-23, in git history) section `specs/phase_a_coregistration_report.md` §10.5 (coreg) and norm log analogue.  
+- [ ] **Approval** JSON structure as in §12.4a (method log approvals for coreg and norm).  
 - [ ] **Re-compute** either stubbed with **UNSPECIFIED** pipeline IDs or mapped to `dbsloc` stages when they exist.  
 - [ ] **Regenerate figure** = same contract as §12.2.  
 - [ ] **Open viewer** = separate window with pan/zoom/scroll (reimplement or embed webGPU surface).

@@ -1,8 +1,7 @@
 # Spec 02 — Preprocessing (Wyss DBS Localizer)
 
-**Status:** Phase B  
-**Depends on:** `01_bids.md`, `00_overview.md`  
-**Phase A (archived):** the Phase A archive (removed 2026-10-23, in git history) — section `specs/phase_a_preprocessing_report.md`
+**Status:** Phase B; §4.3, §6.1 and §7.1 are normative and describe the implemented behaviour; §4.1 (except its N4 step, see §4.3), §4.2, §5 and §8 are original design text that is not implemented  
+**Depends on:** `01_bids.md`, `00_overview.md`
 
 ---
 
@@ -83,7 +82,7 @@ for each modality in preop_anat (BIDS order: anchor first in struct = first in l
 
 ## 5. Post-op preproc (minimal)
 
-When only **copy** raw→preproc is required (no N4 in reference pipeline for that block): **gunzip/copy** only. Spec **version 1** may still run `anat_preprocess` on post-op for consistency — **policy flag** `preprocess_postop_same_as_preop` (default: copy-only if that matches validation).
+Not implemented: the `preprocess` stage corrects only the anchor (§4.3) and does not copy post-op images to `preprocessing/`; the policy flag `preprocess_postop_same_as_preop` does not exist. Design text: when only **copy** raw→preproc is required (no N4 for that block), **gunzip/copy** only.
 
 ---
 
@@ -134,7 +133,7 @@ When only **copy** raw→preproc is required (no N4 in reference pipeline for th
 - **Template mask.** The shipped template gains `resources/templates/space/MNI152NLin2009bAsym/res-1mm/brainmask.nii.gz` (uint8 0/1 on the shipped T1w grid). Built by `scripts/build_shipped_template.py --mask-from <mni_icbm152_nlin_asym_09c_nifti.zip>` (zip pinned by the catalogue SHA-256): member `mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_mask.nii`, carried onto the 2009bAsym 1.0 mm grid through the template space bridge (`04` §5.4a, 2009cAsym → 2009bAsym), linear interpolation, threshold 0.5. Licence: same MNI `COPYING` as the T1w / T2w. A template directory may hold its own `brainmask.nii.gz`; otherwise the reference-space mask is bridged into the template space exactly as atlases are (`08` §5).
 - **When.** In `reconstruct`, before PaCER runs (`recon_method = pacer`, and the PaCER cross-check), only for post-op CT, and only when normalization and CT coregistration outputs exist; otherwise PaCER keeps its own mask (`10` §4) and the stage logs `dbsloc: note: no template brain mask; PaCER computes its own`.
 - **Steps.** (1) Template mask → anchor-native on the anchor grid with the inverse normalization (`from-<Space>_to-anchorNative` composite; backend per `04` §5.4, in-process apply for `wgpu`), linear, threshold 0.5 → `anchor_native_mask`. (2) Anchor-native mask → raw CT grid with the inverse of the CT coregistration (`antsApplyTransforms -r <raw CT> -t [<from-CT_to-anchorNative .mat>,1]`, or the in-process equivalent), linear, threshold 0.5 → `raw_ct_mask`. Both written through the staged write, names per `01` §7a. The `antsApplyTransforms` calls of both steps receive **no** `--ants-…` pass-through tokens (the argv is fixed). `raw_ct_mask` is always written, although the pipeline's PaCER uses `anchor_native_mask` (below).
-- **Use.** PaCER (`10`) receives as `brain_mask` the first of `raw_ct_mask`, `anchor_native_mask` whose grid equals the CT it segments (the pipeline's PaCER segments the coregistered CT on the anchor grid, so in practice `anchor_native_mask`; a mask on another grid is an error `BrainMaskGrid`). A provided mask is eroded exactly like the computed one (`10` §4, ~3 mm). Reco `meta.pacer_mask` = `"template"` or `"own"`. `recon_method = auto` (TRAC/CORE) does not run PaCER and does not build the masks. Shipping the template mask also activates the reconstruction in-brain plausibility gate (`05`) on the default template.
+- **Use.** PaCER (`10`) receives as `brain_mask` the first of `raw_ct_mask`, `anchor_native_mask` whose grid equals the CT it segments (the pipeline's PaCER segments the coregistered CT on the anchor grid, so in practice `anchor_native_mask`; a candidate on another grid is skipped, and when none matches the stage logs `dbsloc: note: reconstruct: no template brain mask lies on the CT grid PaCER segments; PaCER computes its own` and PaCER computes its own mask, `ct_recon.rs`). A provided mask is eroded exactly like the computed one (`10` §4, ~3 mm). Reco `meta.pacer_mask` = `"template"` or `"own"`. `recon_method = auto` (TRAC/CORE) does not run PaCER and does not build the masks. Shipping the template mask also activates the reconstruction in-brain plausibility gate (`05`) on the default template.
 - **Acceptance.** On the synthetic head, the CT mask covers ≥ 95 % of the synthetic brain and < 5 % of the skull voxels; on the cohort, PaCER results with the template mask are reported next to its own mask (no acceptance threshold: PaCER is a cross-check).
 
 ---
@@ -149,19 +148,19 @@ When only **copy** raw→preproc is required (no N4 in reference pipeline for th
 
 | Condition | Behaviour |
 |-----------|-----------|
-| Raw missing | **E_RAW_MISSING** — skip modality or abort |
-| N4 failure | **E_N4** — do not commit half-written preproc (temp+rename) |
-| Reslice OOM | **E_RESAMPLE** — reduce pad or chunk (impl) |
-| Precoreg template missing | **E_TEMPLATE** |
+| Raw missing | `no anchor raw` or `anchor raw file missing` (stage fails) |
+| N4 failure | `N4 failed with <code>` (ANTs process) or `preprocess: N4 on <engine> failed: …` (in-process engine); the half-written file is not committed (staged write, `00` §5.2) |
+| Reslice OOM | not applicable: the reslice is not implemented (§4.3) |
+| Precoreg template missing | `precoreg: no normalization template …` |
+
+The `E_RAW_MISSING`, `E_N4`, `E_RESAMPLE` and `E_TEMPLATE` codes of the original design are not emitted.
 
 ---
 
 ## 10. Acceptance criteria
 
 - [ ] Golden raw NIfTI → preproc passes **header** sanity (dims, no NaN slice).
-- [ ] File &lt; 10 KB retry path tested.
-- [ ] Anchor with 1.0 mm voxels + post-op → output 0.7 mm isotropic.
-- [ ] Pre-op only + 1.2 mm anchor → **no** forced reslice (flag).
+- Not implemented (§4.3): the file &lt; 10 KB retry path, the 0.7 mm anchor reslice (1.0 mm anchor + post-op → 0.7 mm isotropic) and the pre-op-only no-reslice flag.
 - [ ] Precoreg: round-trip **position** of template center of mass within tolerance (config mm) — smoke test.
 
 ---
@@ -169,8 +168,7 @@ When only **copy** raw→preproc is required (no N4 in reference pipeline for th
 ## 11. References
 
 - Tustison et al. N4 (2010).  
-- ANTs / SPM coregistration citations in `03` / `04`.  
-- Phase A report (path detail only).
+- ANTs / SPM coregistration citations in `03` / `04`.
 
 ---
 

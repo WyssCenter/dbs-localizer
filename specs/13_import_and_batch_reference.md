@@ -410,7 +410,7 @@ One options record is built from the GUI once and shared by all selected subject
 
 ## 14. Lead-DBS behaviour vs current `specs/01` §8.4
 
-| Lead-DBS behaviour | In `specs/01` §8.4 | Note for the implementer |
+| Lead-DBS behaviour | In `specs/01` §8.4 | Note for the implementer (state before 2026-10-22; the status column and the paragraph after the table give the current state) |
 |---|---|---|
 | Dataset root chosen in a dialog; `rawdata/`, `sourcedata/`, `derivatives/leaddbs/` created | yes | §8.4 Destination step |
 | `dataset_description.json` when missing | partial | dbsloc writes `BIDSVersion 1.9.0`, no `LeadDBSVersion`, no `.bidsignore` |
@@ -425,7 +425,7 @@ One options record is built from the GUI once and shared by all selected subject
 | Lookup-table suggestion (regex on name, last match wins, user-editable, persisted) | partial | dbsloc: fixed rules on description + `Modality` tag (CT from DICOM `Modality`, more robust); not user-editable |
 | Unmatched rows default to not included | missing | dbsloc defaults unmatched to pre-op T1w included — consider "unassigned" |
 | Acq guess from voxel sizes | yes (different rule) | dbsloc: 10 % tolerance + affine to world axis (better than index-axis rule) |
-| Image preview (3 planes, histogram, sidecar keys) per row | missing | needed to classify series by eye |
+| Image preview (3 planes, histogram, sidecar keys) per row | partial (2026-11) | the import wizard opens a 3-plane preview per row (`import_wizard.rs` `open_preview`, `dbsloc_viz::VolumePreview`); no histogram; sidecar keys not checked |
 | Acquisition date surfaced / used for pre- vs post-op | missing in both | reference does not use it either; a date column + "later study = post-op" suggestion would be a Phase C improvement |
 | Duplicate detection on resulting name, user resolves | yes | dbsloc `E_IMPORT_RULES` |
 | `dir-` entity from phase encoding for bold/dwi | missing | out of scope (anat only) |
@@ -448,5 +448,5 @@ One options record is built from the GUI once and shared by all selected subject
 | Checkreg during batch | differs | reference non-blocking windows per patient; dbsloc review hook pauses the run (GUI) — for batch, offer "review after all subjects" or run-with-review-off then review queue |
 | Batch / per-patient logs | partial | reference has none at batch level; dbsloc session log exists; add per-run batch summary |
 
-**Status 2026-10-22.** Closed by the import and batch work (`specs/01` §8.4 amendments, `00` §5.2, `03` §12.4a, `docs/RUN_REFERENCE.md`): multi-subject import (one subject per input folder), DICOM archived under `sourcedata/`, `-i y` and the full file-name pattern, lookup-table suggestions (last match wins, `DBSLOC_IMPORT_LOOKUP_JSON`; user-editable through the JSON, not yet in the GUI), unassigned rows, acquisition date column + "post-op = latest study" rule (opt-in), "no post-op → confirm", headless `dbsloc import`, per-subject post-op modality choice (CT preferred when both exist, `uiprefs.mat` `modality` honoured, `PostopModality`), batch runner with per-subject errors, summary table and exit codes, review *After all subjects* / deferred, batch summary. Still open: image preview per row, `run` / `task` entities, `.bidsignore`, resumable `unsorted/` staging, re-labelling an existing image in place, excluding an image without deleting it, acq order iso > ax > cor > sag for the anchor, regular-expression keywords.
+**Status 2026-10-22.** Closed by the import and batch work (`specs/01` §8.4 amendments, `00` §5.2, `03` §12.4a, `docs/RUN_REFERENCE.md`): multi-subject import (one subject per input folder), DICOM archived under `sourcedata/`, `-i y` and the full file-name pattern, lookup-table suggestions (last match wins, `DBSLOC_IMPORT_LOOKUP_JSON`; user-editable through the JSON, not yet in the GUI), unassigned rows, acquisition date column + "post-op = latest study" rule (opt-in), "no post-op → confirm", headless `dbsloc import`, per-subject post-op modality choice (CT preferred when both exist, `uiprefs.mat` `modality` honoured, `PostopModality`), batch runner with per-subject errors, summary table and exit codes, review *After all subjects* / deferred, batch summary. Image preview per row exists (volume preview in the import wizard). Still open: `run` / `task` entities, `.bidsignore`, resumable `unsorted/` staging, re-labelling an existing image in place, excluding an image without deleting it, acq order iso > ax > cor > sag for the anchor, regular-expression keywords.
 
