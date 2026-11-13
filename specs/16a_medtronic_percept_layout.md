@@ -3,12 +3,12 @@
 **Status:** normative (2026-10-23). Measured on four demo reports of the manufacturer (DEMO MODE, Percept PC and RC, 3389 ring and B33005 directional leads; not in the repository, the folder named by `DBSLOC_MEDTRONIC_FIXTURES` holds them for the gated tests of `specs/16` §9) and verified against their vendor JSON exports (`vendor_json/*.json.gz`, pairing in `pairing.json`, both in that folder). In the four demo reports all 72 stimulation programs, 180 group-history programs, 168 annotations, 184 impedance cells and 16 BrainSense settings match the vendor JSON. The committed fixtures are the two synthetic reports of `specs/16` §9, written from this layout reference; their content is invented and smaller. The sample values quoted below (names, identifiers, serial numbers, dates) are those of the demo reports, kept as the record of what was measured (owner decision 2026-11-10). Coordinates are PDF points with the origin at the top left (`specs/16` §2). The analysis scripts stayed outside the repository; no third-party extractor code was used.
 
 
-Source material: four synthetic demo reports (`Report_SessionReport_20260930T0905xx.pdf`, Percept PC and RC,
+Source material: four demo-mode reports printed by the manufacturer's software (`Report_SessionReport_20260930T0905xx.pdf`, Percept PC and RC,
 3389 and SenSight B33005 leads) and the four vendor JSON session exports of the same sessions.
 Programmer "Application Version: 5.0.676", JSON `DataVersion` "1.2". Everything below was measured on these
-files with pdfplumber 0.11.10 / pypdf 6.21.2 plus an own content-stream walker (scripts in
-`scratchpad/medtronic/scripts/`). All rules in §3 were re-implemented independently and checked against the
-vendor JSON (§3.9): **72/72 stimulation programs, 180/180 group-history programs, 168/168 annotations and
+files with pdfplumber 0.11.10 / pypdf 6.21.2 plus an own content-stream walker (the
+measurement scripts are external and not in the repository). All rules in §3 were re-implemented independently and checked against the
+vendor JSON (§3.8): **72/72 stimulation programs, 180/180 group-history programs, 168/168 annotations and
 184/184 impedance cells match** with zero unexplained differences.
 
 Conventions used in this document
@@ -21,7 +21,7 @@ Conventions used in this document
 
 ---------------------------------------------------------------------------------------------------------
 
-## 0. Pairing PDF ↔ JSON (deliverable 3: `pairing.json` in the folder named by `DBSLOC_MEDTRONIC_FIXTURES`)
+## 0. Pairing PDF ↔ JSON (`pairing.json` in the folder named by `DBSLOC_MEDTRONIC_FIXTURES`)
 
 PDF header line 3 prints `<device> <serial>` and `Session Date: <local time>`; JSON has
 `DeviceInformation.Initial.NeurostimulatorSerialNumber` and `SessionDate` (UTC) plus
@@ -608,7 +608,7 @@ Current lines are ordered like the diagram (top level first, a → c), label = c
 * anodes never get a current (JSON has only a positive `ElectrodeFractionOf64` for them);
 * `ElectrodeFractionOf64` (−64 single cathode; e.g. −11/−21/−9 with +41 anode) is never printed.
 
-### 3.7 Measured consistency issues (synthetic data, but parse defensively)
+### 3.7 Measured consistency issues (demo data, but parse defensively)
 
 Programs whose printed/JSON cathode currents do not sum to the printed amplitude (|Σ − A| > 0.05 mA):
 
@@ -638,7 +638,7 @@ never derive one from the other except for the single-cathode case.
 
 ### 3.8 Verification of the rule against the vendor JSON
 
-Independent re-implementation (`scripts/ref_extract.py`, `compare.py`, `annot.py`, `imped.py`, `gdcheck.py`):
+Independent re-implementation (external scripts, not in the repository):
 
 | check | 539 | 548 | 558 | 606 | total | mismatches |
 |---|---|---|---|---|---|---|
@@ -650,7 +650,7 @@ Independent re-implementation (`scripts/ref_extract.py`, `compare.py`, `annot.py
 
 Amplitude source for the comparison: `AmplitudeInMilliAmps` for regular programs, `SuspendAmplitudeInMilliAmps`
 for BrainSense `SensingChannel` entries (the only amplitude in them). Full per-program tables follow in §3.9 and
-§3.10 (also as `ref/stim_table.md`, `ref/hist_table.md`).
+§3.10.
 
 ### 3.9 Stimulation programs, PDF rule vs JSON (all 72)
 
@@ -841,7 +841,7 @@ Format: `contacts [S sensing levels] amp/pw/rate`, programs of one hemisphere jo
 
 All four share the same section order, header/footer, fonts, box geometry and 4 groups A (Walking), B (Talking,
 two programs on the left), C (MRI, bipolar with anode), D (BrainSense). No voltage-mode program, no unilateral lead,
-no cycling, no group without stimulation and no B33015 lead occur — those paths are untested.
+no cycling, no group without stimulation and no B33015 lead occur in them; the synthetic ring report of `specs/16` §9 covers a voltage-mode program, the other paths are untested.
 
 ## 5. Edge cases and recommended handling
 

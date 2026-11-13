@@ -1,6 +1,6 @@
 # 16 — Vendor session reports: import of programming data from manufacturer PDFs
 
-**Status:** normative draft (2026-10-23). Owner decisions in §11. Sources: this module reads vendor documents, not Lead-DBS; the only reference material is the vendor PDFs themselves and their vendor JSON exports used as test ground truth. No code from third-party extractors is reused.
+**Status:** implemented, partial (`docs/STATUS.md` row 14 lists the open items); specified 2026-10-23. Owner decisions in §11. Sources: this module reads vendor documents, not Lead-DBS; the only reference material is the vendor PDFs themselves and their vendor JSON exports used as test ground truth. No code from third-party extractors is reused.
 
 ## 1. Purpose and scope
 
@@ -147,7 +147,7 @@ pub trait VendorModule: Sync {
 - Every number the module writes into the record carries a `fields` entry with page, bbox and rule id. Rule ids are `<vendor>.<section>.<field>`.
 - Modules are pure (no I/O, no clock, no randomness); the registry stamps `source` and `parsed_at`.
 - Vendor-specific contact label → `k` tables live in the module and are unit-tested against `specs/09` contact counts.
-- Adding a vendor = one folder under `vendors/`, one registry line, one fixture set under `tests/fixtures/reports/<vendor>/` and one §7-style section in this spec.
+- Adding a vendor = one folder under `vendors/`, one registry line, one synthetic fixture set under `tests/fixtures/reports/synthetic/` (the repository holds no manufacturer file; tests against the manufacturer's own reports are gated, §9) and one §7-style section in this spec.
 
 ## 7. Medtronic Percept PC / RC session report (`medtronic` / `percept_session_report`)
 
@@ -208,7 +208,7 @@ Messages follow `00` §9: `dbsloc: error: report: E_REPORT_<code>: <text>`, `dbs
 
 ### 8.2 GUI
 
-- Top bar *Import…* menu gains *Session report (PDF)…*; the Pipeline panel's *Volume of activated tissue* card gains *Import from session report…*. Both open a file dialog (several PDFs), then one dialog: detected vendor and session per file (parsed on a worker, with a spinner), *Anonymise* (off by default; explanation line under it: "Removes name, patient id, notes and serial number; shifts every date by a fixed random offset of at most 30 days."), *Create stimulation settings from* (Final / Initial / Both / None), the group ticks of the chosen snapshot (prefilled with the active ones), *Keep a copy of the PDF in sourcedata* (on; disabled and off when anonymising). *Import* runs on the worker, prints the §8.1 summary lines to the Output panel and refreshes the stimulation list; an open stimulation editor (not dirty, no run active) is re-opened so its label list shows the new labels (selecting the first new label is a later addition). The subject is resolved once when the dialog opens (one directory scan on the paint thread); parsing and importing run on one worker, a cancel takes effect between files. Keys while the window is open: Esc = cancel / stop after the current file / close, Enter = Import when enabled and no text field has focus.
+- Top bar *Import…* menu gains *Session report (PDF)…*; the Pipeline panel's *Volume of activated tissue* card gains *Import session report…*. Both open a file dialog (several PDFs), then one dialog: detected vendor and session per file (parsed on a worker, with a spinner), *Anonymise* (off by default; explanation line under it: "Removes name, patient id, notes and serial number; shifts every date by a fixed random offset of at most 30 days."), *Create stimulation settings from* (Final / Initial / Both / None), the group ticks of the chosen snapshot (prefilled with the groups that have at least one program with an amplitude above 0), *Keep a copy of the PDF in sourcedata* (on; disabled and off when anonymising). *Import* runs on the worker, prints the §8.1 summary lines to the Output panel and refreshes the stimulation list; an open stimulation editor (not dirty, no run active) is re-opened so its label list shows the new labels (selecting the first new label is a later addition). The subject is resolved once when the dialog opens (one directory scan on the paint thread); parsing and importing run on one worker, a cancel takes effect between files. Keys while the window is open: Esc = cancel / stop after the current file / close, Enter = Import when enabled and no text field has focus.
 - A *Reports* line on the *Volume of activated tissue* card lists the imported reports (session date, vendor, anonymised flag, labels) with *Show…* opening the record in a read-only text window.
 - Screenshot mode: `DBSLOC_APP_SCREENSHOT_ACTION=report` with `DBSLOC_APP_REPORT_PDF=<path>` opens the dialog on that file.
 

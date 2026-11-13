@@ -1,6 +1,8 @@
 # 12 — Reconstruction `.mat` interchange format and the reference manual correction view
 
 > Phase B specification written 2026-10-22 from observation of the reference implementation (no reference code). Part 1 is normative for the `.mat` export / import of the reconstruction (`fastwarp/crates/fastwarp-matfile`, `crates/dbsloc-pipeline/src/reco_mat.rs`); Part 2 is the behaviour reference for the gaps closed in the *Refine localization* view (`specs/08` §11.1.6). Decisions of the orchestrator are recorded in `docs/PHASE_HISTORY.md` (2026-10-22). Referenced as `specs/12` §n.
+>
+> Status: the export (`reco_mat.rs`: `reco_mat_from_json`, `write_reco_mat`, `export_beside_json`) is implemented. The import (`.mat` to Reco v2, §7 *Import*) and the round-trip acceptance check that needs it are **not implemented**. The Part 2 gap table (§12) is the state when it was written; its current status is in the note after the table.
 
 
 **Status:** Phase B draft (2026-10-22), written from the reference implementation (Lead-DBS 3.2.1, `.version.txt`; git `5b1008d`, 2026-03-02) as behaviour and data-format prose. No reference code is reproduced. Phase C implementers read only this document plus `specs/05`, `specs/06`, `specs/08`, `specs/09`.
@@ -122,10 +124,10 @@ The flag also changes the manual view (Part 2 §8.1): 0 resets the roll to anter
 
 | Reco v2 JSON | `.mat` | Rule / gap |
 |---|---|---|
-| `version`, `subj_id`, `method`, `meta.*` | — | **No place in `reco`.** Do not add fields to `reco`: any Lead-DBS re-save rebuilds `reco` from scratch and drops them. Provenance stays in our JSON. Optional: a second top-level variable (e.g. `dbsloc_provenance`, a struct of char fields: exporter version, source JSON path, `meta.template_space`, `meta.side_keys`, export time). Lead-DBS loads only `reco` by name and ignores it; the few whole-file loads tolerate extra variables. Decision for the caller. |
+| `version`, `subj_id`, `method`, `meta.*` | — | **No place in `reco`.** Do not add fields to `reco`: any Lead-DBS re-save rebuilds `reco` from scratch and drops them. Provenance stays in our JSON. A second top-level variable `dbsloc_provenance` (a struct of char fields: exporter version, source JSON path, `meta.template_space`, `meta.side_keys`, export time) is written (`PROVENANCE_VARIABLE`). Lead-DBS loads only `reco` by name and ignores it; the few whole-file loads tolerate extra variables. |
 | side keys `"1"`, `"2"` | index 1, 2 | Same meaning since 2026-10-04. A JSON without `meta.side_keys` is first resolved with `side_hemispheres` (`specs/05` §8). The exporter writes index 1 = right. |
 | `props["k"].elmodel` | `props(k).elmodel` (char) | For an absent side **also write the model string** (recommended; avoids the `props(1)` empty pitfalls of §5.2 and §5.3). |
-| `props["k"].manually_corrected` | `props(k).manually_corrected` (double) | **Decision needed (recommended):** write 1 if `manually_corrected` is true, **or** `meta.manual_correction[k].review` is `corrected`/`accepted`, **or** the side is directed and `meta.orientation[k].status` ∈ {`resolved`, `ambiguous`, `manual`}. This is what Lead-DBS does itself after its own orientation step, and it stops the Lead-DBS manual view from resetting the roll. Otherwise write 0. Absent side: 0. |
+| `props["k"].manually_corrected` | `props(k).manually_corrected` (double) | **Implemented (`manually_corrected_flag`):** write 1 if `manually_corrected` is true, **or** `meta.manual_correction[k].review` is `corrected`/`accepted`, **or** the side is directed and `meta.orientation[k].status` ∈ {`resolved`, `ambiguous`, `manual`}. This is what Lead-DBS does itself after its own orientation step, and it stops the Lead-DBS manual view from resetting the roll. Otherwise write 0. Absent side: 0. |
 | `native["k"].coords_mm` | `native.coords_mm{k}` | Per-contact rows. If a PaCER side still has per-level rows, re-resolve from the native markers (`specs/05` §6 map `T`) before export (gap). |
 | `native["k"].trajectory` | `native.trajectory{k}` | 50×3 as stored. If missing or not 50 rows, synthesise it with §4 *Trajectory*. |
 | `native["k"].markers.{head,tail,x,y}` | `native.markers(k).{head,tail,x,y}` | 1×3 rows. Check `|x−head| = |y−head| = r` within 1e-6 (Lead-DBS would rescale them anyway). |
@@ -140,14 +142,14 @@ The flag also changes the manual view (Part 2 §8.1): 0 resets the roll to anter
 
 **Unilateral export:** `S` = highest present side index. A right-only file uses `1×1` cells/structs. A left-only file uses `1×2`, with element 1 `[]`, `markers(1)` fields `[]`, and `props(1)` = model string + 0.
 
-**Import (`.mat` → Reco v2):** this is the reverse mapping. Sides are present per §5.1. `manually_corrected` → bool. `meta.side_keys` is written as `"1=right,2=left"` only after the mean-x check passes; otherwise the file is refused. No `meta.orientation` is written (roll unknown) unless the side is directed and `manually_corrected` = 1, in which case `{status: "manual", roll_deg: <from y>}` may be derived (decision for caller). Prefer `native` over `scrf`.
+**Import (`.mat` → Reco v2) — not implemented; the text below is the intended behaviour:** this is the reverse mapping. Sides are present per §5.1. `manually_corrected` → bool. `meta.side_keys` is written as `"1=right,2=left"` only after the mean-x check passes; otherwise the file is refused. No `meta.orientation` is written (roll unknown) unless the side is directed and `manually_corrected` = 1, in which case `{status: "manual", roll_deg: <from y>}` may be derived (decision for caller). Prefer `native` over `scrf`.
 
 ## 8. Acceptance checks — Part 1
 
 1. The exported file name and folder match §1. The file is a v7 MAT whose only variable is `reco` (or `reco` plus the optional provenance variable).
 2. Classes and shapes per §3 for a bilateral directional fixture, checked with a MAT reader (no MATLAB): `props` 1×2 struct with char + double, cells 1×2, markers 1×2 struct of 1×3 doubles, `mni.trajvector` present, `native`/`mni` trajectories 50×3.
 3. Left-only fixture: `props(1).manually_corrected` is numeric 0 (not empty), `markers(1).head` empty, `coords_mm{1}` empty.
-4. Round trip JSON → MAT → JSON reproduces markers, contacts and trajectories within 1e-9 mm and side assignment exactly.
+4. (Needs the import, not implemented.) Round trip JSON → MAT → JSON reproduces markers, contacts and trajectories within 1e-9 mm and side assignment exactly.
 5. `|x − head| = |y − head| = r` within 1e-6 in both blocks. Template `x`/`y` equal the `specs/06` §10.6 construction.
 6. Resolving contacts from the exported markers with the §4 affine reproduces exported `coords_mm` within 1e-6 mm in both blocks.
 7. Non-reference template space: exported `mni` equals our `reference` block; with no `reference` the export is refused with a clear error.
@@ -331,6 +333,8 @@ The roll is changed only by the ±15° buttons and DiODe; there is **no roll key
 | 31 | Drag markers, zoom/pan, undo, numeric 0.01 mm entry, accept per side | superset | Wyss-only features. |
 | 32 | Marker snap to metal `.` (non-functional in reference) | missing | Optional future "snap to metal centre" in the close-up plane. |
 | 33 | Roll controls for ring leads | — | Deliberate: Wyss hides them. |
+
+**Current status (crates/dbsloc-viz/src/refine_app.rs):** rows 3 (oblique lead panes), 4 (head / tail close-ups, key `L`), 8 (slab view, key `X`), 9 (hide markers, key `V`), 13 (*Keep lead length*, key `K`), 14 (Alt + Page Up / Page Down), 17 (spacing readout) and 21 (*Move whole lead*) are implemented; the Status column above is the state when the table was written. Row 27 (methods line in the subject log) is still missing.
 
 **Suggested order to close:** 3, 13, 14, 17 (readout), 19 (decision), 4, 8, 9, 21, 27, 5, 10.
 

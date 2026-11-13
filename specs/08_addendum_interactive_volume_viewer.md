@@ -24,15 +24,15 @@ Deliver a **reusable** interactive 2D viewer so operators can verify registratio
 
 ## 3. Open-source landscape (distribution vs reuse)
 
-| Project | License (verify upstream) | Bundle whole app with Wyss DBS Localizer? | Reuse source in `dbsloc` (proprietary when this was written; GPL-3.0-only since 2026-11-10)? |
+| Project | License (verify upstream) | Bundle whole app with Wyss DBS Localizer? | Reuse source in `dbsloc` (GPL-3.0-only)? |
 |--------|----------------------------|--------------------------------|--------------------------------------|
-| **3D Slicer** | Custom permissive (SPDX `3D-Slicer-1.0`) | Theoretically possible; **very heavy** (Qt/VTK/Python stack) | Possible **fragments** with attribution + legal review—not default |
-| **ITK-SNAP** | **GPL-3** | Separate user install OK | **Do not** embed or link into closed Wyss DBS Localizer binary without GPL compliance |
+| **3D Slicer** | Custom permissive (SPDX `3D-Slicer-1.0`) | Theoretically possible; **very heavy** (Qt/VTK/Python stack) | Not default: the project rule is to write from the specifications, not to copy source |
+| **ITK-SNAP** | **GPL-3** | Separate user install OK | **Do not** copy its source: the project rule is to write from the specifications and independent knowledge of the algorithms, not from other viewers' code |
 | **ITK** (library) | **Apache-2.0** | As optional library dep | **Yes**, with `NOTICE` |
 | **OHIF / Cornerstone3D** | **MIT** | Optional **future** web profile | **Yes**, preserve copyright notices—**not v1** |
 | **Wyss DBS Localizer `dbsloc-viz`** | Wyss (GPL-3.0-only since 2026-11-10) | Yes (in-tree) | Yes |
 
-**Conclusion:** v1 extends **`dbs-localizer checkreg`** (`egui` / `wgpu` where used) and [`checkreg_pair`](../crates/dbsloc-checkreg/src/checkreg_pair.rs) CPU slice compositing—no GPL, no mandate to ship Slicer.
+**Conclusion:** v1 extends **`dbs-localizer checkreg`** (`egui` / `wgpu` where used) and [`checkreg_pair`](../crates/dbsloc-checkreg/src/checkreg_pair.rs) CPU slice compositing—no source copied from other viewers, no mandate to ship Slicer.
 
 ---
 
@@ -84,7 +84,7 @@ Implementations **must** accept manifests **without** `manifest_version` (treat 
   - **Soft tissue (CT-like):** e.g. C ≈ 40, W ≈ 80 (adjustable).
   - **Bone (CT-like):** e.g. C ≈ 300, W ≈ 1500 (adjustable).
   - **Reset** to preset defaults.
-- **Mode toggle:** **“Match batch PNG”** (preprocessed moving) vs **“Raw + W/L”** so operators can compare with static montage.
+- **Mode toggle:** the checkbox *Raw NIfTI window and level (linear)*. On: window and level apply to the raw moving image. Off (default): the grey scale of the montage image (percentile scaling), so operators can compare with the static montage.
 
 ### 6.4 Zoom and pan
 
@@ -100,7 +100,7 @@ Implementations **must** accept manifests **without** `manifest_version` (treat 
 ### 6.6 Approval workflow
 
 - Unchanged: write approval JSON to `method_log`; **Approve/Next**, **Disapprove/Next**, **Back**, last-slide labels per [`03_coregistration.md`](03_coregistration.md) §12.3.
-- **Embedded (2026-10-14):** the viewer UI is the library panel `dbsloc_viz::checkreg_app::CheckregReviewPanel` (feature `checkreg-embed`); the `checkreg` mode of `dbs-localizer` (`dbs-localizer checkreg <options>`; the former `dbsloc_checkreg` binary was removed 2026-10-23, lookup `DBSLOC_GUI_BIN` → beside the executable → `PATH` → `target/{release,debug}`) is a thin window around it and the app's main window shows it in its *Registration review* tab. The panel returns decisions and never writes files: the host writes `method_log` (the `checkreg` mode with its own writer, the app with `dbsloc_pipeline::apply_approval`). Labels: *Approve & next* / *Reject & next*; last slide *Approve & continue run* / *Reject & stop run* during a run, *Approve & close* / *Reject & close* otherwise. Volumes load on a worker thread, one slide at a time. Keys (only without text focus): A approve, D reject, ← / → previous / next image, PageUp / PageDown slice, 1 / 2 / 3 single pane axial / coronal / sagittal, 0 the 2×2 layout, R reset zoom and pan. The *Recompute* button and the free-text *Method* field are removed (the method is recorded by the pipeline).
+- **Embedded (2026-10-14):** the viewer UI is the library panel `dbsloc_viz::checkreg_app::CheckregReviewPanel` (feature `checkreg-embed`); the `checkreg` mode of `dbs-localizer` (`dbs-localizer checkreg <options>`; the former `dbsloc_checkreg` binary was removed 2026-10-23, lookup `DBSLOC_GUI_BIN` → beside the executable → `PATH` → `target/{release,debug}`) is a thin window around it and the app's main window shows it in its *Registration review* tab. The panel returns decisions and never writes files: the host writes `method_log` (the `checkreg` mode with its own writer, the app with `dbsloc_pipeline::apply_approval`). Labels: *Approve & next* / *Reject & next* when the next slide is undecided, *Approve & next undecided* / *Reject & next undecided* when it is already decided; last undecided slide *Approve & continue run* / *Reject & stop run* during a run, *Approve & close* / *Reject & close* otherwise. Volumes load on a worker thread, one slide at a time. Keys (only without text focus): A approve, D reject, ← / → previous / next image, PageUp / PageDown slice, 1 / 2 / 3 single pane axial / coronal / sagittal, 0 the 2×2 layout, R reset zoom and pan. The *Recompute* button and the free-text *Method* field are removed (the method is recorded by the pipeline).
 - **Slice caching (2026-11-12).** Each pane (the three panes of the 2×2 layout and the single pane) keeps three stages, each rebuilt only when its own inputs change: (1) the slice layers — the moving slice (raw or percentile-scaled moving image) and the edge mask of the fixed slice (Sobel magnitude, 10 % of the slice maximum) — keyed by plane, the pane's own slice index and the raw-window switch; (2) the coloured slice resampled to the physical aspect ratio, keyed by the layers plus window centre and width only while the raw window is on; (3) the uploaded texture, keyed by that image plus the crosshair position projected into the pane (or crosshair off). Hence a window / level change recolours and resamples each pane without reading the volumes or recomputing edges; a slice step rebuilds the layers of the pane whose index changed and only redraws the crosshair in the other two; a crosshair move redraws the crosshair line in a pane whose own index is unchanged; with the raw window off, window / level changes rebuild nothing. Each pane holds at most one layers set and one resampled image, replaced on change; all are dropped when a new pair starts loading and when it arrives. Output pixels are byte-identical to the one-pass `PreparedCheckregVols::rgba_slice_display` (same filter order, CPU only); `cargo test -p dbsloc-checkreg --features pair staged_slice_path` guards it.
 
 ### 6.7 Single-volume preview (2026-10-23)
@@ -122,7 +122,7 @@ A plain look at one NIfTI image, with no registration pairing: the embeddable pa
 | **PHI** | No network I/O; local paths only. |
 | **Performance** | Target **interactive** slice updates on typical DBS CT/T1w sizes on a developer GPU; document optional downscale if a future phase adds it. |
 | **Headless / CI** | `--headless-check` validates manifest JSON only; no window. |
-| **Testing** | Rust unit tests for slice compositing and window mapping sanity; CLI smoke for manifest (existing Python tests). |
+| **Testing** | Rust unit tests for slice compositing and window mapping sanity; CLI smoke for the manifest (`crates/dbsloc-cli/tests/cli_misc.rs`). |
 
 ---
 
@@ -140,7 +140,7 @@ A plain look at one NIfTI image, with no registration pairing: the embeddable pa
 1. Operator can switch planes and slices for a manifest with valid NIfTIs.
 2. Operator can toggle **raw W/L** vs **batch-style** preprocessed moving display.
 3. Operator can change zoom and reset view; pan works when image exceeds viewport.
-4. Approval JSON behavior unchanged vs previous `dbsloc_checkreg` binary.
+4. Approval JSON behavior unchanged vs the former `dbsloc_checkreg` binary (removed 2026-10-23).
 5. Omitted `manifest_version` still loads; `manifest_version: 1` round-trips from pipeline manifest writer.
 
 ---
