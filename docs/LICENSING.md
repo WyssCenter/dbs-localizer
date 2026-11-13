@@ -14,6 +14,7 @@ The repository follows the [REUSE](https://reuse.software/spec-3.3/) conventions
 | Path | SPDX licence | Why |
 | --- | --- | --- |
 | `fastwarp/` (git subtree of [WyssCenter/fastwarp](https://github.com/WyssCenter/fastwarp); crates `fastwarp-core`, `fastwarp-niftiio`, `fastwarp-matfile`, `fastwarp-reg`, `fastwarp-gpu`, plus the PyO3 binding `fastwarp-py` and its Python package, which this repository does not build) | `Apache-2.0` | The registration engine (in-process replacement for `antsRegistration` and `N4BiasFieldCorrection`, CPU reference and wgpu GPU path) and the crates it needs to build. About 40 files are ports of ITK v5.4.4 / ANTs v2.6.5 (Apache-2.0, listed in [`fastwarp/docs/THIRD_PARTY_PORTS.md`](../fastwarp/docs/THIRD_PARTY_PORTS.md)); keeping the whole engine Apache-2.0 matches upstream and lets it be published on its own. Each crate has its own `LICENSE`; `fastwarp-reg` and `fastwarp-gpu` also have a `NOTICE`. |
+| `crates/dbsloc-pacer/` | `AGPL-3.0-only` | PaCER electrode reconstruction, an independent implementation written from `specs/10_pacer.md` and Husch et al. (2017), licensed like the original PaCER implementation (owner decision 2026-11-13). Optional: built only with the default-on cargo feature `pacer` (section *PaCER and the AGPL*). The specification `specs/10_pacer.md` keeps its own licence. |
 | Everything else in `crates/`, `dbsloc/`, `scripts/`, `tests/`, `packaging/`, `docs/`, `specs/` | `GPL-3.0-only` | Application code and documentation of the Wyss Center, free software since 2026-11-10. Includes the GPU VAT / E-field solver (`crates/dbsloc-vat-gpu`, moved out of `fastwarp-gpu` so the Apache crate does not depend on application crates). |
 | `crates/dbsloc-viz/assets/brand/wyss-center-icon*.png` | `GPL-3.0-only` | Wyss Center logo. The image files are under the GPL (decision 2026-11-10); the logo and the name stay trademarks (`TRADEMARKS.md`). The application tile (`dbs-loc-icon*`, `packaging/wix/logo-64.png`) is GPL-3.0-only as well. |
 | `resources/ants/` | `Apache-2.0` (Windows runtime DLLs: `LicenseRef-Microsoft-VCRedist`) | ANTs v2.6.5 binaries. |
@@ -34,13 +35,28 @@ Decision of 2026-11-10 (product owner): Wyss DBS Localizer is released as free s
 What the choice means:
 
 - The Apache-2.0 engine in `fastwarp/` can be combined with GPL-3 code (Apache-2.0 is compatible with GPL version 3); the combined programs `dbs-localizer` and `dbsloc` are distributed under GPL-3.0-only, the engine on its own stays Apache-2.0. The engine must not depend on GPL code, or it could no longer be published under Apache-2.0.
-- Dependencies must be compatible with GPL-3.0-only: permissive licences are; `GPL-2.0-only`, AGPL and licences with further restrictions are not. `deny.toml` keeps its permissive allow-list.
+- Third-party dependencies must be compatible with GPL-3.0-only: permissive licences are; `GPL-2.0-only`, AGPL and licences with further restrictions are not. `deny.toml` keeps its permissive allow-list. The one AGPL part is the workspace's own optional PaCER crate (next section); `deny.toml` skips unpublished workspace crates (`[licenses.private] ignore = true`), so it needs no entry there.
 - Code written in Phase C from `specs/` is still an independent implementation (`AGENTS.md` §9). The rule stays: code that is not derived from Lead-DBS is the Wyss Center's own copyright, so the Wyss Center can decide about its licence, and the Lead-DBS bundle also contains material under non-commercial terms that are not GPL-compatible.
 - The specifications in `specs/` were written from a study of the Lead-DBS source and behaviour. Owner decision 2026-11-12: no similarity check against Lead-DBS is run, because both projects are GPL-3 and a part derived from Lead-DBS could be used under the GPL; the *Lead-DBS* section of [`NOTICE`](../NOTICE) credits the Lead-DBS developers and states their copyright and licence for any such part.
 - The atlas data copied from Lead-DBS keeps its own label `GPL-3.0-only AND LicenseRef-LeadDBS-Atlas-Terms`: the owners' request not to use the atlases commercially travels with the data.
 - The Wyss Center name and logo are trademarks. Owner decision 2026-11-10: the two logo image files are licensed under GPL-3.0-only like the rest of the software, because the top-bar logo is compiled into `dbs-localizer` and a file that is part of the program cannot carry copying restrictions beyond the GPL. Only the trademark is reserved (GPL version 3, section 7(e): no trademark rights are granted); `TRADEMARKS.md` says what a modified version may and may not do with the name and logo.
 - A distributed binary must come with the corresponding source (GPL section 6). Every release package names the public repository and the tag it was built from, `https://github.com/WyssCenter/dbs-localizer/tree/v<version>`: `README.txt` in the archive and in the installed folder (`scripts/package_release.py`, checked on the extracted copy by `check_readme_source`), the `copyright` file and `Homepage` of the `.deb` (`scripts/build_deb.py`), the help link of the Windows installer (`packaging/wix/Product.wxs`); tests `tests/test_source_offer.py`. Not yet checked on built packages.
 - The application tile (`dbs-loc-icon*`, `packaging/wix/logo-64.png`) is GPL-3.0-only. Its artwork was made by a Wyss Center employee as part of their work (confirmed by the product owner, 2026-11-10), so the Wyss Center holds the rights.
+
+## PaCER and the AGPL
+
+Owner decision 2026-11-13: the Rust PaCER implementation lives in its own crate `crates/dbsloc-pacer`, licensed `AGPL-3.0-only` because the original PaCER implementation is AGPL-3.0. It is an independent implementation written from the specification `specs/10_pacer.md` and the paper (Husch et al., NeuroImage: Clinical 17, 2017; `NOTICE`, section *PaCER*). The specification keeps its current licence for now.
+
+- **Optional, on by default.** `dbsloc-pipeline` depends on `dbsloc-pacer` only as an optional dependency behind its feature `pacer`, which is in its `default`. `dbsloc-cli`, `dbsloc-app` and `dbsloc-server` each have a default-on `pacer` feature that forwards to `dbsloc-pipeline/pacer` and depend on the pipeline with `default-features = false`; `dbsloc-api` depends on it with `default-features = false`. A plain `cargo build -p dbsloc-cli -p dbsloc-app`, the release packages (`scripts/package_release.py`) and the PyO3 module (`maturin develop -m crates/dbsloc-pipeline/Cargo.toml`) therefore include PaCER.
+- **Combined licence of the default build.** Builds with the feature contain GPL-3.0-only and AGPL-3.0-only code and are distributed as that combination (GNU GPL version 3, section 13). The network-use condition of the AGPL then applies to the combined program: who lets users interact with a modified version over a network (for example `dbsloc_server`) must offer them its corresponding source.
+- **GPL-3.0-only build.** Without the feature no AGPL code is compiled or linked:
+
+  ```
+  cargo build --locked --release -p dbsloc-cli -p dbsloc-app --no-default-features
+  ```
+
+  The other crates in the chain have no further default features, so nothing has to be re-enabled; the PyO3 module is `maturin build --release -m crates/dbsloc-pipeline/Cargo.toml --no-default-features --features pyo3`. Such a build refuses `recon_method = pacer` with `E_RECON_pacer_unavailable` (`docs/RUN_REFERENCE.md`) and shows PaCER as unavailable in the graphical application. CI clippies this variant (`check.yml`, job *Rust fmt and clippy*), runs its pipeline, CLI and server tests and checks with `cargo tree` that `dbsloc-pacer` is not in it (job *Rust unit tests*).
+- **Dependency direction.** `dbsloc-pacer` may depend on GPL-3.0-only crates (it uses the electrode catalogue of `dbsloc-reconstruct`) and on the Apache-2.0 engine; a GPL-3.0-only crate may depend on it only as an optional normal dependency enabled by `pacer`, an Apache-2.0 crate never. `tests/test_licensing.py` checks the SPDX headers, the Cargo `license` field, these rules and that every crate depending on a crate with a `pacer` feature turns default features off.
 
 ## Publishing the repository
 
@@ -57,7 +73,7 @@ Source files start with the header of their directory. Rust and WGSL:
 // SPDX-License-Identifier: Apache-2.0
 ```
 
-under `fastwarp/` (the five Apache crates), and `GPL-3.0-only` everywhere else. Python and shell use the same two lines with `#`, after a shebang line if there is one; `.cmd` files use `@REM`.
+under `fastwarp/` (the five Apache crates), `AGPL-3.0-only` under `crates/dbsloc-pacer/`, and `GPL-3.0-only` everywhere else. Python and shell use the same two lines with `#`, after a shebang line if there is one; `.cmd` files use `@REM`.
 
 A file ported from ITK or ANTs keeps the upstream copyright and the Apache header of the "Header template for ported files" in [`fastwarp/docs/THIRD_PARTY_PORTS.md`](../fastwarp/docs/THIRD_PARTY_PORTS.md) and gets a row there. It may only live in an Apache-2.0 crate, that is under `fastwarp/`.
 

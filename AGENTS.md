@@ -101,6 +101,7 @@ The original source (a local checkout of [netstim/leaddbs](https://github.com/ne
 | CLI (`dbsloc`: flags → `RunOptions`, progress printing, JSON summary, Lead-Tutor submit commands) | **Rust** (`crates/dbsloc-cli`; the Python CLI was removed 2026-10-12) | No pipeline logic in the CLI; calls `dbsloc-pipeline` directly |
 | PyO3 module `dbsloc_reconstruct`, electrode-geometry generator, cohort scripts, library modules | **Python 3.14** (developer / research tooling) | Not needed by end users; matplotlib QC montages retired (decision C3) |
 | Performance-critical algorithms (reconstruction, VAT, signal processing) | **Rust** | Compiled, memory-safe, fearless concurrency (rayon), zero-cost abstractions |
+| PaCER CT reconstruction (`specs/10`) | **Rust** (`crates/dbsloc-pacer`, **AGPL-3.0-only**; optional dependency of `dbsloc-pipeline` behind the default-on cargo feature `pacer`, decision 2026-11-13) | Licensed like the original PaCER; without the feature the program is GPL-3.0-only (`docs/LICENSING.md` *PaCER and the AGPL*) |
 | GPU acceleration (registration, visualization; later VAT FEM, E-field)   | **wgpu** (WGSL compute, `fastwarp/crates/fastwarp-gpu`) | One code path on NVIDIA / AMD / Intel / Apple, incl. integrated GPUs; CUDA via `cudarc` optional later fast path (amended 2026-10-07) |
 
 
@@ -195,7 +196,7 @@ To keep the code free of material derived from Lead-DBS:
 5. External tools invoked as subprocesses (ANTs, FSL, SynthMorph) are fine — they have their own compatible licenses.
 6. Bundled data (electrode model geometries, atlas ROIs) must be checked individually for license compatibility before inclusion.
 7. **ANTs/ITK source code in-tree:** Vendored or modified ANTs/ITK (Apache-2.0) must keep notices and document changes, and may only live in an Apache-2.0 crate (under `fastwarp/`). See the repository `NOTICE` file (ported GPU / parity decisions) and the header template in `fastwarp/docs/THIRD_PARTY_PORTS.md`.
-8. **Licence labels (REUSE, 2026-11-09):** every source file starts with an SPDX header (`Apache-2.0` for every file under `fastwarp/`, `GPL-3.0-only` elsewhere); data and binaries are covered by `REUSE.toml`; licence texts in `LICENSES/`; `tests/test_licensing.py` enforces it, including that an Apache-2.0 crate never depends on a GPL-3.0-only one. Material copied from Lead-DBS (today the atlas data in `resources/atlases/leaddbs/`) carries `GPL-3.0-only AND LicenseRef-LeadDBS-Atlas-Terms`; the Wyss Center logo files are GPL-3.0-only as images, the logo and name stay trademarks (`TRADEMARKS.md`, `docs/LICENSING.md`).
+8. **Licence labels (REUSE, 2026-11-09):** every source file starts with an SPDX header (`Apache-2.0` for every file under `fastwarp/`, `AGPL-3.0-only` for every file under `crates/dbsloc-pacer/` (PaCER, decision 2026-11-13), `GPL-3.0-only` elsewhere); data and binaries are covered by `REUSE.toml`; licence texts in `LICENSES/`; `tests/test_licensing.py` enforces it, including that an Apache-2.0 crate never depends on a GPL-3.0-only one and that GPL-3.0-only crates reach `dbsloc-pacer` only as an optional dependency behind the default-on feature `pacer`. Builds with `pacer` (the default and the release packages) are a GPL-3.0-only + AGPL-3.0-only combination (GPL section 13); `--no-default-features` builds contain no AGPL code. Material copied from Lead-DBS (today the atlas data in `resources/atlases/leaddbs/`) carries `GPL-3.0-only AND LicenseRef-LeadDBS-Atlas-Terms`; the Wyss Center logo files are GPL-3.0-only as images, the logo and name stay trademarks (`TRADEMARKS.md`, `docs/LICENSING.md`).
 9. **The `fastwarp/` subtree (2026-11-09):** `fastwarp/` is the Apache-2.0 engine, a squashed git subtree of https://github.com/WyssCenter/fastwarp with its own Cargo workspace. Edit it only in a commit that touches nothing else, with a message fit for a public repository (no patient data, no internal context), so it can go back upstream with `git subtree push --prefix=fastwarp fastwarp <branch>`; it must never depend on GPL-3.0-only code or on data of this repository. Update, contribute and check commands: `docs/LICENSING.md` *The fastwarp subtree*.
 
 ---
@@ -233,6 +234,7 @@ Standard invocations are defined in `pyproject.toml`, `.pre-commit-config.yaml` 
 ```bash
 uv sync                                 # Python env incl. the dev dependency group (pytest, maturin, ruff, ty, pre-commit); there are no extras
 cargo build -p dbsloc-cli --release     # the end-user CLI: target/release/dbsloc[.exe]
+cargo build --locked --release -p dbsloc-cli -p dbsloc-app --no-default-features   # GPL-3.0-only build without the AGPL-3.0-only PaCER crate (recon_method pacer then fails with E_RECON_pacer_unavailable)
 cargo build -p dbsloc-cli -p dbsloc-app --profile release-dev   # optimized + incremental for edit-run loops (target/release-dev/); ship and report timings from --release only
 cargo build --profile debugging         # full debug info (dev keeps line tables only, deps none); Windows links with rust-lld (.cargo/config.toml), package_release.py pins link.exe
 cargo build --manifest-path fastwarp/Cargo.toml --target-dir target -p fastwarp-gpu --features dev-tools   # GPU developer binaries fastwarp_gpu_probe / fastwarp_reg_syn / fastwarp_reg_ab
@@ -269,7 +271,7 @@ Status per row; code paths, tests, cohort numbers and notes for each row: **`doc
 | 4   | `02` preprocessing | N4 (ANTs / in-process wgpu), precoreg | **Partial** |
 | 5   | `03` coreg         | CT / MR → anchor multi-start + masked rigid, checkreg gate | **Partial** |
 | 6   | `04` norm          | Rigid → Affine → SyN, multispectral, `--reg-backend auto\|wgpu\|ants` | **Partial** |
-| 7   | `05` recon         | TRAC/CORE + PaCER in Rust, manual correction, `.mat` export | **Partial** |
+| 7   | `05` recon         | TRAC/CORE + PaCER in Rust (PaCER: `crates/dbsloc-pacer`, AGPL-3.0-only, default-on feature `pacer`), manual correction, `.mat` export | **Partial** |
 | 8   | `06` orientation   | DiODe (Boston / Abbott directed leads) | **Experimental** |
 | 9   | `07` vat           | Stimulation settings, CPU + wgpu E-field engine, `vat` stage | **Partial** |
 | 10  | `08` viz           | `dbsloc-viz`: checkreg, 3D scene, refine view, backdrops, atlas sets, fibre / map layers, group view | **Partial** |

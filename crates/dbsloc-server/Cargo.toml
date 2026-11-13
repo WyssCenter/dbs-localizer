@@ -14,8 +14,12 @@ path = "src/lib.rs"
 name = "dbsloc_server"
 path = "src/main.rs"
 
+[features]
+default = ["pacer"]
+pacer = ["dbsloc-pipeline/pacer"]
+
 [dependencies]
-dbsloc-pipeline = { path = "../dbsloc-pipeline" }
+dbsloc-pipeline = { path = "../dbsloc-pipeline", default-features = false }
 dbsloc-api = { path = "../dbsloc-api" }
 dbsloc-protocol = { path = "../dbsloc-protocol" }
 

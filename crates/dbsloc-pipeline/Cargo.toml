@@ -17,14 +17,16 @@ path = "src/bin/dbsloc_pipeline_runner.rs"
 required-features = []
 
 [features]
-default = []
+default = ["pacer"]
 pyo3 = ["dep:pyo3"]
+pacer = ["dep:dbsloc-pacer"]
 
 [dependencies]
 dbsloc-protocol = { path = "../dbsloc-protocol" }
 fastwarp-core = { path = "../../fastwarp/crates/fastwarp-core", features = ["nifti"] }
 fastwarp-niftiio = { path = "../../fastwarp/crates/fastwarp-niftiio" }
 dbsloc-reconstruct = { path = "../dbsloc-reconstruct" }
+dbsloc-pacer = { path = "../dbsloc-pacer", optional = true }
 fastwarp-reg = { path = "../../fastwarp/crates/fastwarp-reg" }
 fastwarp-matfile = { path = "../../fastwarp/crates/fastwarp-matfile" }
 dbsloc-vat = { path = "../dbsloc-vat" }

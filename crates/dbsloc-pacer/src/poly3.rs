@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 
 //! Parametric polynomial curve in ℝ³, parameter t ∈ [0, 1].
 //! Coefficient layout matches common `polyval` (high degree first).

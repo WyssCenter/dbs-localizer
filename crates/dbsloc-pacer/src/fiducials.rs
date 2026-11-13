@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 
 //! PaCER result → `head` / `tail` / `x` / `y` + contacts (`specs/05` §2, §7; `specs/10` §8).
 //!
@@ -12,12 +12,11 @@
 //! non-uniform depth leads and the tip-is-contact offset, which the prototype table gets wrong
 //! for anything it does not enumerate.
 
-use crate::electrode_catalog::{by_name as electrode_by_name, ElectrodeGeometry};
-use crate::pacer::{
+use crate::{
     catalog_by_name, inv_poly_arc_length3, poly_arc_length3, polyval3, run_pacer_per_cloud,
     CtVolume, PacerConfig, PacerElectrode, PacerError, PolyR3,
 };
-use crate::ring::ring_in_plane;
+use dbsloc_reconstruct::{electrode_by_name, ring_in_plane, ElectrodeGeometry};
 use ndarray::Array3;
 
 /// One lead located in the CT's own (native) world space, in mm.
@@ -301,7 +300,7 @@ pub fn pacer_sides(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::pacer::fit_param_poly_to_skeleton;
+    use crate::fit_param_poly_to_skeleton;
 
     fn levels_along_poly(poly: &PolyR3, e: &ElectrodeGeometry) -> Vec<[f64; 3]> {
         e.apex_to_level_mm()

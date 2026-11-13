@@ -13,6 +13,8 @@ and rules). Each source file states its licence in an ``SPDX-License-Identifier`
 
   Apache-2.0             ``fastwarp/`` (the registration and N4 engine, a git subtree of
                          https://github.com/WyssCenter/fastwarp). Parts are derived from ITK and ANTs.
+  AGPL-3.0-only          ``crates/dbsloc-pacer/`` (PaCER electrode reconstruction; optional,
+                         built with the default cargo feature ``pacer``; section "PaCER" below).
   Third-party licences   bundled binaries, templates, atlases, fonts and terms under
                          ``resources/`` and ``crates/dbsloc-viz/assets/fonts/`` (below).
 
@@ -31,6 +33,28 @@ Where a part of Wyss DBS Localizer is nonetheless derived from Lead-DBS, the Lea
 developers keep their copyright in it, it was modified for Wyss DBS Localizer from April
 2026 on, and it is distributed under the GNU GPL version 3 like Lead-DBS. Atlas data
 copied from Lead-DBS is listed under "Lead-DBS atlas folders" below.
+
+PaCER (AGPL-3.0-only)
+================================================================================
+
+The PaCER electrode reconstruction in ``crates/dbsloc-pacer`` is an independent
+implementation written from the specification ``specs/10_pacer.md`` and from the paper
+
+  Husch A, Petersen MV, Gemmar P, Goncalves J, Hertel F (2017). PaCER - A fully automated
+  method for electrode trajectory and contact reconstruction in deep brain stimulation.
+  NeuroImage: Clinical 17, 80-89.
+
+It is licensed under the GNU Affero General Public License, version 3 only
+(``AGPL-3.0-only``; full text ``LICENSES/AGPL-3.0-only.txt``), to match the licence of the
+original PaCER implementation. Everything else in this repository keeps its own licence.
+
+PaCER is an optional component behind the cargo feature ``pacer``, which is on by default,
+so the default builds and the release packages of ``dbs-localizer`` and ``dbsloc``
+contain it. Those builds are distributed as a combination of GPL-3.0-only and
+AGPL-3.0-only code (GNU GPL version 3, section 13); the network-use condition of the AGPL
+(section 13 of the AGPL) therefore applies to the combined program. A build without the
+feature (``--no-default-features``, ``docs/LICENSING.md``) contains no AGPL code and is
+GPL-3.0-only.
 
 Source code derived from ITK and ANTs (Apache-2.0)
 ================================================================================

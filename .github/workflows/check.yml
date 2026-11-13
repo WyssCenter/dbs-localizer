@@ -86,6 +86,9 @@ jobs:
       - name: Clippy dbsloc-pipeline (PyO3 binding)
         run: cargo clippy --locked -p dbsloc-pipeline --all-targets --features pyo3 -- -D warnings
 
+      - name: Clippy without PaCER (GPL-3.0-only build, no AGPL-3.0-only crate)
+        run: cargo clippy --locked -p dbsloc-pipeline -p dbsloc-cli --all-targets --no-default-features -- -D warnings
+
       - name: Clippy dbsloc-viz viewers
         run: |
           cargo clippy --locked -p dbsloc-viz --all-targets --features checkreg-viewer -- -D warnings
@@ -126,6 +129,17 @@ jobs:
 
       - name: Cargo test
         run: cargo nextest run --locked --workspace --profile ci
+
+      - name: Cargo test without PaCER (GPL-3.0-only build)
+        shell: bash
+        run: |
+          tree=$(cargo tree --locked -p dbsloc-cli -p dbsloc-app -p dbsloc-server -e all --prefix none)
+          grep -q '^dbsloc-pacer ' <<<"$tree" || { echo "::error::the default build lost dbsloc-pacer"; exit 1; }
+          tree=$(cargo tree --locked --no-default-features -p dbsloc-cli -p dbsloc-app -p dbsloc-server -e all --prefix none)
+          if grep -q '^dbsloc-pacer ' <<<"$tree"; then echo "::error::dbsloc-pacer (AGPL-3.0-only) is in the --no-default-features build"; exit 1; fi
+          cargo nextest run --locked --no-default-features --profile ci -p dbsloc-pipeline -p dbsloc-server --lib
+          cargo nextest run --locked --no-default-features --profile ci -p dbsloc-cli --test cli_run_options
+          cargo nextest run --locked --no-default-features --profile ci -p dbsloc-server --test runs_api
 
       - name: Cargo test fastwarp
         env:

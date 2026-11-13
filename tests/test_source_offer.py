@@ -29,6 +29,18 @@ def test_readme_states_licence_and_source_tag() -> None:
         assert "version 3 only" in text
         assert f"{REPO_URL}/tree/v1.2.3" in text
         assert "NOTICE" in text and "LICENSES/" in text and pr.THIRD_PARTY_NAME in text
+        assert "GNU Affero General Public" in text
+        assert "LICENSES/AGPL-3.0-only.txt" in text
+
+
+def test_packages_ship_the_agpl_text_of_the_pacer_component() -> None:
+    assert "AGPL-3.0-only.txt" in pr.REQUIRED_LICENCE_TEXTS
+    for name in pr.REQUIRED_LICENCE_TEXTS:
+        assert (REPO / "LICENSES" / name).is_file(), name
+    text = bd.copyright_text("0.1.0")
+    assert "License: GPL-3.0-only and AGPL-3.0-only\n" in text
+    assert "\n\nLicense: AGPL-3.0-only\n" in text
+    assert "LICENSES/AGPL-3.0-only.txt" in text
 
 
 def test_readme_defaults_to_workspace_version() -> None:

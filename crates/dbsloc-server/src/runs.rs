@@ -31,7 +31,12 @@ use crate::state::{AppState, AppStateInner, BusItem};
 pub use dbsloc_protocol::NORM_ISOTROPIC_MM_RANGE;
 
 /// Reconstruction methods the pipeline accepts (the `dbsloc run --recon-method` choices).
-pub const RECON_METHODS: [&str; 4] = ["auto", "trac_core", "trac_core_native", "pacer"];
+pub const RECON_METHODS: &[&str] = if dbsloc_pipeline::PACER_AVAILABLE {
+    &["auto", "trac_core", "trac_core_native", "pacer"]
+} else {
+    &["auto", "trac_core", "trac_core_native"]
+};
+pub const E_PACER_UNAVAILABLE: &str = "E_RECON_pacer_unavailable";
 
 pub const JOB_ENV_KEEP: [&str; 10] = [
     "DBSLOC_ANTS_DIR",
@@ -228,6 +233,12 @@ pub fn build_run_options_ext(
             ServerErr::bad_request(code, e)
         })?;
         opts.norm_method = NORM_METHOD_ANTS_SYN.to_owned();
+    }
+    if req.recon_method.is_some() && dbsloc_pipeline::pacer_method_unavailable(&opts.recon_method) {
+        return Err(ServerErr::bad_request(
+            E_PACER_UNAVAILABLE,
+            dbsloc_pipeline::PACER_UNAVAILABLE,
+        ));
     }
     if req.recon_method.is_some() && !RECON_METHODS.contains(&opts.recon_method.as_str()) {
         return Err(ServerErr::bad_request(
@@ -1069,10 +1080,26 @@ mod tests {
         assert_eq!(err.code(), E_BAD_REQUEST);
         for m in RECON_METHODS {
             let req = RunRequest {
-                recon_method: Some(m.to_owned()),
+                recon_method: Some((*m).to_owned()),
                 ..RunRequest::default()
             };
             assert!(build_run_options(&state, "demo", "01", &req).is_ok(), "{m}");
+        }
+        assert_eq!(
+            RECON_METHODS.contains(&"pacer"),
+            dbsloc_pipeline::PACER_AVAILABLE
+        );
+        let req = RunRequest {
+            recon_method: Some("pacer".to_owned()),
+            ..RunRequest::default()
+        };
+        let got = build_run_options(&state, "demo", "01", &req);
+        if dbsloc_pipeline::PACER_AVAILABLE {
+            assert!(got.is_ok());
+        } else {
+            let err = got.unwrap_err();
+            assert_eq!(err.code(), E_PACER_UNAVAILABLE);
+            assert_eq!(err.status, axum::http::StatusCode::BAD_REQUEST);
         }
     }
 

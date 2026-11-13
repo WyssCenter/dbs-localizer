@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 
 //! First-pass axial skeleton + degree-8 fit — `specs/10_pacer.md` §6.
 
@@ -103,7 +103,7 @@ pub fn first_pass_poly(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::pacer::poly3::polyval3;
+    use crate::poly3::polyval3;
 
     fn lead_cloud(tip: [f64; 3], u: [f64; 3], len_mm: f64) -> (Vec<[f64; 3]>, Vec<f32>) {
         let mut pts = vec![];

@@ -1,0 +1,23 @@
+[package]
+name = "dbsloc-pacer"
+version.workspace = true
+publish = false
+edition = "2021"
+description = "PaCER CT electrode reconstruction, an independent implementation written from specs/10_pacer.md (optional component, AGPL-3.0-only)"
+license = "AGPL-3.0-only"
+
+[lib]
+name = "dbsloc_pacer"
+path = "src/lib.rs"
+
+[dependencies]
+dbsloc-reconstruct = { path = "../dbsloc-reconstruct" }
+fastwarp-core = { path = "../../fastwarp/crates/fastwarp-core" }
+ndarray = "0.17"
+rayon = "1.10"
+nalgebra = "0.35"
+thiserror = "2"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

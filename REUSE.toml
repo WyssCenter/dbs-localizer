@@ -21,6 +21,13 @@ SPDX-FileCopyrightText = "2026 Wyss Center for Bio and Neuroengineering"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
+path = "crates/dbsloc-pacer/**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Wyss Center for Bio and Neuroengineering"
+SPDX-License-Identifier = "AGPL-3.0-only"
+SPDX-FileComment = "PaCER, an independent implementation written from specs/10_pacer.md and Husch et al. 2017; AGPL-3.0-only to match the licence of the original PaCER implementation. Optional: built only with the default-on cargo feature pacer."
+
+[[annotations]]
 path = "crates/dbsloc-viz/assets/fonts/**"
 precedence = "closest"
 SPDX-FileCopyrightText = "2017 IBM Corp."

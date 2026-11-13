@@ -48,6 +48,7 @@ RESOURCE_DIRS = ("templates", "atlases")
 REPO_URL = "https://github.com/WyssCenter/dbs-localizer"
 README_NAME = "README.txt"
 THIRD_PARTY_NAME = "THIRD_PARTY_LICENSES.md"
+REQUIRED_LICENCE_TEXTS = ("GPL-3.0-only.txt", "AGPL-3.0-only.txt", "Apache-2.0.txt")
 INSTALL_SCRIPT = "install.sh"
 ICON_SRC = REPO / "crates" / "dbsloc-viz" / "assets" / "brand" / "dbs-loc-icon-256.png"
 ICON_NAME = "dbs-localizer.png"
@@ -208,6 +209,9 @@ def assemble(release_dir: Path, out: Path, plat: str) -> Layout:
     for extra in ("LICENSE", "NOTICE"):
         shutil.copy2(REPO / extra, root / extra)
     copy_tracked("LICENSES", root / "LICENSES")
+    for text in REQUIRED_LICENCE_TEXTS:
+        if not (root / "LICENSES" / text).is_file():
+            raise PackageError(f"LICENSES/{text} is not tracked by git; add it")
     write_third_party_licenses(root / THIRD_PARTY_NAME)
     if plat == "win":
         ship_vc_runtime(exes)
@@ -360,7 +364,11 @@ def readme_text(plat: str, version: str | None = None) -> str:
         f"  binaries on the CPU (slower). `{cli} gpu probe` reports which engine will be used.\n\n"
         "Licence and source code\n"
         "  Wyss DBS Localizer is free software under the GNU General Public License\n"
-        "  version 3 only; the full text is in LICENSE. The source code of this package\n"
+        "  version 3 only; the full text is in LICENSE. The programs include the PaCER\n"
+        "  electrode reconstruction, which is licensed under the GNU Affero General Public\n"
+        "  License version 3 only (LICENSES/AGPL-3.0-only.txt), so they are distributed as a\n"
+        "  combination of both licences and the AGPL's network-use condition applies to\n"
+        "  them (NOTICE, section PaCER). The source code of this package\n"
         f"  is the tag {source_tag(version)} of the public repository {REPO_URL}\n"
         f"  (direct address: {source_url(version)}).\n"
         "  Licences of third-party components: NOTICE (bundled components),\n"

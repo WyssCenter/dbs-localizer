@@ -175,7 +175,17 @@ fn per_step_backends() {
 #[test]
 fn recon_method_and_log_choices_are_validated() {
     let (_d, root) = root();
-    assert_eq!(run_plan(&root, &[], &["--recon-method", "pacer"]).code, 0);
+    let pacer = run_plan(&root, &[], &["--recon-method", "pacer"]);
+    if cfg!(feature = "pacer") {
+        assert_eq!(pacer.code, 0, "{}", pacer.stderr);
+    } else {
+        assert_eq!(pacer.code, 2, "{}", pacer.stderr);
+        assert!(
+            pacer.stderr.contains("E_RECON_pacer_unavailable"),
+            "{}",
+            pacer.stderr
+        );
+    }
     assert_eq!(run_plan(&root, &[], &["--recon-method", "magic"]).code, 2);
     assert_eq!(run_plan(&root, &[], &["--log", "loud"]).code, 2);
 }

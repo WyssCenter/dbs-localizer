@@ -8,24 +8,30 @@ use ndarray::Array3;
 use serde_json::{json, Map, Value};
 use thiserror::Error;
 
+#[cfg(feature = "pacer")]
+use dbsloc_pacer::{ct_volume_from_ijk, pacer_leads, PacerConfig, PacerLead, PacerSide};
 use dbsloc_reconstruct::metal_axis::{LEAD_BODY_HU, STEEP_CONTINUITY_MM};
+#[cfg(feature = "pacer")]
+use dbsloc_reconstruct::native_frame::trajectory_from_anchors;
 use dbsloc_reconstruct::native_frame::{
     frame_lattice, implausible_message, rigid_frame_from_points, trace_native_sides,
-    trajectory_from_anchors, world_bounds_corners, ChosenSide, NativeFrame, NativeSides,
-    NativeTraceError, NativeTraceParams, SideGeometry, SideSource, FRAME_CENTRAL_FRACTION,
-    FRAME_LATTICE_PER_AXIS,
+    world_bounds_corners, ChosenSide, NativeFrame, NativeSides, NativeTraceError,
+    NativeTraceParams, SideGeometry, SideSource, FRAME_CENTRAL_FRACTION, FRAME_LATTICE_PER_AXIS,
 };
 use dbsloc_reconstruct::orientation::FLAG_VERTICAL_MARKER;
 use dbsloc_reconstruct::{
-    check_in_brain_mask, check_side, check_tilt, ct_volume_from_ijk, electrode_by_name,
-    pacer_leads, ElectrodeGeometry, PacerConfig, PacerLead, PacerSide, PlausibilityLimits,
-    TracConfig, WorldBounds, BRAIN_MASK_MARGIN_MM, MAX_TILT_FROM_VERTICAL_DEG,
+    check_in_brain_mask, check_tilt, electrode_by_name, ElectrodeGeometry, TracConfig,
+    BRAIN_MASK_MARGIN_MM, MAX_TILT_FROM_VERTICAL_DEG,
 };
+#[cfg(feature = "pacer")]
+use dbsloc_reconstruct::{check_side, PlausibilityLimits, WorldBounds};
 use fastwarp_core::Mat4;
 
 use crate::bids::simplify_verbatim;
 use crate::bundled_bin::find_binary;
-use crate::nifti_io::{load_mask, load_volume_f64, read_grid};
+#[cfg(feature = "pacer")]
+use crate::nifti_io::read_grid;
+use crate::nifti_io::{load_mask, load_volume_f64};
 use crate::point_warp::{
     composite_point_transform_tokens, AntsPointWarp, PointWarp, PointWarpError, RustPointWarp,
 };
@@ -42,7 +48,21 @@ pub const ORIENTATION_UNRESOLVED: &str =
      segment azimuth needs the orientation stage (specs/06)";
 const PACER_IMPORT_ENV: &str = "DBSLOC_PACER_RECO_JSON";
 pub const BRAIN_MASK_NAME: &str = "brainmask.nii.gz";
+#[cfg(feature = "pacer")]
 const MIDLINE_MARGIN_MM: f64 = 2.0;
+pub const PACER_AVAILABLE: bool = cfg!(feature = "pacer");
+pub const PACER_UNAVAILABLE: &str = "E_RECON_pacer_unavailable: the reconstruction method pacer \
+     (--recon-method pacer) needs the optional PaCER component (licensed AGPL-3.0-only), which \
+     this build does not include; use auto or trac_core";
+
+pub fn pacer_method_unavailable(method: &str) -> bool {
+    method.trim().eq_ignore_ascii_case("pacer") && !PACER_AVAILABLE
+}
+
+pub fn pacer_unavailable(opts: &crate::options::RunOptions) -> Option<&'static str> {
+    let reconstructs = opts.stages.contains(&crate::stages::Stage::Reconstruct);
+    (reconstructs && pacer_method_unavailable(&opts.recon_method)).then_some(PACER_UNAVAILABLE)
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CtMethod {
@@ -320,6 +340,9 @@ fn reconstruct_ct_unstamped(
     log: &mut dyn FnMut(String),
 ) -> Result<Value, CtReconError> {
     let req = &sanitize_request(req)?;
+    if req.method == CtMethod::Pacer && !PACER_AVAILABLE {
+        return Err(CtReconError::Invalid(PACER_UNAVAILABLE.to_owned()));
+    }
     if matches!(req.method, CtMethod::Auto | CtMethod::Pacer) {
         if let Some(v) = pacer_import(req)? {
             log("[reconstruct] honouring a pre-exported PaCER Reco v2 JSON".into());
@@ -332,7 +355,10 @@ fn reconstruct_ct_unstamped(
     let electrode = resolve_electrode(req)?;
     let warper = point_warper(req, cancel, log)?;
     match req.method {
+        #[cfg(feature = "pacer")]
         CtMethod::Pacer => pacer_reco(req, electrode, warper.as_ref(), log),
+        #[cfg(not(feature = "pacer"))]
+        CtMethod::Pacer => Err(CtReconError::Invalid(PACER_UNAVAILABLE.to_owned())),
         _ => native_frame_reco(req, electrode, warper.as_ref(), log),
     }
 }
@@ -785,6 +811,7 @@ pub fn side_name(key: &str) -> &'static str {
     }
 }
 
+#[cfg(feature = "pacer")]
 fn key_pacer_leads(
     leads: &[PacerLead],
     midline_x: f64,
@@ -821,6 +848,7 @@ fn key_pacer_leads(
     Ok(out)
 }
 
+#[cfg(feature = "pacer")]
 fn build_pacer_reco_json(
     subj_id: &str,
     sides: &[(&'static str, &PacerSide)],
@@ -868,12 +896,15 @@ fn build_pacer_reco_json(
 
 pub const PACER_MASK_TEMPLATE: &str = "template";
 pub const PACER_MASK_OWN: &str = "own";
+#[cfg(feature = "pacer")]
 const MASK_GRID_TOLERANCE_MM: f64 = 1e-3;
 
+#[cfg(feature = "pacer")]
 fn same_grid(a: &Mat4, b: &Mat4) -> bool {
     (0..3).all(|r| (0..4).all(|c| (a[r][c] - b[r][c]).abs() <= MASK_GRID_TOLERANCE_MM))
 }
 
+#[cfg(feature = "pacer")]
 fn pacer_template_mask(
     candidates: &[PathBuf],
     dims: (usize, usize, usize),
@@ -901,6 +932,7 @@ fn pacer_template_mask(
     Ok(None)
 }
 
+#[cfg(feature = "pacer")]
 fn place_pacer_leads<'a>(
     keyed: &[(&'static str, &'a PacerLead)],
     req: &CtReconRequest,
@@ -942,6 +974,7 @@ fn place_pacer_leads<'a>(
     Ok(placed)
 }
 
+#[cfg(feature = "pacer")]
 pub fn pacer_reco(
     req: &CtReconRequest,
     electrode: &'static ElectrodeGeometry,
@@ -1178,7 +1211,9 @@ fn pacer_import(req: &CtReconRequest) -> Result<Option<Value>, CtReconError> {
 #[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
-    use dbsloc_reconstruct::{norm3, sub3, unit3, PacerError};
+    #[cfg(feature = "pacer")]
+    use dbsloc_pacer::PacerError;
+    use dbsloc_reconstruct::{norm3, sub3, unit3};
     use fastwarp_core::dot3;
     use fastwarp_niftiio::WriterOptions;
     use nifti::NiftiHeader;
@@ -1605,6 +1640,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&d);
     }
 
+    #[cfg(feature = "pacer")]
     #[test]
     fn pacer_placement_skips_kept_sides_and_ignores_their_failures() {
         let leads = vec![lead_at(12.0, false), lead_at(-12.0, true)];
@@ -1758,7 +1794,11 @@ mod tests {
             .unwrap(),
         )
         .unwrap();
-        req.method = CtMethod::Pacer;
+        req.method = if PACER_AVAILABLE {
+            CtMethod::Pacer
+        } else {
+            CtMethod::Auto
+        };
         let v = reconstruct_ct(&req, None, &mut |_| {}).unwrap();
         assert_eq!(v["method"], "pacer_import");
         let w: Vec<&str> = v["meta"]["pacer_import_warnings"]
@@ -1880,6 +1920,45 @@ mod tests {
         assert_eq!(CtMethod::parse("bogus"), None);
     }
 
+    #[cfg(not(feature = "pacer"))]
+    #[test]
+    fn without_the_pacer_feature_pacer_is_refused_and_auto_still_runs() {
+        let d = tmp("no_pacer");
+        let p = d.join("sub-1_desc-pacer_import.json");
+        let mk = json!({"head": [0, 0, 0], "tail": [0, 0, 5], "x": [1, 0, 0], "y": [0, 1, 0]});
+        std::fs::write(
+            &p,
+            serde_json::to_string(&json!({"version": 2, "subj_id": "1", "method": "pacer",
+                "mni": {"1": {"markers": mk, "coords_mm": []}, "2": {"markers": mk}},
+                "native": {"1": {"markers": mk}, "2": {"markers": mk}}}))
+            .unwrap(),
+        )
+        .unwrap();
+        let mut req = CtReconRequest::new("1", CtMethod::Pacer);
+        req.pacer_import = Some(p.clone());
+        let e = reconstruct_ct(&req, None, &mut |_| {}).unwrap_err();
+        assert!(matches!(e, CtReconError::Invalid(_)) && !e.is_os_error());
+        assert_eq!(e.to_string(), PACER_UNAVAILABLE);
+        assert!(e.to_string().starts_with("E_RECON_pacer_unavailable: "));
+        assert!(e.to_string().contains("needs the optional PaCER component"));
+        let mut opts = crate::options::RunOptions {
+            recon_method: " PACER ".into(),
+            stages: vec![crate::stages::Stage::Reconstruct],
+            ..crate::options::RunOptions::new("/data", "1")
+        };
+        assert_eq!(pacer_unavailable(&opts), Some(PACER_UNAVAILABLE));
+        opts.stages = vec![crate::stages::Stage::Coregister];
+        assert_eq!(pacer_unavailable(&opts), None);
+        opts.stages = vec![crate::stages::Stage::Reconstruct];
+        opts.recon_method = "auto".into();
+        assert_eq!(pacer_unavailable(&opts), None);
+        req.method = CtMethod::Auto;
+        let v = reconstruct_ct(&req, None, &mut |_| {}).unwrap();
+        assert_eq!(v["meta"]["pacer"], "import_json");
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[cfg(feature = "pacer")]
     fn lead_at(x: f64, placed: bool) -> PacerLead {
         let side = PacerSide {
             head: [x, -10.0, -8.0],
@@ -1962,6 +2041,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "pacer")]
     #[test]
     fn a_lone_left_lead_is_side_2() {
         let leads = vec![lead_at(-12.0, true)];
@@ -1987,6 +2067,7 @@ mod tests {
         assert_eq!(mni[SIDE_LEFT]["coords_mm"], native[SIDE_LEFT]["coords_mm"]);
     }
 
+    #[cfg(feature = "pacer")]
     #[test]
     fn pacer_takes_the_first_template_mask_on_its_ct_grid() {
         let d = tmp("pacer_mask_choice");
@@ -2036,6 +2117,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&d);
     }
 
+    #[cfg(feature = "pacer")]
     #[test]
     fn keys_follow_the_midline_not_the_scanner_origin() {
         let leads = vec![lead_at(30.0, true), lead_at(58.0, true)];
@@ -2045,6 +2127,7 @@ mod tests {
         assert_eq!(keyed[1].0, SIDE_LEFT);
     }
 
+    #[cfg(feature = "pacer")]
     #[test]
     fn a_failed_lead_still_occupies_its_hemisphere() {
         let leads = vec![lead_at(12.0, false), lead_at(-12.0, true)];
@@ -2054,6 +2137,7 @@ mod tests {
         assert!(keyed[1].1.side.is_ok());
     }
 
+    #[cfg(feature = "pacer")]
     #[test]
     fn spurious_or_ambiguous_leads_are_refused() {
         let three = vec![

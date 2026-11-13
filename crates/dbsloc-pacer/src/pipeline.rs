@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 
 //! High-level PaCER pipeline. `specs/10_pacer.md` §2–3, §8.
 
