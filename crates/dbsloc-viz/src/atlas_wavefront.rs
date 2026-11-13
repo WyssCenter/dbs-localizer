@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Minimal Wavefront `.obj` loader (triangles only). Clean-room.
+//! Minimal Wavefront `.obj` loader (triangles only).
 
 use std::collections::HashMap;
 use std::collections::HashSet;

@@ -1,4 +1,4 @@
-# PaCER — algorithm specification (clean-room target)
+# PaCER — algorithm specification (implementation contract)
 
 **Reference (behaviour, not code):** Husch et al. (2017), *PaCER — A fully automated method for electrode trajectory and contact reconstruction in deep brain stimulation.* *NeuroImage: Clinical* 17, 80–89.  
 **Original implementation:** separate codebase, **AGPL-3** (copyleft). This document describes *observable behaviour* and *mathematical structure* so that `crates/dbsloc-reconstruct` can implement a **functionally equivalent** pipeline without translating that source.
@@ -200,4 +200,4 @@ Implementation must ship **at least** the Medtronic **3389**, **3387**, and **Bo
 - **Phase 4:** §8 peak finding + catalog + final refit.
 - NIfTI I/O stays outside or uses existing `fastwarp-core` / workspace conventions.
 
-**Clean-room rule:** implementers of Phases 2+ must not read PaCER or Lead-DBS source — **only** this file + Husch 2017 + open datasheets.
+**Independent-implementation rule:** implementers of Phases 2+ must not read PaCER or Lead-DBS source — **only** this file + Husch 2017 + open datasheets.

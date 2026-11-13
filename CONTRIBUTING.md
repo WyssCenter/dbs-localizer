@@ -3,7 +3,7 @@
 Thank you for helping. This guide explains how to report a problem, ask a question, build the software from source, run the tests and propose a change. If anything here is unclear, open an issue and ask. Everyone taking part in the project follows our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 - [Reporting problems and asking questions](#reporting-problems-and-asking-questions)
-- [Before you write code: the clean-room rule](#before-you-write-code-the-clean-room-rule)
+- [Before you write code: write from the specifications](#before-you-write-code-write-from-the-specifications)
 - [Development setup](#development-setup)
 - [Building and running from source](#building-and-running-from-source)
 - [Running the tests](#running-the-tests)
@@ -23,7 +23,7 @@ Use the [issue tracker](https://github.com/WyssCenter/dbs-localizer/issues) for 
 
 **Never attach patient data** or a log that contains patient names, dates of birth or other identifying information. If a problem only shows with a particular dataset, describe the images (modality, voxel size, orientation, scanner) or share an anonymised copy privately with the maintainers.
 
-## Before you write code: the clean-room rule
+## Before you write code: write from the specifications
 
 Wyss DBS Localizer is written from written specifications, not from the Lead-DBS source code. Lead-DBS and this project are both licensed under the GPL-3, but the project keeps its code free of material derived from Lead-DBS, so that the Wyss Center holds the copyright of the code and the licence of each part stays clear. Therefore:
 
@@ -170,7 +170,7 @@ Further rules:
 5. Write commit messages in the [Conventional Commits](https://www.conventionalcommits.org) style, for example `fix(reconstruct): keep the roll of an accepted lead`.
 6. Open a pull request against `main`. Describe what changed, why, and how you tested it. CI must pass, and a maintainer reviews every pull request before it is merged.
 
-By submitting a pull request you confirm that you wrote the code yourself, that it follows the clean-room rule above, and that you have the right to contribute it under the licence of the files you change (the SPDX header of each file; [`docs/LICENSING.md`](docs/LICENSING.md)).
+By submitting a pull request you confirm that you wrote the code yourself, that it follows the rule above (write from the specifications), and that you have the right to contribute it under the licence of the files you change (the SPDX header of each file; [`docs/LICENSING.md`](docs/LICENSING.md)).
 
 ## Where things are
 

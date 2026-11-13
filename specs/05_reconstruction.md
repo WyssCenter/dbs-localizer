@@ -171,7 +171,7 @@ trajectory = linspace(a1, a2, 50)
 
 ## 7. PaCER (interface)
 
-**Full algorithm spec:** `specs/10_pacer.md` (clean-room target for `crates/dbsloc-reconstruct::pacer`).  
+**Full algorithm spec:** `specs/10_pacer.md` (implementation contract for `crates/dbsloc-reconstruct::pacer`).  
 
 **Pre:** `pacer` CT masks on disk, coreg CT.  
 **Call:** in-tree Rust implementation (per `10_pacer.md` phases) or **stub** returning `(coords, trajectory, markers)` in **native** mm until the pipeline is complete.  

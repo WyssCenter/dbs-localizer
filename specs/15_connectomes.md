@@ -12,7 +12,7 @@
 
 ### 1.1 Purpose
 
-Give a clean-room implementer everything needed to (a) list, download or import the normative connectomes that Lead-DBS users work with, honouring each dataset's terms; (b) read the Lead-DBS on-disk formats natively; (c) compute, per subject and per stimulation, the structural seed map, the functional seed map and the per-fibre values that the group analyses of `specs/14` consume.
+Give an implementer who works from this specification and the cited sources everything needed to (a) list, download or import the normative connectomes that Lead-DBS users work with, honouring each dataset's terms; (b) read the Lead-DBS on-disk formats natively; (c) compute, per subject and per stimulation, the structural seed map, the functional seed map and the per-fibre values that the group analyses of `specs/14` consume.
 
 ### 1.2 In scope / out of scope
 

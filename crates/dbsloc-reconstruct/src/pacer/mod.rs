@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! PaCER-equivalent pipeline (clean-room; see `specs/10_pacer.md`).
+//! PaCER-equivalent pipeline (written from `specs/10_pacer.md`).
 
 mod catalog;
 mod errors;
