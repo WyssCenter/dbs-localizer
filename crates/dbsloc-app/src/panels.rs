@@ -2640,12 +2640,49 @@ fn gpu_status_line(ui: &mut egui::Ui) {
         );
 }
 
+const PACER_NOT_IN_BUILD: &str = "PaCER is not included in this build of Wyss DBS Localizer. \
+     PaCER is an optional component licensed under the GNU Affero General Public License \
+     (AGPL-3.0-only), and this copy was built without it. \
+     Choose Automatic or TRAC / CORE, or install the standard build, which includes PaCER.";
+
+pub(crate) const PACER_SWITCHED_NOTE: &str = "The saved reconstruction method PaCER is not \
+     included in this build of Wyss DBS Localizer, so the method was set to Automatic.";
+
+fn recon_method_available(v: ReconMethod) -> bool {
+    v != ReconMethod::Pacer || dbsloc_pipeline::PACER_AVAILABLE
+}
+
+pub(crate) fn drop_unavailable_recon_method(method: &mut ReconMethod) -> bool {
+    if recon_method_available(*method) {
+        return false;
+    }
+    *method = ReconMethod::Auto;
+    true
+}
+
+fn recon_method_label(v: ReconMethod) -> String {
+    if recon_method_available(v) {
+        v.label().to_owned()
+    } else {
+        format!("{} (not in this build)", v.label())
+    }
+}
+
+fn recon_method_hint(v: ReconMethod) -> &'static str {
+    if recon_method_available(v) {
+        v.hint()
+    } else {
+        PACER_NOT_IN_BUILD
+    }
+}
+
 fn reconstruct_options(ui: &mut egui::Ui, state: &mut DbslocAppState, pal: &tokens::Palette) {
     let unit = em(ui);
     ui.horizontal(|ui| {
         ui.label("Method:");
+        let current = state.stage.recon_method;
         egui::ComboBox::from_id_salt("recon_method")
-            .selected_text(state.stage.recon_method.label())
+            .selected_text(recon_method_label(current))
             .show_ui(ui, |ui| {
                 for v in [
                     ReconMethod::Auto,
@@ -2653,12 +2690,17 @@ fn reconstruct_options(ui: &mut egui::Ui, state: &mut DbslocAppState, pal: &toke
                     ReconMethod::TracCoreNative,
                     ReconMethod::Pacer,
                 ] {
-                    ui.selectable_value(&mut state.stage.recon_method, v, v.label())
-                        .on_hover_text(v.hint());
+                    let available = recon_method_available(v);
+                    ui.add_enabled_ui(available, |ui| {
+                        ui.selectable_value(&mut state.stage.recon_method, v, recon_method_label(v))
+                    })
+                    .inner
+                    .on_hover_text(v.hint())
+                    .on_disabled_hover_text(recon_method_hint(v));
                 }
             })
             .response
-            .on_hover_text(state.stage.recon_method.hint());
+            .on_hover_text(recon_method_hint(current));
         info_icon(
             ui,
             "Which algorithm locates the lead. PaCER and the native TRAC / CORE path need a \
@@ -5082,6 +5124,42 @@ mod tests {
             assert_eq!(back.coregister_engine, engine);
             assert_eq!(back.coregister_engine.value(), backend);
         }
+    }
+
+    #[test]
+    fn pacer_is_offered_only_in_a_build_that_contains_it() {
+        let built = dbsloc_pipeline::PACER_AVAILABLE;
+        assert_eq!(built, cfg!(feature = "pacer"));
+        assert_eq!(recon_method_available(ReconMethod::Pacer), built);
+        for v in [
+            ReconMethod::Auto,
+            ReconMethod::TracCore,
+            ReconMethod::TracCoreNative,
+        ] {
+            assert!(recon_method_available(v));
+            assert_eq!(recon_method_label(v), v.label());
+            assert_eq!(recon_method_hint(v), v.hint());
+        }
+        if built {
+            assert_eq!(recon_method_label(ReconMethod::Pacer), "PaCER");
+        } else {
+            assert_eq!(
+                recon_method_label(ReconMethod::Pacer),
+                "PaCER (not in this build)"
+            );
+            assert_eq!(recon_method_hint(ReconMethod::Pacer), PACER_NOT_IN_BUILD);
+        }
+        let mut saved = ReconMethod::Pacer;
+        assert_eq!(drop_unavailable_recon_method(&mut saved), !built);
+        let want = if built {
+            ReconMethod::Pacer
+        } else {
+            ReconMethod::Auto
+        };
+        assert_eq!(saved, want);
+        let mut other = ReconMethod::TracCore;
+        assert!(!drop_unavailable_recon_method(&mut other));
+        assert_eq!(other, ReconMethod::TracCore);
     }
 
     #[test]

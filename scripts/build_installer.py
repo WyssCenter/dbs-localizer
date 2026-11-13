@@ -45,7 +45,9 @@ REQUIRED_PAYLOAD = (
     "THIRD_PARTY_LICENSES.md",
     "README.txt",
     "LICENSES",
+    "LICENSES/AGPL-3.0-only.txt",
 )
+AGPL_TEXT = "LICENSES/AGPL-3.0-only.txt"
 
 
 def log(message: str) -> None:
@@ -177,8 +179,12 @@ def build(stage: Path, out: Path, version: str) -> Path:
 
     notice = (stage / "NOTICE").read_text(encoding="utf-8", errors="replace")
     license_text = (stage / "LICENSE").read_text(encoding="utf-8", errors="replace")
+    agpl_text = (stage / AGPL_TEXT).read_text(encoding="utf-8", errors="replace")
     rtf = work / "license.rtf"
-    rtf.write_text(license_rtf(license_text + "\n\n" + notice), encoding="ascii")
+    rtf.write_text(
+        license_rtf(license_text + "\n\n" + notice + "\n\n" + agpl_text),
+        encoding="ascii",
+    )
 
     msi = work / "dbs-localizer.msi"
     log(f"building MSI {product_version}")

@@ -11,9 +11,13 @@ build = "build.rs"
 name = "dbs-localizer"
 path = "src/main.rs"
 
+[features]
+default = ["pacer"]
+pacer = ["dbsloc-pipeline/pacer"]
+
 [dependencies]
 dbsloc-connectome = { path = "../dbsloc-connectome" }
-dbsloc-pipeline = { path = "../dbsloc-pipeline" }
+dbsloc-pipeline = { path = "../dbsloc-pipeline", default-features = false }
 dbsloc-ui = { path = "../dbsloc-ui" }
 dbsloc-viz = { path = "../dbsloc-viz", features = ["scene-viewer", "checkreg-viewer", "refine-embed"] }
 eframe = { version = "0.36", default-features = false, features = [

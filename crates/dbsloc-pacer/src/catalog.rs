@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 
 //! Electrode prototype geometry — from device IFU / public specs (not Matlab). See `10_pacer` §9.
 
@@ -232,7 +232,8 @@ mod tests {
             (medtronic_3387(), "Medtronic 3387"),
             (boston_verse(), "Boston Scientific Vercise Directed"),
         ] {
-            let e = crate::electrode_by_name(name).unwrap_or_else(|| panic!("{name} catalogued"));
+            let e = dbsloc_reconstruct::electrode_by_name(name)
+                .unwrap_or_else(|| panic!("{name} catalogued"));
             assert!(
                 (proto.diffs_mm[0] as f64 - e.eldist_mm).abs() < 1e-4,
                 "{name}: pacer pitch {} != catalogue {}",

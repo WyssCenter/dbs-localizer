@@ -18,7 +18,7 @@ dbsloc-protocol = { path = "../dbsloc-protocol" }
 serde_json = "1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-dbsloc-pipeline = { path = "../dbsloc-pipeline" }
+dbsloc-pipeline = { path = "../dbsloc-pipeline", default-features = false }
 
 [lints.clippy]
 unwrap_used = "warn"

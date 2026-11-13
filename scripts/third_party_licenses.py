@@ -9,7 +9,8 @@ Walks the dependency graph reported by ``cargo metadata`` from the packages
 ``dbsloc-app`` (``dbs-localizer``) and ``dbsloc-cli`` (``dbsloc``), follows normal
 dependencies only, and writes one document with the licence expression and the
 licence files of every library. The workspace crates under ``crates/`` (GPL-3.0-only,
-the licence of this repository) are left out; the Apache-2.0 engine crates under
+the licence of this repository, and the AGPL-3.0-only PaCER crate; both texts are in
+``LICENSES/`` and ``NOTICE`` describes them) are left out; the Apache-2.0 engine crates under
 ``fastwarp/`` are listed in a section of their own.
 """
 

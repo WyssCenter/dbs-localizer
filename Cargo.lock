@@ -1089,11 +1089,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "dbsloc-pacer"
+version = "0.1.0"
+dependencies = [
+ "dbsloc-reconstruct",
+ "fastwarp-core",
+ "nalgebra",
+ "ndarray",
+ "rayon",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "dbsloc-pipeline"
 version = "0.1.0"
 dependencies = [
  "dbsloc-checkreg",
  "dbsloc-connectome",
+ "dbsloc-pacer",
  "dbsloc-protocol",
  "dbsloc-reconstruct",
  "dbsloc-reports",

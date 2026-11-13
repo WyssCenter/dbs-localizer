@@ -74,7 +74,7 @@ pub struct RunArgs {
     #[arg(long, value_name = "NAMES", help_heading = "Stages")]
     pub stages: Option<String>,
 
-    /// auto: CT -> a pre-exported PaCER import JSON if present, else TRAC/CORE on the native coregistered CT with points warped to the template; MRI -> TRAC/CORE on the template-space volume. On a CT, trac_core and trac_core_native both run the native path; pacer runs PaCER in native space and warps its points to the template.
+    /// auto: CT -> a pre-exported PaCER import JSON if present, else TRAC/CORE on the native coregistered CT with points warped to the template; MRI -> TRAC/CORE on the template-space volume. On a CT, trac_core and trac_core_native both run the native path; pacer runs PaCER in native space and warps its points to the template (only in builds with the optional pacer feature, which the default build includes).
     #[arg(
         long,
         default_value = "auto",
@@ -356,6 +356,12 @@ fn log_mode(log: &str) -> (bool, bool) {
 }
 
 pub fn run(args: &RunArgs, ants: &AntsParsed) -> CmdResult {
+    if dbsloc_pipeline::pacer_method_unavailable(&args.recon_method) {
+        return Err(Fail::new(
+            2,
+            format!("dbsloc: error: {}", dbsloc_pipeline::PACER_UNAVAILABLE),
+        ));
+    }
     let planned = planned_stages(args.stages.as_deref(), &|f| args.drop_flag(f))?;
     let stages: Vec<Stage> = planned.iter().filter_map(|s| Stage::parse(s)).collect();
     let mut opts = build_options(args, ants, stages, "")?;

@@ -551,10 +551,18 @@ async fn client_options_are_validated_and_the_server_forces_the_gate_stop() {
         .unwrap()
         .is_none());
 
+    let method = if cfg!(feature = "pacer") {
+        "pacer"
+    } else {
+        let (status, got) = submit(&app, "01", &json!({"recon_method": "pacer"})).await;
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(got["code"], "E_RECON_pacer_unavailable");
+        "trac_core_native"
+    };
     let (status, body) = submit(
         &app,
         "01",
-        &json!({"stop_on_error": false, "norm_isotropic_mm": 1.5, "recon_method": "pacer"}),
+        &json!({"stop_on_error": false, "norm_isotropic_mm": 1.5, "recon_method": method}),
     )
     .await;
     assert_eq!(status, StatusCode::ACCEPTED);
@@ -566,7 +574,7 @@ async fn client_options_are_validated_and_the_server_forces_the_gate_stop() {
     let opts = value(job.options.as_bytes());
     assert_eq!(opts["stop_on_error"], json!(true));
     assert_eq!(opts["norm_isotropic_mm"], json!(1.5));
-    assert_eq!(opts["recon_method"], "pacer");
+    assert_eq!(opts["recon_method"], method);
     assert_eq!(opts["reg_backend"], "wgpu");
     assert_eq!(opts["headless"], json!(true));
 }

@@ -1511,6 +1511,9 @@ fn load_app_state() -> DbslocAppState {
         ));
     }
     state.stage.migrate_legacy_engine();
+    if crate::panels::drop_unavailable_recon_method(&mut state.stage.recon_method) {
+        crate::app_log::info(crate::panels::PACER_SWITCHED_NOTE);
+    }
     state
 }
 

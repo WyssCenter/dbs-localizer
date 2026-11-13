@@ -30,8 +30,12 @@ APACHE_CRATES = frozenset(
     }
 )
 GPUREG_CRATES = APACHE_CRATES | {"fastwarp-py"}
+AGPL_CRATES = frozenset({"dbsloc-pacer"})
+PACER_FEATURE = "pacer"
+SHIPPED_CRATES = frozenset({"dbsloc-cli", "dbsloc-app"})
 APACHE = "Apache-2.0"
 GPL = "GPL-3.0-only"
+AGPL = "AGPL-3.0-only"
 SOURCE_SUFFIXES = frozenset({".rs", ".wgsl", ".py", ".sh", ".cmd"})
 HEADER_LINES = 30
 ITK_COPYRIGHT = "1999-2019 Insight Software Consortium"
@@ -76,6 +80,7 @@ SENTINELS = (
     ("crates/dbsloc-viz/assets/brand/wyss-center-icon-inverse-256.png", GPL),
     ("crates/dbsloc-viz/assets/brand/dbs-loc-icon-256.png", GPL),
     ("packaging/wix/logo-64.png", GPL),
+    ("crates/dbsloc-pacer/Cargo.toml", AGPL),
 )
 
 
@@ -111,7 +116,9 @@ def _in_gpureg(name: str) -> bool:
 
 
 def _expected_licence(name: str) -> str:
-    return APACHE if _in_gpureg(name) else GPL
+    if _in_gpureg(name):
+        return APACHE
+    return AGPL if _crate_of(name) in AGPL_CRATES else GPL
 
 
 def _head(name: str) -> list[str]:
@@ -385,16 +392,27 @@ def test_cargo_licence_fields_and_dependency_direction() -> None:
     for rel in _manifests():
         manifest = tomllib.loads((ROOT / rel).read_text(encoding="utf-8"))
         crate = Path(rel).parent.name
-        want = APACHE if rel.startswith(f"{GPUREG}/") else GPL
+        if rel.startswith(f"{GPUREG}/"):
+            want = APACHE
+        elif crate in AGPL_CRATES:
+            want = AGPL
+        else:
+            want = GPL
         if (crate in GPUREG_CRATES) != (want == APACHE):
             problems.append(
                 f"{rel}: crate name {crate} and location disagree on licence"
+            )
+        if crate in AGPL_CRATES and rel != f"crates/{crate}/Cargo.toml":
+            problems.append(
+                f"{rel}: the AGPL-3.0-only crate {crate} must live in crates/"
             )
         have = manifest["package"].get("license")
         if have == {"workspace": True} and rel.startswith(f"{GPUREG}/"):
             have = inherited
         if have != want:
             problems.append(f"{rel}: license = {have!r}, expected {want!r}")
+        if want == GPL:
+            problems.extend(_agpl_dependency_problems(rel, manifest))
         if want != APACHE:
             continue
         for kind, table in _dependency_tables(manifest):
@@ -415,6 +433,80 @@ def test_cargo_licence_fields_and_dependency_direction() -> None:
                         "(an Apache-2.0 crate may depend only on Apache-2.0 crates, never on a GPL-3.0-only one; move the code or the crate)"
                     )
     assert not problems, "Cargo licence problems:\n" + "\n".join(problems)
+
+
+def _path_target(rel: str, spec: Any) -> str | None:
+    if not isinstance(spec, dict) or spec.get("path") is None:
+        return None
+    return (ROOT / rel).parent.joinpath(spec["path"]).resolve().name
+
+
+def _workspace_features() -> dict[str, dict[str, list[str]]]:
+    out = {}
+    for rel in _manifests():
+        manifest = tomllib.loads((ROOT / rel).read_text(encoding="utf-8"))
+        out[Path(rel).parent.name] = manifest.get("features", {})
+    return out
+
+
+def _agpl_dependency_problems(rel: str, manifest: dict[str, Any]) -> list[str]:
+    problems = []
+    features = manifest.get("features", {})
+    default = features.get("default", [])
+    pacer = features.get(PACER_FEATURE, [])
+    crate = Path(rel).parent.name
+    with_pacer = {
+        name for name, feats in _workspace_features().items() if PACER_FEATURE in feats
+    }
+    for kind, table in _dependency_tables(manifest):
+        for dep, spec in table.items():
+            target = _path_target(rel, spec)
+            if target in AGPL_CRATES:
+                if kind.endswith(("dev-dependencies", "build-dependencies")):
+                    problems.append(
+                        f"{rel}: [{kind}] {dep} -> {target}: a GPL-3.0-only crate may "
+                        "depend on the AGPL-3.0-only crate only as a normal dependency"
+                    )
+                if not spec.get("optional", False):
+                    problems.append(
+                        f"{rel}: [{kind}] {dep} -> {target} must be optional "
+                        f"(behind the {PACER_FEATURE!r} feature)"
+                    )
+                if f"dep:{dep}" not in pacer:
+                    problems.append(
+                        f"{rel}: feature {PACER_FEATURE!r} must enable dep:{dep}"
+                    )
+            elif target in with_pacer and target != crate:
+                if spec.get("default-features", True):
+                    problems.append(
+                        f"{rel}: [{kind}] {dep} -> {target} must set default-features = false, "
+                        f"so that --no-default-features leaves the {PACER_FEATURE!r} feature off"
+                    )
+                if crate in SHIPPED_CRATES and f"{dep}/{PACER_FEATURE}" not in pacer:
+                    problems.append(
+                        f"{rel}: feature {PACER_FEATURE!r} must enable {dep}/{PACER_FEATURE}"
+                    )
+    if (pacer or crate in SHIPPED_CRATES) and PACER_FEATURE not in default:
+        problems.append(
+            f"{rel}: the {PACER_FEATURE!r} feature must be on by default (default = [..., {PACER_FEATURE!r}])"
+        )
+    return problems
+
+
+def test_agpl_crates_exist_and_are_used() -> None:
+    members = {Path(rel).parent.name for rel in _manifests()}
+    assert AGPL_CRATES <= members, (
+        "AGPL_CRATES in tests/test_licensing.py names crates that are not workspace "
+        "members: " + ", ".join(sorted(AGPL_CRATES - members))
+    )
+    reached = set()
+    for rel in _manifests():
+        manifest = tomllib.loads((ROOT / rel).read_text(encoding="utf-8"))
+        for _kind, table in _dependency_tables(manifest):
+            for spec in table.values():
+                if _path_target(rel, spec) in AGPL_CRATES:
+                    reached.add(Path(rel).parent.name)
+    assert reached, "no crate depends on the AGPL-3.0-only crate; update AGPL_CRATES"
 
 
 def _licence_text(path: Path) -> str:

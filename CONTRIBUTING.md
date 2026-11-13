@@ -31,7 +31,7 @@ Wyss DBS Localizer is written from written specifications, not from the Lead-DBS
 - Base your work on the specifications in [`specs/`](specs), on published papers and on general knowledge of the algorithms.
 - If the specification does not answer your question, open an issue. A maintainer who is allowed to study Lead-DBS's behaviour will extend the specification; you then implement from the updated text.
 - Code adapted from ANTs or ITK (Apache-2.0) must keep its licence notice and may only go into an Apache-2.0 crate; see [`NOTICE`](NOTICE) and [`fastwarp/docs/THIRD_PARTY_PORTS.md`](fastwarp/docs/THIRD_PARTY_PORTS.md).
-- Every new source file starts with the SPDX header of its directory (`Apache-2.0` for every file under `fastwarp/`; `GPL-3.0-only` elsewhere). New data or binaries get an entry in [`REUSE.toml`](REUSE.toml). Rules: [`docs/LICENSING.md`](docs/LICENSING.md); `tests/test_licensing.py` checks them.
+- Every new source file starts with the SPDX header of its directory (`Apache-2.0` for every file under `fastwarp/`; `AGPL-3.0-only` for every file under `crates/dbsloc-pacer/`, the optional PaCER component; `GPL-3.0-only` elsewhere). Code that calls PaCER from a GPL-3.0-only crate goes behind the cargo feature `pacer`, so that `--no-default-features` still builds a GPL-3.0-only program (CI checks it). New data or binaries get an entry in [`REUSE.toml`](REUSE.toml). Rules: [`docs/LICENSING.md`](docs/LICENSING.md); `tests/test_licensing.py` checks them.
 
 Contributions that do not follow this rule cannot be accepted.
 
@@ -149,7 +149,7 @@ cargo deny --locked check advisories bans licenses sources
 cargo deny --locked --manifest-path crates/dbsloc-web/Cargo.toml --config deny.toml check advisories bans licenses sources   # the browser client has its own lockfile
 ```
 
-[`deny.toml`](deny.toml) allows crates.io only and an allow-list of permissive licenses. A new dependency under another license (in particular GPL-2.0-only, AGPL or a licence with further restrictions, which a GPL-3.0-only program cannot include; the Apache-2.0 engine in `fastwarp/` accepts permissive licences only) is a decision for a maintainer: open an issue instead of extending the list.
+[`deny.toml`](deny.toml) allows crates.io only and an allow-list of permissive licenses. A new dependency under another license (in particular GPL-2.0-only, AGPL or a licence with further restrictions, which a GPL-3.0-only program cannot include; the project's own optional PaCER crate is the only AGPL part, see [`docs/LICENSING.md`](docs/LICENSING.md); the Apache-2.0 engine in `fastwarp/` accepts permissive licences only) is a decision for a maintainer: open an issue instead of extending the list.
 
 Further rules:
 
@@ -183,7 +183,8 @@ By submitting a pull request you confirm that you wrote the code yourself, that 
 | `crates/dbsloc-viz` | 3D viewer, registration review and image viewers (wgpu) |
 | `fastwarp/` | registration engine (Apache-2.0), a git subtree of [WyssCenter/fastwarp](https://github.com/WyssCenter/fastwarp) with its own Cargo workspace: `crates/fastwarp-reg`, `crates/fastwarp-gpu` (registration algorithms and their graphics-card implementation), `fastwarp-core`, `fastwarp-niftiio`; change it only in a commit that touches nothing else, see [`docs/LICENSING.md`](docs/LICENSING.md) *The fastwarp subtree* |
 | `crates/dbsloc-vat-gpu` | graphics-card E-field solver for the VTA stage |
-| `crates/dbsloc-reconstruct` | electrode reconstruction (TRAC/CORE, PaCER) and orientation detection |
+| `crates/dbsloc-reconstruct` | electrode reconstruction (TRAC/CORE), electrode catalogue and orientation detection |
+| `crates/dbsloc-pacer` | PaCER electrode reconstruction (AGPL-3.0-only); optional, built with the default-on cargo feature `pacer` |
 | `crates/dbsloc-vat` | electric-field and activated-tissue model |
 | `crates/dbsloc-connectome`, `crates/dbsloc-reports` (and `fastwarp/crates/fastwarp-matfile`) | connectome readers, session-report import (and MATLAB file reading and writing) |
 | `crates/dbsloc-server`, `crates/dbsloc-web`, `crates/dbsloc-api`, `crates/dbsloc-protocol` | experimental server and browser client (prototype, see [`docs/SERVER_CLIENT_PLAN.md`](docs/SERVER_CLIENT_PLAN.md)) |

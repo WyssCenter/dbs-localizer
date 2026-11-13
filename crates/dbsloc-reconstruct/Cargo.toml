@@ -3,7 +3,7 @@ name = "dbsloc-reconstruct"
 version.workspace = true
 publish = false
 edition = "2021"
-description = "TRAC/CORE, PaCER and native-frame CT reconstruction algorithms (Phase C)"
+description = "TRAC/CORE and native-frame CT reconstruction algorithms and the electrode catalogue (Phase C)"
 license = "GPL-3.0-only"
 
 [lib]

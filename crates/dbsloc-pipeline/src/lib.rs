@@ -90,6 +90,9 @@ pub use crate::checkreg::{
     slide_approved, slide_rejected, PngWriter, ReviewHook, ReviewOutcome, ReviewRequest,
     ReviewSetup, ReviewState,
 };
+pub use crate::ct_recon::{
+    pacer_method_unavailable, pacer_unavailable, PACER_AVAILABLE, PACER_UNAVAILABLE,
+};
 use crate::locks::{
     default_lock_input_paths, lock_allows_skip_with, stage_approval_path, HashMemo,
 };
@@ -450,6 +453,22 @@ fn run_pipeline_with_runner<F: FnMut(&RunEvent)>(
     runner: &StageRunner,
 ) -> u32 {
     let opts = &opts.with_resolved_template();
+    if let Some(msg) = ct_recon::pacer_unavailable(opts) {
+        sink(&RunEvent::StageStarted {
+            stage: Stage::Reconstruct.label().to_owned(),
+        });
+        let failed = emit_stage_failure(
+            &mut sink,
+            Stage::Reconstruct,
+            &error::PipelineError::Message(msg.to_owned()),
+        );
+        sink(&RunEvent::PipelineCompleted {
+            stages_ok: 0,
+            stages_failed: failed,
+            stages_skipped: 0,
+        });
+        return failed;
+    }
     let plan = plan_run(opts);
     let mut ok: u32 = 0;
     let mut failed: u32 = 0;
@@ -1004,6 +1023,50 @@ mod driver_tests {
             ]
         );
         let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[cfg(not(feature = "pacer"))]
+    #[test]
+    fn without_the_pacer_feature_a_pacer_run_fails_before_any_stage() {
+        let opts = RunOptions {
+            recon_method: "pacer".into(),
+            stages: vec![Stage::Preprocess, Stage::Coregister, Stage::Reconstruct],
+            ..RunOptions::new("/no/such/dataset", "1")
+        };
+        static RAN: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+        let counting = |_: &RunOptions,
+                        _: Stage,
+                        _: Option<&mpsc::Sender<RunEvent>>,
+                        _: Option<&AtomicBool>|
+         -> error::PipelineResult<StageOutcome> {
+            RAN.fetch_add(1, Ordering::SeqCst);
+            Ok(approved_outcome())
+        };
+        let mut events = Vec::new();
+        let failed =
+            run_pipeline_with_runner(&opts, |e| events.push(e.clone()), None, None, &counting);
+        assert_eq!(failed, 1);
+        assert_eq!(RAN.load(Ordering::SeqCst), 0);
+        assert!(events.iter().any(|e| matches!(e,
+            RunEvent::StageFailed { stage, message }
+                if stage == Stage::Reconstruct.label() && message == PACER_UNAVAILABLE)));
+        assert!(matches!(
+            events.last(),
+            Some(RunEvent::PipelineCompleted {
+                stages_ok: 0,
+                stages_failed: 1,
+                ..
+            })
+        ));
+        let other = RunOptions {
+            stages: vec![Stage::Coregister],
+            ..opts
+        };
+        let mut events = Vec::new();
+        run_pipeline_with_runner(&other, |e| events.push(e.clone()), None, None, &counting);
+        assert!(!events.iter().any(
+            |e| matches!(e, RunEvent::StageFailed { message, .. } if message == PACER_UNAVAILABLE)
+        ));
     }
 
     #[test]

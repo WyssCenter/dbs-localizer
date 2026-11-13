@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 
 //! PaCER end to end on a synthetic native-space CT with known contact positions.
 //!
@@ -9,9 +9,8 @@
 
 use ndarray::Array3;
 
-use dbsloc_reconstruct::{
-    electrode_by_name, pacer_sides, CtVolume, ElectrodeGeometry, PacerConfig,
-};
+use dbsloc_pacer::{pacer_sides, CtVolume, PacerConfig};
+use dbsloc_reconstruct::{electrode_by_name, ElectrodeGeometry};
 
 const VOX_MM: f64 = 0.5;
 const N: usize = 120;
@@ -200,7 +199,7 @@ fn a_provided_brain_mask_replaces_the_computed_one() {
     let outside = Array3::from_elem((N, N, N), false);
     let none = pacer_sides(&vol, &masked_cfg(outside), Some("Medtronic 3387"));
     assert!(
-        matches!(none, Err(dbsloc_reconstruct::PacerError::NoElectrode)),
+        matches!(none, Err(dbsloc_pacer::PacerError::NoElectrode)),
         "{none:?}"
     );
 }
@@ -214,10 +213,7 @@ fn a_brain_mask_on_another_grid_is_refused() {
     let wrong = Array3::from_elem((20, 20, 19), true);
     let got = pacer_sides(&vol, &masked_cfg(wrong), Some("Medtronic 3387"));
     assert!(
-        matches!(
-            got,
-            Err(dbsloc_reconstruct::PacerError::BrainMaskGrid { .. })
-        ),
+        matches!(got, Err(dbsloc_pacer::PacerError::BrainMaskGrid { .. })),
         "{got:?}"
     );
 }

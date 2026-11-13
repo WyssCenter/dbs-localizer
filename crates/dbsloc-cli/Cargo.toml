@@ -10,8 +10,12 @@ publish = false
 name = "dbsloc"
 path = "src/main.rs"
 
+[features]
+default = ["pacer"]
+pacer = ["dbsloc-pipeline/pacer"]
+
 [dependencies]
-dbsloc-pipeline = { path = "../dbsloc-pipeline" }
+dbsloc-pipeline = { path = "../dbsloc-pipeline", default-features = false }
 dbsloc-checkreg = { path = "../dbsloc-checkreg", features = ["pair"] }
 dbsloc-connectome = { path = "../dbsloc-connectome" }
 clap = { version = "4.6", features = ["derive", "env"] }

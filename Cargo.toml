@@ -6,6 +6,7 @@ resolver = "2"
 exclude = ["crates/dbsloc-web", "fastwarp"]
 members = [
     "crates/dbsloc-reconstruct",
+    "crates/dbsloc-pacer",
     "crates/dbsloc-viz",
     "crates/dbsloc-vat-gpu",
     "crates/dbsloc-pipeline",

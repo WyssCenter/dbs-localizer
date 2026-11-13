@@ -2926,6 +2926,11 @@ pub fn run_reconstruct(
     let resolved = opts_with_prefs_model(sub, opts, tx);
     let opts = resolved.as_ref().unwrap_or(opts);
     let method = opts.recon_method.trim().to_ascii_lowercase();
+    if method == "pacer" && !crate::ct_recon::PACER_AVAILABLE {
+        return Err(recon_err(PipelineError::Message(
+            crate::ct_recon::PACER_UNAVAILABLE.into(),
+        )));
+    }
     let modality = sub.postop_modality.as_deref();
     if modality != Some("CT") {
         if method == "pacer" && modality == Some("MRI") {

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The PaCER electrode reconstruction moved into its own component, `crates/dbsloc-pacer`, licensed under the GNU Affero General Public License, version 3 only (AGPL-3.0-only), like the original PaCER. It is included by default (cargo feature `pacer`), so the programs and release packages are now distributed as a combination of GPL-3.0-only and AGPL-3.0-only code. Building with `--no-default-features` gives a GPL-3.0-only program without PaCER, in which the PaCER method is refused with a message naming the missing feature and shown as unavailable in the application. Reconstruction results are unchanged.
 - Connectomes that need your own data use agreement (PPMI 85, PPMI 74 Patients 15 Controls, MGH-USC HCP 32) are no longer downloaded by the application. Their entries show numbered steps for getting access and the archive; you then import the archive or folder.
 - The dTOR-985 connectomes are downloaded from the authors' figshare records instead of lead-dbs.org.
 
