@@ -744,11 +744,28 @@ pub fn resolve_subject_for(
                     modalities.insert_if_absent(suf.to_owned(), p);
                 }
             } else if e.session == "postop" {
-                let logical = e
+                let entity = |name: &str| {
+                    e.entities
+                        .get(name)
+                        .map(|v| v.as_str().map_or_else(|| v.to_string(), str::to_owned))
+                };
+                let modality = e
                     .entities
                     .get("modality")
-                    .map(|v| v.as_str().map_or_else(|| v.to_string(), str::to_owned))
-                    .unwrap_or_else(|| "CT".to_owned());
+                    .and_then(Value::as_str)
+                    .unwrap_or_default();
+                let logical = if !modality.trim().is_empty() {
+                    modality.to_owned()
+                } else if entity("suffix").is_some_and(|v| v.trim().eq_ignore_ascii_case("CT")) {
+                    "CT".to_owned()
+                } else {
+                    match entity("acq").map(|v| v.trim().to_ascii_lowercase()) {
+                        Some(a) if matches!(a.as_str(), "ax" | "cor" | "sag") => {
+                            format!("{a}_MRI")
+                        }
+                        _ => String::new(),
+                    }
+                };
                 let key = postop_bundle_key(&logical, &file_name(&p));
                 if !postop.contains_key(&key) {
                     indexed_postop.insert(key.clone());
@@ -1315,6 +1332,126 @@ mod tests {
             assert_eq!(sub.postop_modality, None, "{key}");
             let _ = std::fs::remove_dir_all(&root);
         }
+    }
+
+    fn modality_less_row_subject(name: &str, file: &str, entities: Value) -> (PathBuf, Subject) {
+        let root = scratch(name);
+        touch(&root.join("rawdata/sub-1/ses-preop/anat/sub-1_ses-preop_T1w.nii.gz"));
+        touch(&root.join(format!("rawdata/sub-1/ses-postop/anat/{file}")));
+        std::fs::write(
+            root.join("rawdata/sub-1/rawimages.json"),
+            json!([{"path": format!("rawdata/sub-1/ses-postop/anat/{file}"),
+                    "session": "postop", "datatype": "anat",
+                    "entities": entities}])
+            .to_string(),
+        )
+        .unwrap();
+        let sub = resolve_subject_with(&root, "1", true).unwrap();
+        (root, sub)
+    }
+
+    #[test]
+    fn a_modality_less_row_with_acq_ax_is_an_axial_mr() {
+        let (root, sub) = modality_less_row_subject(
+            "nomod_ax_acq",
+            "sub-1_ses-postop_T2w.nii.gz",
+            json!({"suffix": "T2w", "acq": "ax"}),
+        );
+        let keys: Vec<&str> = sub.postop_raw.keys().map(String::as_str).collect();
+        assert_eq!(keys, ["ax_MRI"]);
+        assert!(sub.postop_ct_raw.is_none());
+        assert_eq!(sub.postop_modality.as_deref(), Some("MRI"));
+        assert!(!sub.both_mrct_present);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_modality_less_row_takes_the_mr_orientation_from_its_acq_entity() {
+        let (root, sub) = modality_less_row_subject(
+            "nomod_cor",
+            "sub-1_ses-postop_T2w.nii.gz",
+            json!({"suffix": "T2w", "acq": "cor"}),
+        );
+        let keys: Vec<&str> = sub.postop_raw.keys().map(String::as_str).collect();
+        assert_eq!(keys, ["cor_MRI"]);
+        assert_eq!(sub.postop_modality.as_deref(), Some("MRI"));
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_modality_less_row_with_suffix_ct_is_the_ct() {
+        let (root, sub) = modality_less_row_subject(
+            "nomod_ct",
+            "sub-1_ses-postop_head.nii.gz",
+            json!({"suffix": "CT"}),
+        );
+        let keys: Vec<&str> = sub.postop_raw.keys().map(String::as_str).collect();
+        assert_eq!(keys, ["CT"]);
+        assert!(sub.postop_ct_raw.is_some());
+        assert_eq!(sub.postop_modality.as_deref(), Some("CT"));
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_modality_less_row_without_ct_suffix_or_acq_is_an_axial_mr() {
+        let (root, sub) = modality_less_row_subject(
+            "nomod_plain",
+            "sub-1_ses-postop_T2w.nii.gz",
+            json!({"suffix": "T2w"}),
+        );
+        let keys: Vec<&str> = sub.postop_raw.keys().map(String::as_str).collect();
+        assert_eq!(keys, ["ax_MRI"]);
+        assert!(sub.postop_ct_raw.is_none());
+        assert_eq!(sub.postop_modality.as_deref(), Some("MRI"));
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_null_modality_counts_as_absent() {
+        let (root, sub) = modality_less_row_subject(
+            "nomod_null",
+            "sub-1_ses-postop_head.nii.gz",
+            json!({"modality": null, "suffix": "CT"}),
+        );
+        let keys: Vec<&str> = sub.postop_raw.keys().map(String::as_str).collect();
+        assert_eq!(keys, ["CT"]);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_padded_upper_case_acq_is_matched() {
+        let (root, sub) = modality_less_row_subject(
+            "nomod_padacq",
+            "sub-1_ses-postop_T2w.nii.gz",
+            json!({"suffix": "T2w", "acq": " COR "}),
+        );
+        let keys: Vec<&str> = sub.postop_raw.keys().map(String::as_str).collect();
+        assert_eq!(keys, ["cor_MRI"]);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_lower_case_ct_suffix_is_the_ct() {
+        let (root, sub) = modality_less_row_subject(
+            "nomod_lowct",
+            "sub-1_ses-postop_head.nii.gz",
+            json!({"suffix": "ct"}),
+        );
+        let keys: Vec<&str> = sub.postop_raw.keys().map(String::as_str).collect();
+        assert_eq!(keys, ["CT"]);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn an_empty_modality_counts_as_absent() {
+        let (root, sub) = modality_less_row_subject(
+            "nomod_empty",
+            "sub-1_ses-postop_T2w.nii.gz",
+            json!({"modality": "", "suffix": "T2w", "acq": "sag"}),
+        );
+        let keys: Vec<&str> = sub.postop_raw.keys().map(String::as_str).collect();
+        assert_eq!(keys, ["sag_MRI"]);
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     #[test]
