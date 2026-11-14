@@ -44,6 +44,11 @@ def test_exported_geometry_agrees_with_the_python_model() -> None:
         assert row["level_z_mm"] == pytest.approx(list(layout.level_z_mm)), row[
             "elmodel"
         ]
+        assert row["array_span_mm"] == pytest.approx(layout.array_span_mm), row[
+            "elmodel"
+        ]
+        assert row["tail_level"] == layout.tail_level, row["elmodel"]
+        assert row["segment_arc_deg"] == layout.segment_arc_deg, row["elmodel"]
         assert len(row["contact_xyz_mm"]) == layout.n_contacts, row["elmodel"]
         for got, want in zip(row["contact_xyz_mm"], layout.contact_xyz_mm, strict=True):
             assert got == pytest.approx(list(want)), row["elmodel"]

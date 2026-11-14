@@ -10,8 +10,8 @@
 //!   This yields the shaft *direction* and a centreline, but says nothing about where along
 //!   that line the contacts sit.
 //! * **CORE** answers that by matching the intensity profile sampled along the fitted line
-//!   against the electrode's own metal comb, so `head` is contact 0 and `tail` is the last
-//!   level — not the two ends of whatever the trace happened to cover.
+//!   against the electrode's own metal comb, so `head` is contact 0 and `tail` is the tail
+//!   fiducial level (`specs/09` §2.2) — not the two ends of whatever the trace happened to cover.
 //!
 //! The previous implementation had neither: it split hemispheres at the median *x* of a `> p10`
 //! mask, took one weighted centroid per slice over the whole hemisphere, fitted a line, and
@@ -197,7 +197,7 @@ impl std::fmt::Display for TracError {
 
 impl std::error::Error for TracError {}
 
-/// One side's result. `head` is contact 0, `tail` the most-proximal level centre.
+/// One side's result. `head` is contact 0, `tail` the tail fiducial level centre (`specs/09` §2.2).
 #[derive(Clone, Debug)]
 pub struct TracResult {
     pub head: [f64; 3],
@@ -1241,7 +1241,7 @@ fn core_place(
         deep[1] + u_hat[1] * a_head,
         deep[2] + u_hat[2] * a_head,
     ];
-    let span = e.contact_span_mm();
+    let span = e.fiducial_span_mm();
     let tail = [
         head[0] + u_hat[0] * span,
         head[1] + u_hat[1] * span,

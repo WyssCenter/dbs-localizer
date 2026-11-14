@@ -1,5 +1,5 @@
 {
-  "schema": 1,
+  "schema": 2,
   "generator": "scripts/emit_electrode_geometry.py",
   "source": "dbsloc/electrodes/data/catalogue.json via dbsloc.electrodes.layout",
   "unsupported": [],
@@ -56,7 +56,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 16.0,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "2069-EPC-15C-35",
@@ -180,7 +183,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 51.0,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "Abbott ActiveTip (6142-6145)",
@@ -227,7 +233,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 12.0,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "Abbott ActiveTip (6146-6149)",
@@ -274,7 +283,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 9.0,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "Abbott Directed 6172 (short)",
@@ -313,12 +325,12 @@
           2.0
         ],
         [
-          -0.549926,
+          0.549926,
           -0.3175,
           2.0
         ],
         [
-          0.549926,
+          -0.549926,
           -0.3175,
           2.0
         ],
@@ -328,12 +340,12 @@
           4.0
         ],
         [
-          -0.549926,
+          0.549926,
           -0.3175,
           4.0
         ],
         [
-          0.549926,
+          -0.549926,
           -0.3175,
           4.0
         ],
@@ -345,7 +357,10 @@
       ],
       "is_directed": true,
       "marker_pos_mm": 10.75,
-      "marker_len_mm": 1.5
+      "marker_len_mm": 1.5,
+      "array_span_mm": 7.5,
+      "tail_level": 3,
+      "segment_arc_deg": 90.0
     },
     {
       "elmodel": "Abbott Directed 6173 (long)",
@@ -384,12 +399,12 @@
           3.0
         ],
         [
-          -0.549926,
+          0.549926,
           -0.3175,
           3.0
         ],
         [
-          0.549926,
+          -0.549926,
           -0.3175,
           3.0
         ],
@@ -399,12 +414,12 @@
           6.0
         ],
         [
-          -0.549926,
+          0.549926,
           -0.3175,
           6.0
         ],
         [
-          0.549926,
+          -0.549926,
           -0.3175,
           6.0
         ],
@@ -416,7 +431,10 @@
       ],
       "is_directed": true,
       "marker_pos_mm": 13.75,
-      "marker_len_mm": 1.5
+      "marker_len_mm": 1.5,
+      "array_span_mm": 10.5,
+      "tail_level": 3,
+      "segment_arc_deg": 90.0
     },
     {
       "elmodel": "AdTech BF08R-SP05X",
@@ -491,7 +509,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 36.57,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech BF08R-SP21X",
@@ -566,7 +587,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 37.57,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech BF08R-SP61X",
@@ -641,7 +665,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 40.57,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech BF09R-SP61X-0BB",
@@ -723,7 +750,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 46.57,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech RD06R-SP05X",
@@ -784,7 +814,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 27.29,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech RD08R-SP05X",
@@ -859,7 +892,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 37.29,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech RD10R-SP03X",
@@ -948,7 +984,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 29.29,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech RD10R-SP05X",
@@ -1037,7 +1076,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 47.29,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech RD10R-SP06X",
@@ -1126,7 +1168,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 56.29,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech RD10R-SP07X",
@@ -1215,7 +1260,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 65.29,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech RD10R-SP08X",
@@ -1304,7 +1352,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 74.29,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech SD06R-SP26X",
@@ -1365,7 +1416,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 42.41,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech SD08R-SP05X",
@@ -1440,7 +1494,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 37.41,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech SD10R-SP05X",
@@ -1529,7 +1586,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 47.41,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech SD10R-SP05X Choi",
@@ -1618,7 +1678,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 45.6,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "AdTech SD14R-SP05X",
@@ -1735,7 +1798,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 67.41,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "Aleva directSTIM Directed",
@@ -1830,7 +1896,10 @@
       ],
       "is_directed": true,
       "marker_pos_mm": 13.0,
-      "marker_len_mm": 3.0
+      "marker_len_mm": null,
+      "array_span_mm": 7.5,
+      "tail_level": 3,
+      "segment_arc_deg": 85.0
     },
     {
       "elmodel": "Boston Scientific Vercise",
@@ -1905,7 +1974,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 15.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "Boston Scientific Vercise Cartesia HX",
@@ -2028,7 +2100,10 @@
       ],
       "is_directed": true,
       "marker_pos_mm": 20.0,
-      "marker_len_mm": 3.0
+      "marker_len_mm": 3.0,
+      "array_span_mm": 15.5,
+      "tail_level": 3,
+      "segment_arc_deg": 100.0
     },
     {
       "elmodel": "Boston Scientific Vercise Cartesia X",
@@ -2149,7 +2224,10 @@
       ],
       "is_directed": true,
       "marker_pos_mm": 16.0,
-      "marker_len_mm": 3.0
+      "marker_len_mm": 3.0,
+      "array_span_mm": 11.5,
+      "tail_level": 3,
+      "segment_arc_deg": 100.0
     },
     {
       "elmodel": "Boston Scientific Vercise Directed",
@@ -2220,7 +2298,10 @@
       ],
       "is_directed": true,
       "marker_pos_mm": 11.0,
-      "marker_len_mm": 3.0
+      "marker_len_mm": 3.0,
+      "array_span_mm": 7.5,
+      "tail_level": 3,
+      "segment_arc_deg": 90.0
     },
     {
       "elmodel": "DIXI D08-05AM",
@@ -2274,7 +2355,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 16.0,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "DIXI D08-08AM",
@@ -2349,7 +2433,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 26.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "DIXI D08-10AM",
@@ -2438,7 +2525,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 33.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "DIXI D08-12AM",
@@ -2541,7 +2631,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 40.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "DIXI D08-15AM",
@@ -2665,7 +2758,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 51.0,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "DIXI D08-18AM",
@@ -2810,7 +2906,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 61.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "ELAINE Rat Electrode",
@@ -2836,7 +2935,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 0.1125,
+      "tail_level": 0,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "FHC WU Rat Electrode",
@@ -2862,7 +2964,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 0.25,
+      "tail_level": 0,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "Medtronic 3387",
@@ -2909,7 +3014,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 10.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "Medtronic 3389",
@@ -2956,7 +3064,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 7.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "Medtronic 3391",
@@ -3003,7 +3114,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 24.0,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "Medtronic B33005",
@@ -3074,7 +3188,10 @@
       ],
       "is_directed": true,
       "marker_pos_mm": 14.4,
-      "marker_len_mm": 2.3
+      "marker_len_mm": 2.3,
+      "array_span_mm": 7.5,
+      "tail_level": 3,
+      "segment_arc_deg": 90.0
     },
     {
       "elmodel": "Medtronic B33015",
@@ -3145,7 +3262,10 @@
       ],
       "is_directed": true,
       "marker_pos_mm": 17.4,
-      "marker_len_mm": 2.3
+      "marker_len_mm": 2.3,
+      "array_span_mm": 10.5,
+      "tail_level": 3,
+      "segment_arc_deg": 90.0
     },
     {
       "elmodel": "NeuroPace DL-344-10",
@@ -3192,7 +3312,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 32.0,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "NeuroPace DL-344-3.5",
@@ -3239,7 +3362,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 12.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "NuMed Mini Lead",
@@ -3286,7 +3412,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 3.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PINS Medical L301",
@@ -3333,7 +3462,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 7.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PINS Medical L302",
@@ -3380,7 +3512,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 10.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PINS Medical L303",
@@ -3427,7 +3562,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 24.0,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PMT 2102-04-091",
@@ -3474,7 +3612,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 12.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PMT 2102-06-091",
@@ -3535,7 +3676,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 19.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PMT 2102-08-091",
@@ -3610,7 +3754,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 26.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PMT 2102-10-091",
@@ -3699,7 +3846,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 33.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PMT 2102-12-091",
@@ -3802,7 +3952,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 40.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PMT 2102-14-091",
@@ -3919,7 +4072,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 47.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PMT 2102-16-091",
@@ -4050,7 +4206,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 54.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PMT 2102-16-092",
@@ -4181,7 +4340,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 61.55,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PMT 2102-16-093",
@@ -4312,7 +4474,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 68.45,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PMT 2102-16-131",
@@ -4443,7 +4608,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 54.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "PMT 2102-16-142",
@@ -4574,7 +4742,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 84.95,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SDE-08 S10",
@@ -4663,7 +4834,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 33.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SDE-08 S10 Legacy",
@@ -4752,7 +4926,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 33.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SDE-08 S12",
@@ -4855,7 +5032,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 40.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SDE-08 S12 Legacy",
@@ -4958,7 +5138,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 40.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SDE-08 S14",
@@ -5075,7 +5258,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 47.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SDE-08 S16",
@@ -5206,7 +5392,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 54.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SDE-08 S16 Legacy",
@@ -5337,7 +5526,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 54.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SDE-08 S8",
@@ -5412,7 +5604,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 26.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SDE-08 S8 Legacy",
@@ -5487,7 +5682,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 26.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SceneRay SR1200",
@@ -5534,7 +5732,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 7.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SceneRay SR1202",
@@ -5609,7 +5810,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 15.5,
+      "tail_level": 7,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SceneRay SR1210",
@@ -5656,7 +5860,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 10.5,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SceneRay SR1211",
@@ -5703,7 +5910,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 9.0,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SceneRay SR1212",
@@ -5778,7 +5988,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 22.5,
+      "tail_level": 7,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SceneRay SR1242",
@@ -5825,7 +6038,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 22.0,
+      "tail_level": 3,
+      "segment_arc_deg": null
     },
     {
       "elmodel": "SmartFlow Cannula NGS-NC-06",
@@ -5858,7 +6074,10 @@
       ],
       "is_directed": false,
       "marker_pos_mm": null,
-      "marker_len_mm": null
+      "marker_len_mm": null,
+      "array_span_mm": 13.0,
+      "tail_level": 1,
+      "segment_arc_deg": null
     }
   ]
 }

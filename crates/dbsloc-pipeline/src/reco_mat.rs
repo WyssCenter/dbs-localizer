@@ -22,9 +22,8 @@ use crate::version::{utc_now_rfc3339, version_string, PRODUCT};
 
 pub const RECO_VARIABLE: &str = "reco";
 pub const PROVENANCE_VARIABLE: &str = "dbsloc_provenance";
-pub const MAT_TRAJECTORY_POINTS: usize = 50;
+pub const MAT_TRAJECTORY_POINTS: usize = dbsloc_reconstruct::TRAJECTORY_POINTS;
 const RADIUS_TOLERANCE_MM: f64 = 1e-6;
-const TRAJECTORY_PAST_HEAD_MM: f64 = 5.0;
 const ROLL_DETERMINED: [&str; 3] = ["resolved", "ambiguous", "manual"];
 const MARKER_FIELDS: [&str; 4] = ["head", "tail", "x", "y"];
 const HEMISPHERES: [&str; 2] = ["right", "left"];
@@ -81,22 +80,14 @@ fn model_name<'a>(reco: &'a Value, key: &str) -> Option<&'a str> {
 }
 
 /// Trajectory of `specs/12` §4: 50 points from `head − 5·û` to `tail + k·span·û`, where span is
-/// the catalogue's contact span and `k = 1.5` for models with more than 8 levels, else 2.
+/// the catalogue array span (`specs/09` §2.2) and `k = 1.5` for models with more than 8
+/// levels, else 2.
 pub fn synthesize_trajectory(
     head: [f64; 3],
     tail: [f64; 3],
     electrode: &ElectrodeGeometry,
 ) -> Option<Vec<[f64; 3]>> {
-    let u = unit(sub3(tail, head))?;
-    let k = if electrode.n_levels() > 8 { 1.5 } else { 2.0 };
-    let a1 = sub3(head, scale3(u, TRAJECTORY_PAST_HEAD_MM));
-    let a2 = add3(tail, scale3(u, k * electrode.contact_span_mm()));
-    let last = (MAT_TRAJECTORY_POINTS - 1) as f64;
-    Some(
-        (0..MAT_TRAJECTORY_POINTS)
-            .map(|i| add3(a1, scale3(sub3(a2, a1), i as f64 / last)))
-            .collect(),
-    )
+    electrode.trajectory(head, tail)
 }
 
 fn at_radius(
@@ -331,6 +322,10 @@ pub fn reco_mat_from_json(
     source_json: &str,
     written_at: &str,
 ) -> Result<RecoMat, String> {
+    let mut converted = reco.clone();
+    let tail_conversions =
+        dbsloc_reconstruct::tail_fiducial::convert_legacy_tail(&mut converted, None);
+    let reco = &converted;
     let root = reco
         .as_object()
         .ok_or("reco_mat: the reconstruction JSON root must be an object")?;
@@ -411,7 +406,7 @@ pub fn reco_mat_from_json(
         .next()
         .map(|e| e.elmodel.clone())
         .unwrap_or_default();
-    let mut warnings = Vec::new();
+    let mut warnings: Vec<String> = tail_conversions.into_iter().map(|c| c.warning).collect();
     let props = (0..sides)
         .map(|index| match (keys[index].as_deref(), electrodes[index]) {
             (Some(key), Some(e)) => vec![
@@ -554,7 +549,7 @@ mod tests {
 
     fn geometry(model: &str, head: [f64; 3], tilt: [f64; 3], anterior: [f64; 3]) -> SideGeometry {
         let e = electrode_by_name(model).unwrap();
-        let tail = add3(head, scale3(unit3(tilt), e.contact_span_mm()));
+        let tail = add3(head, scale3(unit3(tilt), e.fiducial_span_mm()));
         let u = unit3(sub3(tail, head));
         let y = unit3(sub3(anterior, scale3(u, dot3(anterior, u))));
         let x = cross3(y, u);
@@ -918,7 +913,7 @@ mod tests {
         let traj = rows(native.field("trajectory", 0).unwrap().item(0).unwrap());
         assert_eq!(traj.len(), MAT_TRAJECTORY_POINTS);
         let a1 = sub3(h, scale3(u, 5.0));
-        let a2 = add3(t, scale3(u, 2.0 * e.contact_span_mm()));
+        let a2 = add3(t, scale3(u, 2.0 * e.array_span_mm()));
         assert!(close(&[traj[0], traj[49]], &[a1, a2], 1e-9));
     }
 
@@ -927,17 +922,59 @@ mod tests {
         let e = electrode_by_name(BOSTON).unwrap();
         assert!(e.n_levels() <= 8);
         let traj = synthesize_trajectory([0.0; 3], [0.0, 0.0, 6.0], e).unwrap();
-        let end = 6.0 + 2.0 * e.contact_span_mm();
+        let end = 6.0 + 2.0 * 7.5;
         assert!((traj[49][2] - end).abs() < 1e-12);
         assert!((traj[0][2] + 5.0).abs() < 1e-12);
-        if let Some(long) = dbsloc_reconstruct::electrode_model_names()
+        let hx = electrode_by_name("Boston Scientific Vercise Cartesia HX").unwrap();
+        assert_eq!(hx.n_levels(), 8);
+        let traj = synthesize_trajectory([0.0; 3], [0.0, 0.0, 6.0], hx).unwrap();
+        assert!((traj[49][2] - (6.0 + 2.0 * 15.5)).abs() < 1e-9);
+        let long = dbsloc_reconstruct::electrode_model_names()
             .into_iter()
             .filter_map(electrode_by_name)
             .find(|m| m.n_levels() > 8)
-        {
-            let traj = synthesize_trajectory([0.0; 3], [0.0, 0.0, 6.0], long).unwrap();
-            assert!((traj[49][2] - (6.0 + 1.5 * long.contact_span_mm())).abs() < 1e-9);
+            .unwrap();
+        let traj = synthesize_trajectory([0.0; 3], [0.0, 0.0, 6.0], long).unwrap();
+        assert!((traj[49][2] - (6.0 + 1.5 * long.array_span_mm())).abs() < 1e-9);
+    }
+
+    #[test]
+    fn reco_mat_converts_an_old_convention_tail_on_read() {
+        const HX: &str = "Boston Scientific Vercise Cartesia HX";
+        let e = electrode_by_name(HX).unwrap();
+        let mut reco = bilateral();
+        let n1 = geometry(HX, [22.0, -4.0, 30.0], [0.1, 0.2, 1.0], [0.3, 1.0, 0.1]);
+        let m1 = geometry(HX, [12.0, -13.0, -8.0], [0.2, 0.3, 1.0], [0.3, 1.0, 0.0]);
+        let mut heads = Vec::new();
+        for (block, g) in [("native", &n1), ("mni", &m1)] {
+            let mut side = side_json(g);
+            let u = unit3(sub3(g.tail, g.head));
+            side["markers"]["tail"] = json!(add3(g.head, scale3(u, e.last_level_span_mm())));
+            reco[block]["1"] = side;
+            heads.push((g.head, u));
         }
+        reco["props"]["1"]["elmodel"] = json!(HX);
+        assert!(reco["meta"].get("tail_fiducial").is_none());
+        let out = export(&reco);
+        assert!(
+            out.warnings.iter().any(|w| w
+                == "dbsloc: warning: reconstruction: side 1: tail marker moved from the last to the 4th contact level (file written before 2026-11-14)"),
+            "{:?}",
+            out.warnings
+        );
+        let var = reco_var(&out);
+        for (block, (head, u)) in ["native", "mni"].into_iter().zip(heads) {
+            let tail = marker(var.field(block, 0).unwrap(), 0, "tail");
+            let want = add3(head, scale3(u, 6.0));
+            assert!(
+                close(&[tail], &[want], 1e-9),
+                "{block}: {tail:?} vs {want:?}"
+            );
+        }
+        assert_eq!(
+            reco["native"]["1"]["markers"]["tail"],
+            json!(add3(n1.head, scale3(unit3(sub3(n1.tail, n1.head)), 14.0)))
+        );
     }
 
     #[test]

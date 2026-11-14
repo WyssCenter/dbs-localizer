@@ -174,8 +174,7 @@ impl PlaneFrame {
 }
 
 pub(crate) fn trajectory_extension_mm(electrode: &ElectrodeGeometry) -> f64 {
-    let k = if electrode.n_contacts > 8 { 1.5 } else { 2.0 };
-    k * electrode.contact_span_mm().max(0.0)
+    electrode.trajectory_extension_mm()
 }
 
 /// The plane through the lead axis and world x (seen from anterior) or world y (seen from the
@@ -289,7 +288,7 @@ pub(crate) fn catalogue_spacing_mm(electrode: &ElectrodeGeometry) -> Option<f64>
     if n < 2 {
         return None;
     }
-    let s = electrode.contact_span_mm() / (n - 1) as f64;
+    let s = electrode.last_level_span_mm() / (n - 1) as f64;
     (s.is_finite() && s > 0.0).then_some(s)
 }
 

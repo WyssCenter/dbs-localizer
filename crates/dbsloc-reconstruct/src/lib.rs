@@ -14,11 +14,13 @@ mod percentile;
 mod plausibility;
 mod ring;
 pub mod sampling;
+pub mod tail_fiducial;
 mod trac;
 
 pub use composite::{composite_mean_3d, CompositeError};
 pub use electrode_catalog::{
     by_name as electrode_by_name, model_names as electrode_model_names, ElectrodeGeometry,
+    TRAJECTORY_POINTS,
 };
 pub use kabsch::{apply_rigid_r_rows, estimate_rigid_kabsch, KabschError};
 pub use math::{add3, cross3, norm3, scale3, sub3, unit3, unit3_or};

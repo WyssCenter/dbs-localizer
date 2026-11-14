@@ -6,7 +6,8 @@ Emit the resolved electrode geometry that ``dbsloc-reconstruct`` embeds.
 
 The Rust reconstruct path needs the same per-contact model coordinates the Python path builds,
 but the derivation lives in :mod:`dbsloc.electrodes.archetypes` and
-:mod:`dbsloc.electrodes.layout` (spacing overrides, ``etageidx`` archetypes, segment azimuths).
+:mod:`dbsloc.electrodes.layout` (spacing overrides, ``etageidx`` archetypes, segment azimuths,
+array span, tail fiducial level, segment arc).
 Rather than port that to Rust and let the two drift, the derivation runs once here and the
 result is checked in as data. ``tests/test_electrode_geometry_export.py`` regenerates it and
 fails on any difference, so a catalogue or layout change that is not re-emitted breaks the
@@ -72,10 +73,17 @@ def build_payload() -> dict[str, Any]:
                 "marker_len_mm": (
                     None if layout.marker_len_mm is None else _r(layout.marker_len_mm)
                 ),
+                "array_span_mm": _r(layout.array_span_mm),
+                "tail_level": layout.tail_level,
+                "segment_arc_deg": (
+                    None
+                    if layout.segment_arc_deg is None
+                    else _r(layout.segment_arc_deg)
+                ),
             }
         )
     return {
-        "schema": 1,
+        "schema": 2,
         "generator": "scripts/emit_electrode_geometry.py",
         "source": "dbsloc/electrodes/data/catalogue.json via dbsloc.electrodes.layout",
         "unsupported": unsupported,
@@ -105,7 +113,7 @@ def main() -> int:
         print(f"{args.out} up to date")
         return 0
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(text, encoding="utf-8")
+    args.out.write_text(text, encoding="utf-8", newline="\n")
     print(f"wrote {args.out}")
     return 0
 

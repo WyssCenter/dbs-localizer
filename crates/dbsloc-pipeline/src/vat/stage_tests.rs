@@ -50,7 +50,7 @@ fn small_params() -> VatParams {
 fn markers(head: [f64; 3]) -> Value {
     let model = electrode_by_name(MODEL).unwrap();
     let r = 0.5 * model.lead_diameter_mm;
-    let tail = [head[0], head[1], head[2] + model.contact_span_mm()];
+    let tail = [head[0], head[1], head[2] + model.fiducial_span_mm()];
     json!({
         "head": head,
         "tail": tail,
@@ -688,6 +688,34 @@ fn the_up_to_date_check_follows_the_settings_and_the_stats_atlas() {
     let mut forced = opts.clone();
     forced.overwrite_approved = true;
     assert_eq!(token(&run(&fx, &forced)), "ok:vat:1/1");
+}
+
+#[test]
+fn a_changed_or_missing_electrode_geometry_recomputes_the_vta() {
+    let fx = fixture("geometry", true, true);
+    let s = stimulation("geo", ModelKind::Kuncel, Side::Right, Mode::Voltage, 3.0, 2);
+    save(&fx, &s);
+    let opts = options(&fx);
+    assert_eq!(token(&run(&fx, &opts)), "ok:vat:1/1");
+    assert_eq!(token(&run(&fx, &opts)), "ok:vat:0/1");
+    let dir = label_dir_of(&fx, "native", "geo");
+    let sidecar = std::fs::read_dir(&dir)
+        .unwrap()
+        .flatten()
+        .map(|e| e.path())
+        .find(|p| p.to_string_lossy().ends_with("desc-vta.json"))
+        .expect("native sidecar");
+    let mut rec = json_of(&sidecar);
+    assert!(rec["electrode_geometry"]["right"]["segment_arc_deg"].is_null());
+    assert!(rec["electrode_geometry"]["right"]["contact_xyz_mm"].is_array());
+    rec.as_object_mut().unwrap().remove("electrode_geometry");
+    std::fs::write(&sidecar, serde_json::to_string_pretty(&rec).unwrap()).unwrap();
+    assert_eq!(token(&run(&fx, &opts)), "ok:vat:1/1");
+    assert_eq!(token(&run(&fx, &opts)), "ok:vat:0/1");
+    let mut rec = json_of(&sidecar);
+    rec["electrode_geometry"]["right"]["contact_level"] = json!([0, 1, 1, 1]);
+    std::fs::write(&sidecar, serde_json::to_string_pretty(&rec).unwrap()).unwrap();
+    assert_eq!(token(&run(&fx, &opts)), "ok:vat:1/1");
 }
 
 #[test]

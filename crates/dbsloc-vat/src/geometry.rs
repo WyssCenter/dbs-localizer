@@ -16,7 +16,7 @@ pub const INSULATION: u16 = 1;
 /// Class code of contact 0; contact `k` is `CONTACT_BASE + k`.
 pub const CONTACT_BASE: u16 = 2;
 
-const SEGMENT_HALF_ARC: f64 = std::f64::consts::FRAC_PI_4;
+const DEFAULT_SEGMENT_ARC_DEG: f64 = 90.0;
 const SEGMENT_INNER_FACTOR: f64 = 0.5;
 const MAX_CELL_WIDTH_MM: f64 = 6.0;
 
@@ -113,7 +113,7 @@ impl LeadFrame {
                 (ex, cross(ez, ex))
             }
         };
-        let span = model.contact_span_mm();
+        let span = model.fiducial_span_mm();
         let stretch = if span.is_finite() && span > 1e-6 && len.is_finite() {
             len / span
         } else {
@@ -186,6 +186,7 @@ pub enum Body {
 #[derive(Clone, Debug)]
 pub struct LeadBody {
     radius: f64,
+    segment_half_arc: f64,
     apex_z: f64,
     dome_len: f64,
     contacts: Vec<ContactShape>,
@@ -303,8 +304,14 @@ impl LeadBody {
             .iter()
             .map(|c| c.z_hi)
             .fold(f64::NEG_INFINITY, f64::max);
+        let segment_half_arc = 0.5
+            * model
+                .segment_arc_deg()
+                .unwrap_or(DEFAULT_SEGMENT_ARC_DEG)
+                .to_radians();
         Ok(Self {
             radius,
+            segment_half_arc,
             apex_z,
             dome_len,
             contacts,
@@ -347,7 +354,7 @@ impl LeadBody {
                     if d > std::f64::consts::PI {
                         d = 2.0 * std::f64::consts::PI - d;
                     }
-                    if d <= SEGMENT_HALF_ARC {
+                    if d <= self.segment_half_arc {
                         return Material::Contact(k);
                     }
                 }

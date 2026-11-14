@@ -14,7 +14,7 @@ const DIRECTED: &str = "Boston Scientific Vercise Directed";
 fn side_json(model: &str, head: [f64; 3]) -> serde_json::Value {
     let g = electrode_by_name(model).unwrap();
     let r = 0.5 * g.lead_diameter_mm;
-    let tail = [head[0], head[1], head[2] + g.contact_span_mm()];
+    let tail = [head[0], head[1], head[2] + g.fiducial_span_mm()];
     let contacts: Vec<[f64; 3]> = g
         .contact_xyz_mm
         .iter()

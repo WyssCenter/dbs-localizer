@@ -10,6 +10,7 @@
 //! the volume that was traced. Anything that passes is not necessarily correct, but anything
 //! that fails is certainly not a reconstruction.
 
+use crate::electrode_catalog::ElectrodeGeometry;
 use crate::math::{norm3, sub3};
 
 /// World-space axis-aligned bounds of the traced volume, in mm.
@@ -84,7 +85,7 @@ impl WorldBounds {
 /// the axial pitch and reject every directional lead.
 #[derive(Clone, Debug)]
 pub struct PlausibilityLimits {
-    /// Expected `‖tail − head‖`, i.e. the distal-to-proximal level span.
+    /// Expected `‖tail − head‖`, i.e. the head-to-tail fiducial span (`specs/09` §2.2).
     pub expected_span_mm: f64,
     /// Allowed absolute deviation of the measured head→tail span.
     pub span_tol_mm: f64,
@@ -102,18 +103,20 @@ impl PlausibilityLimits {
     #[cfg(test)]
     fn for_levels(n_levels: usize, eldist_mm: f64, lead_diameter_mm: f64) -> Self {
         let z: Vec<f64> = (0..n_levels.max(1)).map(|i| i as f64 * eldist_mm).collect();
-        Self::for_level_z(&z, lead_diameter_mm)
+        let span = z.last().copied().unwrap_or(0.0);
+        Self::for_level_z(&z, span, lead_diameter_mm)
+    }
+
+    pub fn for_electrode(e: &ElectrodeGeometry) -> Self {
+        Self::for_level_z(&e.level_z_mm, e.fiducial_span_mm(), e.lead_diameter_mm)
     }
 
     /// Pitch tolerance stays below half the 3387/3389 pitch difference (3.0 vs 2.0 mm), so a
     /// lead reconstructed with the wrong model does not pass as the right one. Leads with
     /// non-uniform gaps carry one expected pitch per gap; the tolerance follows the smallest.
-    pub fn for_level_z(level_z_mm: &[f64], lead_diameter_mm: f64) -> Self {
+    pub fn for_level_z(level_z_mm: &[f64], expected_span_mm: f64, lead_diameter_mm: f64) -> Self {
         let pitches: Vec<f64> = level_z_mm.windows(2).map(|w| w[1] - w[0]).collect();
-        let span = match (level_z_mm.first(), level_z_mm.last()) {
-            (Some(a), Some(b)) => b - a,
-            _ => 0.0,
-        };
+        let span = expected_span_mm;
         let pitch_ref = pitches.iter().copied().fold(f64::INFINITY, f64::min);
         let pitch_ref = if pitch_ref.is_finite() {
             pitch_ref
@@ -266,7 +269,7 @@ pub fn check_side(
     if d_span > limits.span_tol_mm {
         bad.push(format!(
             "head→tail span {:.2} mm deviates {:.2} mm from model span {:.2} mm (tol {:.2}); \
-             head/tail are probably centreline extremes, not the distal / proximal level centres",
+             head/tail are probably centreline extremes, not the head / tail fiducial level centres",
             span, d_span, limits.expected_span_mm, limits.span_tol_mm
         ));
     }
@@ -620,9 +623,9 @@ mod tests {
     #[test]
     fn directional_lead_passes_with_levels_and_fails_without() {
         let e = crate::electrode_by_name("Boston Scientific Vercise Directed").expect("catalogued");
-        let l = PlausibilityLimits::for_level_z(&e.level_z_mm, e.lead_diameter_mm);
+        let l = PlausibilityLimits::for_electrode(e);
         let head = [0.0, 0.0, 0.0];
-        let tail = [0.0, 0.0, e.contact_span_mm()];
+        let tail = [0.0, 0.0, e.fiducial_span_mm()];
         let contacts: Vec<[f64; 3]> = e.contact_xyz_mm.clone();
 
         let bad = check_side(head, tail, &contacts, Some(&e.contact_level), &l, None);
@@ -639,12 +642,12 @@ mod tests {
     #[test]
     fn contact_off_the_shaft_axis_is_rejected() {
         let e = crate::electrode_by_name("Boston Scientific Vercise Directed").expect("catalogued");
-        let l = PlausibilityLimits::for_level_z(&e.level_z_mm, e.lead_diameter_mm);
+        let l = PlausibilityLimits::for_electrode(e);
         let mut contacts = e.contact_xyz_mm.clone();
         contacts[1][0] += 4.0;
         let bad = check_side(
             [0.0, 0.0, 0.0],
-            [0.0, 0.0, e.contact_span_mm()],
+            [0.0, 0.0, e.fiducial_span_mm()],
             &contacts,
             Some(&e.contact_level),
             &l,
@@ -778,7 +781,7 @@ mod tests {
     #[test]
     fn non_uniform_gaps_use_per_gap_pitches() {
         let e = crate::electrode_by_name("AdTech BF08R-SP21X").expect("catalogued");
-        let l = PlausibilityLimits::for_level_z(&e.level_z_mm, e.lead_diameter_mm);
+        let l = PlausibilityLimits::for_electrode(e);
         assert!(l.expected_pitches_mm.len() >= 2);
         assert!(
             (l.expected_pitches_mm[0] - l.expected_pitches_mm[1]).abs() > 1.0,
@@ -786,9 +789,14 @@ mod tests {
             l.expected_pitches_mm
         );
         let contacts: Vec<[f64; 3]> = e.contact_xyz_mm.clone();
+        let tail = contacts[e
+            .contact_level
+            .iter()
+            .position(|&lv| lv == e.tail_level())
+            .expect("tail level contact")];
         let bad = check_side(
             contacts[0],
-            contacts[contacts.len() - 1],
+            tail,
             &contacts,
             Some(&e.contact_level),
             &l,

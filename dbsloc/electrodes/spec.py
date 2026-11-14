@@ -30,6 +30,8 @@ class ElectrodeSpec:
     etageidx: tuple[tuple[int, ...], ...]
     markerpos: float | None
     markerlen: float | None
+    tail_level: int
+    segment_arc_deg: float | None
 
 
 __all__ = ["ElectrodeSpec"]

@@ -686,6 +686,7 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "dbsloc-checkreg",
+ "dbsloc-reconstruct",
  "fastwarp-core",
  "flate2",
  "glam 0.33.12",

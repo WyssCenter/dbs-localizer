@@ -390,7 +390,10 @@ impl RecoV2 {
 
     pub fn read(path: &Path) -> Result<RecoV2, String> {
         let raw = std::fs::read(path).map_err(|e| e.to_string())?;
-        let v: Value = serde_json::from_slice(&raw).map_err(|e| e.to_string())?;
+        let mut v: Value = serde_json::from_slice(&raw).map_err(|e| e.to_string())?;
+        for c in dbsloc_reconstruct::tail_fiducial::convert_legacy_tail(&mut v, None) {
+            eprintln!("{}: {}", path.display(), c.warning);
+        }
         RecoV2::from_value(&v)
     }
 }

@@ -25,9 +25,9 @@
 | Topic | Canonical path |
 | ----- | -------------- |
 | Phase B specs | `specs/00_overview.md` … `specs/10_pacer.md`, `specs/09_electrode_models.md` |
-| VTA / E-field from stimulation settings (`vat` stage: stimulation-settings JSON ↔ Lead-DBS `S`, native-space E-field engine, analytical models, Lead-DBS-compatible outputs, atlas statistics; rewritten 2026-10-23, implementation pending) | `specs/07_vat.md`; owner decisions `specs/14_lead_group.md` §15 |
-| Lead Group (group record ↔ Lead Group `M`, `ea_stats`, batch *Calculate*, group 3D view, atlas tables, sweet spots, fibre filtering, network mapping, clinical variables; 2026-10-23, implementation pending) | `specs/14_lead_group.md` |
-| Normative connectomes (catalogue, licences, polite download, Lead-DBS formats, structural / functional seed maps, per-fibre values; 2026-10-23, implementation pending) | `specs/15_connectomes.md` |
+| VTA / E-field from stimulation settings (`vat` stage: stimulation-settings JSON ↔ Lead-DBS `S`, native-space E-field engine, analytical models, Lead-DBS-compatible outputs, atlas statistics; rewritten 2026-10-23, partly implemented, status §12 row 9) | `specs/07_vat.md`; owner decisions `specs/14_lead_group.md` §15 |
+| Lead Group (group record ↔ Lead Group `M`, `ea_stats`, batch *Calculate*, group 3D view, atlas tables, sweet spots, fibre filtering, network mapping, clinical variables; 2026-10-23, partly implemented, status §12 row 12) | `specs/14_lead_group.md` |
+| Normative connectomes (catalogue, licences, polite download, Lead-DBS formats, structural / functional seed maps, per-fibre values; 2026-10-23, partly implemented, status §12 row 13) | `specs/15_connectomes.md` |
 | Vendor session reports (Medtronic Percept PDF import: generic record, anonymisation with a patient-constant date shift, stimulation labels, CLI / GUI; 2026-10-23) | `specs/16_session_reports.md`; measured Medtronic layout `specs/16a_medtronic_percept_layout.md` |
 | Data of an existing Lead-DBS installation (first-start question, scan of atlases and connectomes with sizes, use in place or copy; `dbsloc leaddbs scan` / `copy`; 2026-11-10) | `specs/17_leaddbs_data_import.md` |
 | Checkreg / `gencheckregpair` / scroll viewer | `specs/03_coregistration.md` §12; interactive NIfTI QC `specs/08_addendum_interactive_volume_viewer.md` |
@@ -81,7 +81,7 @@ The original source (a local checkout of [netstim/leaddbs](https://github.com/ne
 
 ### Non-goals (for now)
 
-- Lead Group features (VTA from stimulation settings, group analyses, connectomes): in scope since 2026-10-23, specs `07` / `14` / `15`, implementation pending; Lead-Connectome tractography and Lead-OR remain non-goals
+- Lead Group features (VTA from stimulation settings, group analyses, connectomes): in scope since 2026-10-23, specs `07` / `14` / `15`, partly implemented (§12 rows 9, 12, 13); Lead-Connectome tractography and Lead-OR remain non-goals
 - Lead-Connectome (fiber tractography pipeline)
 - Lead-OR (intraoperative platform)
 - Any GUI replication (CLI + library API first)

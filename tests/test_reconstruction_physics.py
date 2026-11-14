@@ -42,6 +42,8 @@ def test_reco_v2_json_roundtrip(tmp_path) -> None:
     write_recon_json_v2(p, r)
     r2 = read_recon_json_v2(p)
     assert r2.mni[SIDE_RIGHT]["markers"]["head"] == mni[SIDE_RIGHT]["markers"]["head"]
+    assert r2.meta["tail_fiducial"] == "fourth_level"
+    assert r.meta == {}
 
 
 def test_side_keys_follow_specs_09_right_first() -> None:

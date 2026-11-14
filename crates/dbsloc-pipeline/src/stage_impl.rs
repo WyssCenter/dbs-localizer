@@ -3348,6 +3348,7 @@ fn write_reconstruction(
         crate::manual_correction::restore_kept_reference(&mut reco, k);
     }
     stamp_reconstruction_provenance(sub, opts, &mut reco);
+    dbsloc_reconstruct::tail_fiducial::mark_tail_fiducial(&mut reco);
     let reco = &reco;
     write_replacing(
         &out_path,
@@ -3419,12 +3420,12 @@ fn reconstruct_template(
     log(
         tx,
         format!(
-            "[reconstruct] electrode {}: {} contacts in {} level(s), pitch {:.2} mm, span {:.2} mm",
+            "[reconstruct] electrode {}: {} contacts in {} level(s), pitch {:.2} mm, head-to-tail span {:.2} mm",
             electrode.elmodel,
             electrode.n_contacts,
             electrode.n_levels(),
             electrode.eldist_mm,
-            electrode.contact_span_mm()
+            electrode.fiducial_span_mm()
         ),
     );
 
@@ -3464,7 +3465,7 @@ fn reconstruct_template(
         sides.push((label, key, geometry));
     }
 
-    let limits = PlausibilityLimits::for_level_z(&electrode.level_z_mm, electrode.lead_diameter_mm);
+    let limits = PlausibilityLimits::for_electrode(electrode);
     let (ni, nj, nk) = lpost.dim();
     let bounds = WorldBounds::from_grid(&aff, ni, nj, nk, 0.0);
     let mut problems: Vec<String> = Vec::new();

@@ -146,7 +146,7 @@ After *Reconstruct*, the Reconstruct card shows one line per lead: whether it wa
 
 Click *Refine localization* on the Reconstruct card. The view shows the post-operative scan in planes along the lead, with the lead model drawn on top.
 
-- Select the deepest contact with `H` (*Head*) or the top end of the contact array with `T` (*Tail*), then drag it, or move it with the arrow keys (0.25 mm per press; with `Shift` 1 mm, with `Ctrl` 0.05 mm).
+- Select the deepest contact with `H` (*Head*) or the tail contact with `T` (*Tail*: the 4th contact level from the bottom, or the top level on leads with fewer levels), then drag it, or move it with the arrow keys (0.25 mm per press; with `Shift` 1 mm, with `Ctrl` 0.05 mm).
 - *Keep lead length* (`K`) keeps the distance between head and tail fixed.
 - For directional leads, set the *Roll* with the slider or `[` / `]`. *Flip 180°* and *Other candidate* switch between the orientations the automatic estimate found; *Automatic* returns to the estimate.
 - *Accept side* (`Space`) marks a lead as checked without changing it.
@@ -229,7 +229,7 @@ dbsloc run my-study 01 --stages vat --vat-labels <label>  # compute the VTA
 
 The session report PDF that a Medtronic Percept PC or RC programmer saves contains the stimulation settings, impedances and events. Wyss DBS Localizer reads it and turns its stimulation groups into stimulation settings, so you do not have to type them in.
 
-Choose *Import… → Session report (PDF)…* in the header (a subject must be open), or *Import from session report…* on the *Volume of activated tissue* card. You can select several PDFs. The *Import session report* window shows, for each file, the session date, the device, the leads and the groups.
+Choose *Import… → Session report (PDF)…* in the header (a subject must be open), or *Import session report…* on the *Volume of activated tissue* card. You can select several PDFs. The *Import session report* window shows, for each file, the session date, the device, the leads and the groups.
 
 - *Anonymise* removes the name, patient id, notes and device serial number, and moves every date by the same random number of days (at most 30) for this patient. The time of day, all stimulation values, impedances and events are kept.
 - *Create stimulation settings from* chooses the settings at the start (*Initial*) or end (*Final*) of the session, *Both*, or *None*.
@@ -444,7 +444,7 @@ Approving a registration in the review records your verdict in the step's log; i
    ```
 
    Only the template-space (MNI) coordinates of the two lead ends and of a point marking the orientation, for the 10 tutorial patients, are sent; no images, names or other data. The upload goes to port 8000 of `tutor.lead-dbs.org`; some institutional networks block that port.
-5. **Read the result.** The feedback page (`http://tutor.lead-dbs.org/?userid=<your-id>`) opens in the browser. It shows, for each patient and lead, how far your lead is from the expert's. The service measures two distances per lead: at the deepest contact (head) and at the top of the contact array (tail). The accuracy in the README is, for each lead, the average of these two distances, averaged over all 20 leads.
+5. **Read the result.** The feedback page (`http://tutor.lead-dbs.org/?userid=<your-id>`) opens in the browser. It shows, for each patient and lead, how far your lead is from the expert's. The service measures two distances per lead: at the deepest contact level (head) and at the 4th contact level (tail; the top level of the 4-level leads in the Lead-Tutor cohort). The accuracy in the README is, for each lead, the average of these two distances, averaged over all 20 leads.
 
 The team's own upload of the version described in the README scored 1.15 mm on this measure. Small differences between computers and graphics cards are expected.
 

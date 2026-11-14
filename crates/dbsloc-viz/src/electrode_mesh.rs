@@ -6,7 +6,8 @@
 //! Lead-DBS ships its contact meshes under **GPL-3.0**; this project does not copy Lead-DBS
 //! material into its code (`AGENTS.md` §9). This module therefore derives a lead from the
 //! catalogue scalars instead: the shaft is a cylinder, each contact is a band (a full ring for
-//! ring contacts, a 120° arc for the segments of a directional level) and the tip is a rounded cap.
+//! ring contacts, an arc of the catalogue `segment_arc_deg` for the segments of a directional
+//! level, `specs/09` §2.2) and the tip is a rounded cap.
 //!
 //! The mesh is built in the lead's local model frame (`+z` proximal, origin at the most-distal
 //! **level** centre — [`ElectrodeGeometry::level_z_mm`]`[0] == 0`) and then mapped into world
@@ -48,8 +49,7 @@ impl ElectrodeMeshGroup {
 
 /// How finely each ring is tessellated around the shaft.
 const RADIAL_SEGMENTS: usize = 24;
-/// A directional level carries three segments; `specs/09` §10 fixes each at 120°.
-const SEGMENT_ARC: f32 = TAU / 3.0;
+const DEFAULT_SEGMENT_ARC_DEG: f64 = 90.0;
 /// Contacts sit slightly proud of the insulation so the two surfaces do not z-fight.
 const CONTACT_OUTER_FACTOR: f32 = 1.06;
 /// Inner radius of a directional pad, as a fraction of the lead radius.
@@ -303,10 +303,14 @@ impl Builder {
     }
 }
 
+fn segment_arc_rad(geom: &ElectrodeGeometry) -> f32 {
+    geom.segment_arc_deg()
+        .unwrap_or(DEFAULT_SEGMENT_ARC_DEG)
+        .to_radians() as f32
+}
+
 fn axial_stretch(geom: &ElectrodeGeometry, world_span: f32) -> f32 {
-    let lo = geom.level_z_mm.iter().copied().fold(f64::MAX, f64::min);
-    let hi = geom.level_z_mm.iter().copied().fold(f64::MIN, f64::max);
-    let span = (hi - lo) as f32;
+    let span = geom.fiducial_span_mm() as f32;
     let s = world_span / span;
     if span.is_finite() && span > 1e-6 && s.is_finite() && s > 1e-3 {
         s
@@ -354,6 +358,7 @@ pub fn build_electrode(
     ins.sector_solid(&frame, tip_top, prox, 0.0, r, 0.0, TAU, RADIAL_SEGMENTS);
 
     let r_out = r * CONTACT_OUTER_FACTOR;
+    let arc = segment_arc_rad(geom);
     for (lv, &z) in geom.level_z_mm.iter().enumerate() {
         let z = z as f32;
         let indices: Vec<usize> = geom
@@ -376,8 +381,8 @@ pub fn build_electrode(
                     z + half,
                     r * PAD_INNER_FACTOR,
                     r_out,
-                    angle - 0.5 * SEGMENT_ARC,
-                    angle + 0.5 * SEGMENT_ARC,
+                    angle - 0.5 * arc,
+                    angle + 0.5 * arc,
                     RADIAL_SEGMENTS,
                 );
             }
@@ -412,10 +417,8 @@ pub fn build_electrode(
 /// Shaft length (mm, proximal of the most-proximal contact) of a [`canonical_electrode`].
 pub const CANONICAL_SHAFT_MM: f32 = 30.0;
 
-fn level_span(geom: &ElectrodeGeometry) -> f32 {
-    let lo = geom.level_z_mm.iter().copied().fold(f64::MAX, f64::min);
-    let hi = geom.level_z_mm.iter().copied().fold(f64::MIN, f64::max);
-    let span = (hi - lo) as f32;
+fn fiducial_span(geom: &ElectrodeGeometry) -> f32 {
+    let span = geom.fiducial_span_mm() as f32;
     if span.is_finite() && span > 1e-6 {
         span
     } else {
@@ -429,7 +432,7 @@ pub fn canonical_electrode(geom: &ElectrodeGeometry) -> Option<ElectrodeMeshGrou
     build_electrode(
         geom,
         Vec3::ZERO,
-        Vec3::new(0.0, 0.0, level_span(geom)),
+        Vec3::new(0.0, 0.0, fiducial_span(geom)),
         Some(Vec3::X),
         Some(Vec3::Y),
         CANONICAL_SHAFT_MM,
@@ -523,20 +526,68 @@ mod tests {
 
     #[test]
     fn exact_catalogue_span_keeps_unscaled_geometry() {
-        let g = geom("Medtronic 3389");
-        let span = (g.level_z_mm[g.level_z_mm.len() - 1] - g.level_z_mm[0]) as f32;
-        assert!((axial_stretch(g, span) - 1.0).abs() < 1e-6);
-        let m = build_electrode(g, Vec3::ZERO, Vec3::Z * span, Some(Vec3::X), None, 30.0)
-            .expect("mesh");
-        for (k, c) in band_centres(&m, g, 1.0).iter().enumerate() {
-            assert!((c - g.level_z_mm[k] as f32).abs() < 1e-4);
+        for name in ["Medtronic 3389", "Boston Scientific Vercise Cartesia HX"] {
+            let g = geom(name);
+            let span = g.fiducial_span_mm() as f32;
+            assert!((axial_stretch(g, span) - 1.0).abs() < 1e-6, "{name}");
+            let m = build_electrode(g, Vec3::ZERO, Vec3::Z * span, Some(Vec3::X), None, 30.0)
+                .expect("mesh");
+            for (k, c) in band_centres(&m, g, 1.0).iter().enumerate() {
+                assert!(
+                    (c - g.level_z_mm[k] as f32).abs() < 1e-4,
+                    "{name} level {k}"
+                );
+            }
+        }
+        let hx = geom("Boston Scientific Vercise Cartesia HX");
+        assert!((axial_stretch(hx, 6.0) - 1.0).abs() < 1e-6);
+    }
+
+    fn segment_half_arc_deg(g: &ElectrodeGeometry) -> f32 {
+        let m = build_electrode(
+            g,
+            Vec3::ZERO,
+            Vec3::Z * g.fiducial_span_mm() as f32,
+            Some(Vec3::X),
+            None,
+            30.0,
+        )
+        .expect("mesh");
+        let lv = (0..g.n_levels())
+            .find(|&lv| g.contact_level.iter().filter(|&&l| l == lv).count() == 3)
+            .expect("segmented level");
+        let z = g.level_z_mm[lv] as f32;
+        let half = 0.5 * g.contact_length_mm as f32;
+        let r_out = 0.5 * g.lead_diameter_mm as f32 * CONTACT_OUTER_FACTOR;
+        m.metal
+            .positions
+            .iter()
+            .filter(|p| (p.z - z).abs() <= half + 1e-3)
+            .filter(|p| ((p.x * p.x + p.y * p.y).sqrt() - r_out).abs() < 1e-3)
+            .map(|p| (p.y.atan2(p.x).to_degrees() - 90.0).abs())
+            .filter(|d| *d < 60.0)
+            .fold(0.0_f32, f32::max)
+    }
+
+    #[test]
+    fn segment_arc_comes_from_the_catalogue() {
+        for (name, arc) in [
+            ("Boston Scientific Vercise Directed", 90.0),
+            ("Medtronic B33005", 90.0),
+            ("Abbott Directed 6172 (short)", 90.0),
+            ("Boston Scientific Vercise Cartesia HX", 100.0),
+            ("Boston Scientific Vercise Cartesia X", 100.0),
+            ("Aleva directSTIM Directed", 85.0),
+        ] {
+            let got = segment_half_arc_deg(geom(name));
+            assert!((got - 0.5 * arc).abs() < 1e-2, "{name}: half arc {got}");
         }
     }
 
     #[test]
     fn stretched_tail_scales_axial_positions_only() {
         let g = geom("Medtronic 3389");
-        let span = (g.level_z_mm[g.level_z_mm.len() - 1] - g.level_z_mm[0]) as f32;
+        let span = g.fiducial_span_mm() as f32;
         let m = build_electrode(
             g,
             Vec3::ZERO,
@@ -645,7 +696,7 @@ mod tests {
     #[test]
     fn rounded_tip_does_not_move_the_apex() {
         let g = geom("Medtronic 3389");
-        let span = (g.level_z_mm[g.level_z_mm.len() - 1] - g.level_z_mm[0]) as f32;
+        let span = g.fiducial_span_mm() as f32;
         let m = build_electrode(g, Vec3::ZERO, Vec3::Z * span, Some(Vec3::X), None, 30.0)
             .expect("mesh");
         let min_z = m

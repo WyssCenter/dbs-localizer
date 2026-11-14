@@ -21,6 +21,7 @@ data-mni = [
     "dep:nifti",
     "dep:fastwarp-core",
     "dep:dbsloc-checkreg",
+    "dep:dbsloc-reconstruct",
     "dep:serde",
     "dep:serde_json",
 ]

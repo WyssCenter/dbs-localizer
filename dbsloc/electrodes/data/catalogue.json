@@ -1399,7 +1399,7 @@
 "contact_length": 1.5,
 "contact_spacing": 0.5,
 "markerpos": 13.0,
-"markerlen": 3.0,
+"markerlen": null,
 "archetype": "a12d"
 },
 {

@@ -138,6 +138,8 @@ pub struct RefineRequest {
     pub space: EditSpace,
     pub backdrop_nii: PathBuf,
     pub sides: Vec<RefineSide>,
+    #[serde(default)]
+    pub warnings: Vec<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -779,6 +781,7 @@ impl RefinePanel {
     }
 
     pub fn mark_saved(&mut self) {
+        self.req.warnings.clear();
         let keys = std::mem::take(&mut self.saved_keys);
         for side in self.sides.iter_mut().filter(|s| keys.contains(&s.key)) {
             let accept_only = side.accept_pending();
@@ -2325,6 +2328,9 @@ impl RefinePanel {
             if let Some(err) = &self.sides[self.cur].geom_error {
                 ui.colored_label(pal.warn, format!("Lead geometry: {err}"));
             }
+            for w in &self.req.warnings {
+                ui.colored_label(pal.warn, w);
+            }
         });
     }
 
@@ -2599,7 +2605,7 @@ impl RefinePanel {
             let (rect, resp) =
                 ui.allocate_exact_size(egui::vec2(ui.available_width(), h), egui::Sense::hover());
             self.paint_model_diagram(ui, rect);
-            resp.on_hover_text("The electrode model: the head marker sits on the deepest contact level (contact 0), the tail marker on the most proximal level.");
+            resp.on_hover_text("The electrode model: the head marker sits on the deepest contact level (contact 0), the tail marker on the fourth level (the most proximal level when the lead has fewer than four).");
         }
     }
 
@@ -2607,7 +2613,11 @@ impl RefinePanel {
         let pal = ui_tokens::palette_for(ui);
         let painter = ui.painter_at(rect);
         let e = self.sides[self.cur].electrode;
-        let (Some(&z0), Some(&z1)) = (e.level_z_mm.first(), e.level_z_mm.last()) else {
+        let (Some(&z0), Some(&z1), Some(&z_tail)) = (
+            e.level_z_mm.first(),
+            e.level_z_mm.last(),
+            e.level_z_mm.get(e.tail_level()),
+        ) else {
             return;
         };
         let half = 0.5 * e.contact_length_mm.max(0.0);
@@ -2664,7 +2674,7 @@ impl RefinePanel {
         let font = egui::TextStyle::Small.resolve(ui.style());
         for (m, z, text) in [
             (Marker::Head, z0, "Head (contact 0)"),
-            (Marker::Tail, z1, "Tail"),
+            (Marker::Tail, z_tail, "Tail"),
         ] {
             let color = if self.sel == m { pal.accent } else { pal.text };
             let y = y_of(z);
@@ -2845,6 +2855,7 @@ mod tests {
                 side("1", [2.0, 3.0, -4.0], [3.0, 5.0, 6.0], [0.0, 1.0, 0.0]),
                 side("2", [-8.0, 1.0, -4.0], [-7.0, 2.0, 6.5], [1.0, 1.0, 0.0]),
             ],
+            warnings: Vec::new(),
         };
         (req, volume(affine))
     }
@@ -3810,6 +3821,7 @@ mod tests {
                 manually_corrected: false,
                 review: None,
             }],
+            warnings: Vec::new(),
         }
     }
 
@@ -3817,7 +3829,7 @@ mod tests {
         let (s, c) = tilt_deg.to_radians().sin_cos();
         let dir = [s, 0.0, c];
         let head = [-5.0, 0.0, -12.0];
-        let span = electrode_by_name(model).unwrap().contact_span_mm();
+        let span = electrode_by_name(model).unwrap().fiducial_span_mm();
         (head, add(head, scale(dir, span)), dir)
     }
 
@@ -3917,8 +3929,8 @@ mod tests {
         assert_eq!(caption(left.right), "P");
         let span = norm(sub(tail, head));
         assert!((front.v_range.0 + 5.0).abs() < 1e-12);
-        let k = if e.n_contacts > 8 { 1.5 } else { 2.0 };
-        assert!((front.v_range.1 - span - k * e.contact_span_mm()).abs() < 1e-12);
+        let k = if e.n_levels() > 8 { 1.5 } else { 2.0 };
+        assert!((front.v_range.1 - span - k * e.array_span_mm()).abs() < 1e-12);
         assert_eq!(front.u_range, (-10.0, 10.0));
     }
 
@@ -4056,7 +4068,7 @@ mod tests {
         p.keep_length = false;
         let e = electrode_by_name(MODEL).unwrap();
         let (live, cat) = p.spacing_mm().unwrap();
-        assert!((cat - e.contact_span_mm() / (e.n_levels() - 1) as f64).abs() < 1e-12);
+        assert!((cat - e.last_level_span_mm() / (e.n_levels() - 1) as f64).abs() < 1e-12);
         assert!((live - cat).abs() < 0.01, "{live} {cat}");
         let text = p.status_text();
         assert!(text.contains(&format!(
