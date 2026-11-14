@@ -1267,20 +1267,7 @@ fn coregister_native_with(
 
     write_linear_output(tmp_prefix, &out.total)
         .map_err(|e| PipelineError::Message(format!("coreg: {e}")))?;
-    let forward = TransformChain::from_queue(vec![TransformElem::Affine(out.total)]);
-    let inverse = TransformChain::from_queue(vec![TransformElem::Affine(
-        out.total
-            .inverse()
-            .map_err(|e| PipelineError::Message(format!("coreg: {e}")))?,
-    )]);
-    write_composite_pair(
-        tmp_prefix,
-        &CompositePair {
-            forward: forward.clone(),
-            inverse,
-        },
-    )
-    .map_err(|e| PipelineError::Message(format!("coreg: {e}")))?;
+    let forward = write_coreg_composites(tmp_prefix, out.total)?;
     let warped = staged.tmp(&paths.warped);
     let warped_moving = load_reg_volume(moving, "post-op CT", "coreg")?;
     let warped_vol = fastwarp_reg::apply::apply_chain(
@@ -1308,6 +1295,47 @@ fn coregister_native_with(
         total_start.elapsed().as_secs_f64(),
     )?;
     Ok(())
+}
+
+fn write_coreg_composites(
+    tmp_prefix: &Path,
+    total: AffineTransform,
+) -> PipelineResult<TransformChain> {
+    let forward = TransformChain::from_queue(vec![TransformElem::Affine(total)]);
+    let inverse = TransformChain::from_queue(vec![TransformElem::Affine(
+        total
+            .inverse()
+            .map_err(|e| PipelineError::Message(format!("coreg: {e}")))?,
+    )]);
+    write_composite_pair(
+        tmp_prefix,
+        &CompositePair {
+            forward: forward.clone(),
+            inverse,
+        },
+    )
+    .map_err(|e| PipelineError::Message(format!("coreg: {e}")))?;
+    Ok(forward)
+}
+
+fn write_ants_coreg_composites(tmp_prefix: &Path) -> PipelineResult<()> {
+    let mat = suffixed(tmp_prefix, ANTS_AFFINE_SUFFIX);
+    let chain = read_transform_file(&mat).map_err(|e| {
+        PipelineError::Message(format!(
+            "coreg: cannot read the antsRegistration transform {}: {e}",
+            mat.display()
+        ))
+    })?;
+    let total = match chain.queue() {
+        [TransformElem::Affine(a)] => *a,
+        _ => {
+            return Err(PipelineError::Message(format!(
+                "coreg: {} does not hold a single affine transform",
+                mat.display()
+            )))
+        }
+    };
+    write_coreg_composites(tmp_prefix, total).map(|_| ())
 }
 
 /// The cohort `Rigid[0.1]` coarse multi-start recipe of `specs/03` §5.1 step 3.
@@ -1398,6 +1426,7 @@ fn run_coregister_ants(
     if tmp_warped.is_file() && warped_is_empty(&tmp_warped)? {
         return Err(empty_warp("CT"));
     }
+    write_ants_coreg_composites(tmp_prefix)?;
     merge_record_timings(
         &record_tmp,
         full_s,
@@ -1523,6 +1552,9 @@ fn merge_record_timings(
 /// approved outputs; an explicit request re-runs when the recorded backend differs; a record
 /// without the key counts as `ants`.
 pub fn coreg_approved_outputs_match(sub: &Subject, opts: &RunOptions) -> Result<(), String> {
+    if let Some(key) = coreg_output_missing(sub) {
+        return Err(format!("no coregistered output for {key}"));
+    }
     let asked = opts.backend_for(crate::stages::Stage::Coregister);
     if asked == RegBackend::Auto {
         return Ok(());
@@ -1565,6 +1597,19 @@ pub fn coreg_approved_outputs_match(sub: &Subject, opts: &RunOptions) -> Result<
         )),
         None => Ok(()),
     }
+}
+
+fn coreg_output_missing(sub: &Subject) -> Option<String> {
+    if sub.postop_ct_raw.as_deref().is_some_and(Path::is_file)
+        && !derivatives::coreg_ct_image(sub).is_file()
+    {
+        return Some(derivatives::CT_KEY.to_owned());
+    }
+    sub.postop_mr_images()
+        .into_iter()
+        .map(|(key, _)| key)
+        .find(|key| !derivatives::coreg_mr_image(sub, key).is_file())
+        .map(str::to_owned)
 }
 
 fn data_is_empty(values: impl IntoIterator<Item = f64>) -> bool {
@@ -2931,6 +2976,11 @@ pub fn run_reconstruct(
             crate::ct_recon::PACER_UNAVAILABLE.into(),
         )));
     }
+    let ct_method = CtMethod::parse(&method).ok_or_else(|| {
+        recon_err(PipelineError::Message(format!(
+            "E_RECON: unknown recon_method {method:?} (auto, trac_core, trac_core_native, pacer)"
+        )))
+    })?;
     let modality = sub.postop_modality.as_deref();
     if modality != Some("CT") {
         if method == "pacer" && modality == Some("MRI") {
@@ -2962,12 +3012,6 @@ pub fn run_reconstruct(
             tx,
         );
     }
-    let ct_method = CtMethod::parse(&method).ok_or_else(|| {
-        recon_err(PipelineError::Message(format!(
-            "E_RECON: unknown recon_method {method:?} for a post-op CT (auto, trac_core, \
-             trac_core_native, pacer)"
-        )))
-    })?;
     let kept = kept_corrections(sub, opts, EditSpace::Native, tx);
     let skip = kept_keys(kept.as_ref());
     if skip.len() == SIDE_KEYS.len() {
@@ -5494,6 +5538,177 @@ mod tests {
         };
         coreg_approved_outputs_match(&sub, &o).unwrap();
         let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn approved_coreg_outputs_must_exist_for_every_resolved_post_op_image() {
+        let mut case = norm_case("coreg_lock_missing", false, true);
+        add_postop_mr(&mut case, "acq-ax_T1w", nii);
+        let with = |b: RegBackend| RunOptions {
+            reg_backend: b,
+            ..RunOptions::new(&case.root, "1")
+        };
+        let mr_out = derivatives::coreg_mr_image(&case.sub, "ax_MRI");
+        for asked in [RegBackend::Auto, RegBackend::Ants, RegBackend::Wgpu] {
+            assert_eq!(
+                coreg_approved_outputs_match(&case.sub, &with(asked)),
+                Err("no coregistered output for ax_MRI".to_owned()),
+                "{asked:?}"
+            );
+        }
+        nii(&mr_out);
+        coreg_approved_outputs_match(&case.sub, &with(RegBackend::Auto)).unwrap();
+        coreg_approved_outputs_match(&case.sub, &with(RegBackend::Ants)).unwrap();
+        std::fs::remove_file(derivatives::coreg_ct_image(&case.sub)).unwrap();
+        assert_eq!(
+            coreg_approved_outputs_match(&case.sub, &with(RegBackend::Auto)),
+            Err("no coregistered output for CT".to_owned())
+        );
+        let _ = std::fs::remove_dir_all(&case.root);
+    }
+
+    #[test]
+    fn the_ants_composites_come_from_an_ants_rigid_mat() {
+        let dir =
+            std::env::temp_dir().join(format!("dbsloc_ants_rigid_mat_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let prefix = dir.join("ct_");
+        let (s, c) = (0.3_f64.sin(), 0.3_f64.cos());
+        let r = [[c, -s, 0.0], [s, c, 0.0], [0.0, 0.0, 1.0]];
+        let t = [4.0, -1.5, 2.25];
+        let centre = [-3.0, 10.0, 7.5];
+        let mut params: Vec<f64> = r.iter().flatten().copied().collect();
+        params.extend_from_slice(&t);
+        let mut bytes = Vec::new();
+        for (name, values) in [
+            ("MatrixOffsetTransformBase_double_3_3", params.as_slice()),
+            ("fixed", centre.as_slice()),
+        ] {
+            for word in [0u32, values.len() as u32, 1, 0, name.len() as u32 + 1] {
+                bytes.extend_from_slice(&word.to_le_bytes());
+            }
+            bytes.extend_from_slice(name.as_bytes());
+            bytes.push(0);
+            for v in values {
+                bytes.extend_from_slice(&v.to_le_bytes());
+            }
+        }
+        std::fs::write(suffixed(&prefix, ANTS_AFFINE_SUFFIX), &bytes).unwrap();
+        write_ants_coreg_composites(&prefix).unwrap();
+
+        let only_affine = |p: &Path| match read_transform_file(p).unwrap().queue() {
+            [TransformElem::Affine(a)] => *a,
+            other => panic!("{}: {other:?}", p.display()),
+        };
+        let forward = only_affine(&suffixed(&prefix, ANTS_COMPOSITE_SUFFIX));
+        let inverse = only_affine(&suffixed(&prefix, ANTS_INVERSE_COMPOSITE_SUFFIX));
+        for p in [[0.0, 0.0, 0.0], [12.0, -7.5, 30.0], [-40.0, 55.0, 3.0]] {
+            let want: Vec<f64> = (0..3)
+                .map(|i| {
+                    (0..3).map(|j| r[i][j] * (p[j] - centre[j])).sum::<f64>() + centre[i] + t[i]
+                })
+                .collect();
+            let got = forward.apply(p);
+            let back = inverse.apply(got);
+            for i in 0..3 {
+                assert!((got[i] - want[i]).abs() < 1e-9, "{got:?} vs {want:?}");
+                assert!((back[i] - p[i]).abs() < 1e-9, "{back:?} vs {p:?}");
+            }
+        }
+        std::fs::write(suffixed(&prefix, ANTS_AFFINE_SUFFIX), b"not a mat").unwrap();
+        let e = write_ants_coreg_composites(&prefix)
+            .unwrap_err()
+            .to_string();
+        assert!(
+            e.contains("cannot read the antsRegistration transform"),
+            "{e}"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn the_ants_coreg_path_writes_the_composite_pair_from_its_affine() {
+        let mut case = norm_case("coreg_ants_composites", false, true);
+        case.sub = crate::bids::resolve_subject_with(&case.root, "1", false).unwrap();
+        let sub = &case.sub;
+        std::fs::create_dir_all(derivatives::coreg_transform_dir(sub)).unwrap();
+        std::fs::create_dir_all(derivatives::coreg_log_dir(sub)).unwrap();
+        let staged = Staged::mapped(ct_targets(sub)).unwrap();
+        let tmp_prefix = coreg_work_prefix(sub, derivatives::CT_KEY);
+        let affine = AffineTransform::new(
+            pitch_rotation_lps(12.0),
+            [1.5, -2.0, 3.25],
+            [10.0, 20.0, -5.0],
+        );
+        write_linear_output(&tmp_prefix, &affine).unwrap();
+        write_ants_coreg_composites(&tmp_prefix).unwrap();
+        assert_eq!(
+            staged.tmp(&derivatives::coreg_ct_forward(sub)),
+            suffixed(&tmp_prefix, ANTS_COMPOSITE_SUFFIX)
+        );
+        assert_eq!(
+            staged.tmp(&derivatives::coreg_ct_inverse(sub)),
+            suffixed(&tmp_prefix, ANTS_INVERSE_COMPOSITE_SUFFIX)
+        );
+        for (target, _) in ct_targets(sub) {
+            let tmp = staged.tmp(&target);
+            if !tmp.is_file() {
+                std::fs::write(&tmp, b"x").unwrap();
+            }
+        }
+        staged.commit(None).unwrap();
+
+        let mat = read_affine(&derivatives::coreg_ct_affine(sub)).unwrap();
+        let only_affine = |p: &Path| match read_transform_file(p).unwrap().queue() {
+            [TransformElem::Affine(a)] => *a,
+            other => panic!("{}: {other:?}", p.display()),
+        };
+        let forward = only_affine(&derivatives::coreg_ct_forward(sub));
+        let inverse = only_affine(&derivatives::coreg_ct_inverse(sub));
+        let want_inverse = mat.inverse().unwrap();
+        for p in [[0.0, 0.0, 0.0], [12.0, -7.5, 30.0], [-40.0, 55.0, 3.0]] {
+            let (a, b) = (mat.apply(p), forward.apply(p));
+            let (c, d) = (want_inverse.apply(p), inverse.apply(p));
+            for i in 0..3 {
+                assert!((a[i] - b[i]).abs() < 1e-9, "forward {a:?} vs {b:?}");
+                assert!((c[i] - d[i]).abs() < 1e-9, "inverse {c:?} vs {d:?}");
+            }
+        }
+        let _ = std::fs::remove_dir_all(&case.root);
+    }
+
+    #[test]
+    fn an_unknown_recon_method_fails_before_the_post_op_modality_is_read() {
+        let want = "recon:E_RECON: unknown recon_method \"bogus\" (auto, trac_core, \
+                    trac_core_native, pacer)";
+        let mut mri = norm_case("recon_unknown_mri", false, false);
+        add_postop_mr(&mut mri, "acq-ax_T1w", nii);
+        assert_eq!(mri.sub.postop_modality.as_deref(), Some("MRI"));
+        let ct = norm_case("recon_unknown_ct", false, true);
+        assert_eq!(ct.sub.postop_modality.as_deref(), Some("CT"));
+        for case in [&mri, &ct] {
+            let opts = RunOptions {
+                recon_method: " Bogus ".into(),
+                el_model: Some("Medtronic 3389".into()),
+                ..case.opts.clone()
+            };
+            let err = run_reconstruct(&case.sub, &opts, None, None)
+                .unwrap_err()
+                .to_string();
+            assert_eq!(err, want);
+        }
+        let known = RunOptions {
+            recon_method: "trac_core_native".into(),
+            el_model: Some("Medtronic 3389".into()),
+            ..mri.opts.clone()
+        };
+        let err = run_reconstruct(&mri.sub, &known, None, None)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("requires post-op CT"), "{err}");
+        let _ = std::fs::remove_dir_all(&mri.root);
+        let _ = std::fs::remove_dir_all(&ct.root);
     }
 
     fn reg_blob(path: &Path, shift: f64) {

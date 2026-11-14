@@ -89,9 +89,9 @@ These rules replace any conflicting statement elsewhere in this specification. T
 - **Aleva directSTIM.** Lead and tip diameter 1.35 mm with a rounded cap (the reference's tip diameter of 0.5 mm describes only the flat apex of that cap); no orientation-marker geometry; `markerpos` 13 mm is unverified and `markerlen` is not defined (null); automatic orientation detection (`06`) is not supported.
 - **Medtronic B33005 / B33015.** The manufacturer's manual gives a lead diameter of 1.36 mm and a distal tip of 1.0 mm; the catalogue keeps the reference values 1.3 mm and 0.9 mm for parity with existing reconstructions (known deviation).
 
-### 2.3 Contact display names (normative, 2026-11-14; implementation pending)
+### 2.3 Contact display names (normative, 2026-11-14)
 
-Contact display names follow the reference implementation. A name is `K` + a number (+ the segment letter `A` / `B` / `C` for Medtronic and Abbott directional levels), numbered distal to proximal from the per-model start of the side in the table below, numbers contiguous within a side. The side suffix is ` (R)` / ` (L)` in labels and is dropped or compacted (`K0R`) in file names. Level names: the ring contact's name; for Boston Scientific and Aleva directional levels `K<first>-<last>` (their segments carry plain numbers); for Medtronic and Abbott directional levels the level number. Names appear in the 3D viewer labels, 2D slice export file names, reports and trajectory-planning level names. Stimulation settings, VTA files, the reconstruction file and group data stay positional (contacts 1..N per side) and never store names.
+Contact display names follow the reference implementation. A name is `K` + a number (+ the segment letter `A` / `B` / `C` for Medtronic and Abbott directional levels), numbered distal to proximal from the per-model start of the side in the table below, numbers contiguous within a side. The side suffix is ` (R)` / ` (L)` in labels and is dropped or compacted (`K0R`) in file names. Level names: the ring contact's name; for Boston Scientific and Aleva directional levels `K<first>-<last>` with the plain number after the dash (`K10-12`; their segments carry plain numbers); for Medtronic and Abbott directional levels `K` + the level number (`K1`, `K2`). Segment letters `A` / `B` / `C` follow the level's catalogue contact order (§2.2, §3.2: `A` at +Y, then the device's segment order). Names appear in the 3D viewer labels, 2D slice export file names, reports and trajectory-planning level names (implemented 2026-11-14: the catalogue, `contact_names` / `level_names` in `electrode_catalog.rs` and `dbsloc/electrodes/names.py`, and the 3D viewer contact labels; the other places follow with their features). Stimulation settings, VTA files, the reconstruction file and group data stay positional (contacts 1..N per side) and never store names.
 
 | Models | Right start | Left start | Style |
 | ------ | ----------- | ---------- | ----- |
@@ -108,7 +108,7 @@ Contact display names follow the reference implementation. A name is `K` + a num
 | SmartFlow NGS-NC-06 | K0 (K0, K1) | K3 (K3, K4) | numeric (the reference's gap is kept) |
 | SEEG / depth leads (SDE, PMT, EPC, DIXI, AdTech) | K0 | see below | numeric |
 
-Left start of SEEG / depth leads: SDE-08 S8 (both generations) 8, S10 10, S12 12, S14 16, S16 16; PMT -04 4, -06 6, -08 8, -10 10, -12 12, -14 14, every -16 16; EPC 05C 8, 15C 16; DIXI 05 5, 08 8, 10 10, 12 12, 15 15, 18 18; AdTech BF08 8, BF09 9, RD06 6, RD08 8, every RD10 10, SD06 6, SD08 8, SD10 (both) 10, SD14 14.
+Left start of SEEG / depth leads (each SDE-08 size has one start for its current and Legacy entries): SDE-08 S8 8, S10 10, S12 12, S14 16, S16 16; PMT -04 4, -06 6, -08 8, -10 10, -12 12, -14 14, every -16 16; EPC 05C 8, 15C 16; DIXI 05 5, 08 8, 10 10, 12 12, 15 15, 18 18; AdTech BF08 8, BF09 9, RD06 6, RD08 8, every RD10 10, SD06 6, SD08 8, SD10 (both) 10, SD14 14.
 
 ---
 

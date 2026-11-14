@@ -1,7 +1,7 @@
 {
-  "schema": 2,
+  "schema": 3,
   "generator": "scripts/emit_electrode_geometry.py",
-  "source": "dbsloc/electrodes/data/catalogue.json via dbsloc.electrodes.layout",
+  "source": "dbsloc/electrodes/data/catalogue.json via dbsloc.electrodes.layout and dbsloc.electrodes.names",
   "unsupported": [],
   "models": [
     {
@@ -59,7 +59,44 @@
       "marker_len_mm": null,
       "array_span_mm": 16.0,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12"
+        ]
+      }
     },
     {
       "elmodel": "2069-EPC-15C-35",
@@ -186,7 +223,84 @@
       "marker_len_mm": null,
       "array_span_mm": 51.0,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 16
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30"
+        ]
+      }
     },
     {
       "elmodel": "Abbott ActiveTip (6142-6145)",
@@ -236,7 +350,40 @@
       "marker_len_mm": null,
       "array_span_mm": 12.0,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 1,
+        "2": 1
+      },
+      "contact_names": {
+        "1": [
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ],
+        "2": [
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ],
+        "2": [
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ]
+      }
     },
     {
       "elmodel": "Abbott ActiveTip (6146-6149)",
@@ -286,7 +433,40 @@
       "marker_len_mm": null,
       "array_span_mm": 9.0,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 1,
+        "2": 1
+      },
+      "contact_names": {
+        "1": [
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ],
+        "2": [
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ],
+        "2": [
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ]
+      }
     },
     {
       "elmodel": "Abbott Directed 6172 (short)",
@@ -360,7 +540,48 @@
       "marker_len_mm": 1.5,
       "array_span_mm": 7.5,
       "tail_level": 3,
-      "segment_arc_deg": 90.0
+      "segment_arc_deg": 90.0,
+      "name_style": "level_letter",
+      "name_start": {
+        "1": 1,
+        "2": 1
+      },
+      "contact_names": {
+        "1": [
+          "K1",
+          "K2A",
+          "K2B",
+          "K2C",
+          "K3A",
+          "K3B",
+          "K3C",
+          "K4"
+        ],
+        "2": [
+          "K1",
+          "K2A",
+          "K2B",
+          "K2C",
+          "K3A",
+          "K3B",
+          "K3C",
+          "K4"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ],
+        "2": [
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ]
+      }
     },
     {
       "elmodel": "Abbott Directed 6173 (long)",
@@ -434,7 +655,48 @@
       "marker_len_mm": 1.5,
       "array_span_mm": 10.5,
       "tail_level": 3,
-      "segment_arc_deg": 90.0
+      "segment_arc_deg": 90.0,
+      "name_style": "level_letter",
+      "name_start": {
+        "1": 1,
+        "2": 1
+      },
+      "contact_names": {
+        "1": [
+          "K1",
+          "K2A",
+          "K2B",
+          "K2C",
+          "K3A",
+          "K3B",
+          "K3C",
+          "K4"
+        ],
+        "2": [
+          "K1",
+          "K2A",
+          "K2B",
+          "K2C",
+          "K3A",
+          "K3B",
+          "K3C",
+          "K4"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ],
+        "2": [
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ]
+      }
     },
     {
       "elmodel": "AdTech BF08R-SP05X",
@@ -512,7 +774,56 @@
       "marker_len_mm": null,
       "array_span_mm": 36.57,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      }
     },
     {
       "elmodel": "AdTech BF08R-SP21X",
@@ -590,7 +901,56 @@
       "marker_len_mm": null,
       "array_span_mm": 37.57,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      }
     },
     {
       "elmodel": "AdTech BF08R-SP61X",
@@ -668,7 +1028,56 @@
       "marker_len_mm": null,
       "array_span_mm": 40.57,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      }
     },
     {
       "elmodel": "AdTech BF09R-SP61X-0BB",
@@ -753,7 +1162,60 @@
       "marker_len_mm": null,
       "array_span_mm": 46.57,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 9
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8"
+        ],
+        "2": [
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8"
+        ],
+        "2": [
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17"
+        ]
+      }
     },
     {
       "elmodel": "AdTech RD06R-SP05X",
@@ -817,7 +1279,48 @@
       "marker_len_mm": null,
       "array_span_mm": 27.29,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 6
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5"
+        ],
+        "2": [
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5"
+        ],
+        "2": [
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      }
     },
     {
       "elmodel": "AdTech RD08R-SP05X",
@@ -895,7 +1398,56 @@
       "marker_len_mm": null,
       "array_span_mm": 37.29,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      }
     },
     {
       "elmodel": "AdTech RD10R-SP03X",
@@ -987,7 +1539,64 @@
       "marker_len_mm": null,
       "array_span_mm": 29.29,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 10
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      }
     },
     {
       "elmodel": "AdTech RD10R-SP05X",
@@ -1079,7 +1688,64 @@
       "marker_len_mm": null,
       "array_span_mm": 47.29,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 10
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      }
     },
     {
       "elmodel": "AdTech RD10R-SP06X",
@@ -1171,7 +1837,64 @@
       "marker_len_mm": null,
       "array_span_mm": 56.29,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 10
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      }
     },
     {
       "elmodel": "AdTech RD10R-SP07X",
@@ -1263,7 +1986,64 @@
       "marker_len_mm": null,
       "array_span_mm": 65.29,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 10
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      }
     },
     {
       "elmodel": "AdTech RD10R-SP08X",
@@ -1355,7 +2135,64 @@
       "marker_len_mm": null,
       "array_span_mm": 74.29,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 10
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      }
     },
     {
       "elmodel": "AdTech SD06R-SP26X",
@@ -1419,7 +2256,48 @@
       "marker_len_mm": null,
       "array_span_mm": 42.41,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 6
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5"
+        ],
+        "2": [
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5"
+        ],
+        "2": [
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      }
     },
     {
       "elmodel": "AdTech SD08R-SP05X",
@@ -1497,7 +2375,56 @@
       "marker_len_mm": null,
       "array_span_mm": 37.41,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      }
     },
     {
       "elmodel": "AdTech SD10R-SP05X",
@@ -1589,7 +2516,64 @@
       "marker_len_mm": null,
       "array_span_mm": 47.41,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 10
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      }
     },
     {
       "elmodel": "AdTech SD10R-SP05X Choi",
@@ -1681,7 +2665,64 @@
       "marker_len_mm": null,
       "array_span_mm": 45.6,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 10
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      }
     },
     {
       "elmodel": "AdTech SD14R-SP05X",
@@ -1801,7 +2842,80 @@
       "marker_len_mm": null,
       "array_span_mm": 67.41,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 14
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13"
+        ],
+        "2": [
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13"
+        ],
+        "2": [
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27"
+        ]
+      }
     },
     {
       "elmodel": "Aleva directSTIM Directed",
@@ -1899,7 +3013,56 @@
       "marker_len_mm": null,
       "array_span_mm": 7.5,
       "tail_level": 3,
-      "segment_arc_deg": 85.0
+      "segment_arc_deg": 85.0,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 1,
+        "2": 13
+      },
+      "contact_names": {
+        "1": [
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12"
+        ],
+        "2": [
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K1-3",
+          "K4-6",
+          "K7-9",
+          "K10-12"
+        ],
+        "2": [
+          "K13-15",
+          "K16-18",
+          "K19-21",
+          "K22-24"
+        ]
+      }
     },
     {
       "elmodel": "Boston Scientific Vercise",
@@ -1977,7 +3140,56 @@
       "marker_len_mm": null,
       "array_span_mm": 15.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 9,
+        "2": 1
+      },
+      "contact_names": {
+        "1": [
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16"
+        ],
+        "2": [
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16"
+        ],
+        "2": [
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8"
+        ]
+      }
     },
     {
       "elmodel": "Boston Scientific Vercise Cartesia HX",
@@ -2103,7 +3315,72 @@
       "marker_len_mm": 3.0,
       "array_span_mm": 15.5,
       "tail_level": 3,
-      "segment_arc_deg": 100.0
+      "segment_arc_deg": 100.0,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 17,
+        "2": 1
+      },
+      "contact_names": {
+        "1": [
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31",
+          "K32"
+        ],
+        "2": [
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K17-19",
+          "K20-22",
+          "K23-25",
+          "K26-28",
+          "K29",
+          "K30",
+          "K31",
+          "K32"
+        ],
+        "2": [
+          "K1-3",
+          "K4-6",
+          "K7-9",
+          "K10-12",
+          "K13",
+          "K14",
+          "K15",
+          "K16"
+        ]
+      }
     },
     {
       "elmodel": "Boston Scientific Vercise Cartesia X",
@@ -2227,7 +3504,68 @@
       "marker_len_mm": 3.0,
       "array_span_mm": 11.5,
       "tail_level": 3,
-      "segment_arc_deg": 100.0
+      "segment_arc_deg": 100.0,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 17,
+        "2": 1
+      },
+      "contact_names": {
+        "1": [
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31",
+          "K32"
+        ],
+        "2": [
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K17-19",
+          "K20-22",
+          "K23-25",
+          "K26-28",
+          "K29-31",
+          "K32"
+        ],
+        "2": [
+          "K1-3",
+          "K4-6",
+          "K7-9",
+          "K10-12",
+          "K13-15",
+          "K16"
+        ]
+      }
     },
     {
       "elmodel": "Boston Scientific Vercise Directed",
@@ -2301,7 +3639,48 @@
       "marker_len_mm": 3.0,
       "array_span_mm": 7.5,
       "tail_level": 3,
-      "segment_arc_deg": 90.0
+      "segment_arc_deg": 90.0,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 9,
+        "2": 1
+      },
+      "contact_names": {
+        "1": [
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16"
+        ],
+        "2": [
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K9",
+          "K10-12",
+          "K13-15",
+          "K16"
+        ],
+        "2": [
+          "K1",
+          "K2-4",
+          "K5-7",
+          "K8"
+        ]
+      }
     },
     {
       "elmodel": "DIXI D08-05AM",
@@ -2358,7 +3737,44 @@
       "marker_len_mm": null,
       "array_span_mm": 16.0,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 5
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ],
+        "2": [
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4"
+        ],
+        "2": [
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ]
+      }
     },
     {
       "elmodel": "DIXI D08-08AM",
@@ -2436,7 +3852,56 @@
       "marker_len_mm": null,
       "array_span_mm": 26.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      }
     },
     {
       "elmodel": "DIXI D08-10AM",
@@ -2528,7 +3993,64 @@
       "marker_len_mm": null,
       "array_span_mm": 33.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 10
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      }
     },
     {
       "elmodel": "DIXI D08-12AM",
@@ -2634,7 +4156,72 @@
       "marker_len_mm": null,
       "array_span_mm": 40.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 12
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ],
+        "2": [
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ],
+        "2": [
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23"
+        ]
+      }
     },
     {
       "elmodel": "DIXI D08-15AM",
@@ -2761,7 +4348,84 @@
       "marker_len_mm": null,
       "array_span_mm": 51.0,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 15
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14"
+        ],
+        "2": [
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14"
+        ],
+        "2": [
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29"
+        ]
+      }
     },
     {
       "elmodel": "DIXI D08-18AM",
@@ -2909,7 +4573,96 @@
       "marker_len_mm": null,
       "array_span_mm": 61.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 18
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17"
+        ],
+        "2": [
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31",
+          "K32",
+          "K33",
+          "K34",
+          "K35"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17"
+        ],
+        "2": [
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31",
+          "K32",
+          "K33",
+          "K34",
+          "K35"
+        ]
+      }
     },
     {
       "elmodel": "ELAINE Rat Electrode",
@@ -2938,7 +4691,28 @@
       "marker_len_mm": null,
       "array_span_mm": 0.1125,
       "tail_level": 0,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 0
+      },
+      "contact_names": {
+        "1": [
+          "K0"
+        ],
+        "2": [
+          "K0"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0"
+        ],
+        "2": [
+          "K0"
+        ]
+      }
     },
     {
       "elmodel": "FHC WU Rat Electrode",
@@ -2967,7 +4741,28 @@
       "marker_len_mm": null,
       "array_span_mm": 0.25,
       "tail_level": 0,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 0
+      },
+      "contact_names": {
+        "1": [
+          "K0"
+        ],
+        "2": [
+          "K0"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0"
+        ],
+        "2": [
+          "K0"
+        ]
+      }
     },
     {
       "elmodel": "Medtronic 3387",
@@ -3017,7 +4812,40 @@
       "marker_len_mm": null,
       "array_span_mm": 10.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      }
     },
     {
       "elmodel": "Medtronic 3389",
@@ -3067,7 +4895,40 @@
       "marker_len_mm": null,
       "array_span_mm": 7.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      }
     },
     {
       "elmodel": "Medtronic 3391",
@@ -3117,7 +4978,40 @@
       "marker_len_mm": null,
       "array_span_mm": 24.0,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      }
     },
     {
       "elmodel": "Medtronic B33005",
@@ -3191,7 +5085,48 @@
       "marker_len_mm": 2.3,
       "array_span_mm": 7.5,
       "tail_level": 3,
-      "segment_arc_deg": 90.0
+      "segment_arc_deg": 90.0,
+      "name_style": "level_letter",
+      "name_start": {
+        "1": 0,
+        "2": 0
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1A",
+          "K1B",
+          "K1C",
+          "K2A",
+          "K2B",
+          "K2C",
+          "K3"
+        ],
+        "2": [
+          "K0",
+          "K1A",
+          "K1B",
+          "K1C",
+          "K2A",
+          "K2B",
+          "K2C",
+          "K3"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ]
+      }
     },
     {
       "elmodel": "Medtronic B33015",
@@ -3265,7 +5200,48 @@
       "marker_len_mm": 2.3,
       "array_span_mm": 10.5,
       "tail_level": 3,
-      "segment_arc_deg": 90.0
+      "segment_arc_deg": 90.0,
+      "name_style": "level_letter",
+      "name_start": {
+        "1": 0,
+        "2": 0
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1A",
+          "K1B",
+          "K1C",
+          "K2A",
+          "K2B",
+          "K2C",
+          "K3"
+        ],
+        "2": [
+          "K0",
+          "K1A",
+          "K1B",
+          "K1C",
+          "K2A",
+          "K2B",
+          "K2C",
+          "K3"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ]
+      }
     },
     {
       "elmodel": "NeuroPace DL-344-10",
@@ -3315,7 +5291,40 @@
       "marker_len_mm": null,
       "array_span_mm": 32.0,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      }
     },
     {
       "elmodel": "NeuroPace DL-344-3.5",
@@ -3365,7 +5374,40 @@
       "marker_len_mm": null,
       "array_span_mm": 12.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      }
     },
     {
       "elmodel": "NuMed Mini Lead",
@@ -3415,7 +5457,40 @@
       "marker_len_mm": null,
       "array_span_mm": 3.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 0
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ]
+      }
     },
     {
       "elmodel": "PINS Medical L301",
@@ -3465,7 +5540,40 @@
       "marker_len_mm": null,
       "array_span_mm": 7.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      }
     },
     {
       "elmodel": "PINS Medical L302",
@@ -3515,7 +5623,40 @@
       "marker_len_mm": null,
       "array_span_mm": 10.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      }
     },
     {
       "elmodel": "PINS Medical L303",
@@ -3565,7 +5706,40 @@
       "marker_len_mm": null,
       "array_span_mm": 24.0,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      }
     },
     {
       "elmodel": "PMT 2102-04-091",
@@ -3615,7 +5789,40 @@
       "marker_len_mm": null,
       "array_span_mm": 12.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 4
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ],
+        "2": [
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ]
+      }
     },
     {
       "elmodel": "PMT 2102-06-091",
@@ -3679,7 +5886,48 @@
       "marker_len_mm": null,
       "array_span_mm": 19.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 6
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5"
+        ],
+        "2": [
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5"
+        ],
+        "2": [
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ]
+      }
     },
     {
       "elmodel": "PMT 2102-08-091",
@@ -3757,7 +6005,56 @@
       "marker_len_mm": null,
       "array_span_mm": 26.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      }
     },
     {
       "elmodel": "PMT 2102-10-091",
@@ -3849,7 +6146,64 @@
       "marker_len_mm": null,
       "array_span_mm": 33.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 10
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      }
     },
     {
       "elmodel": "PMT 2102-12-091",
@@ -3955,7 +6309,72 @@
       "marker_len_mm": null,
       "array_span_mm": 40.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 12
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ],
+        "2": [
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ],
+        "2": [
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23"
+        ]
+      }
     },
     {
       "elmodel": "PMT 2102-14-091",
@@ -4075,7 +6494,80 @@
       "marker_len_mm": null,
       "array_span_mm": 47.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 14
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13"
+        ],
+        "2": [
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13"
+        ],
+        "2": [
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27"
+        ]
+      }
     },
     {
       "elmodel": "PMT 2102-16-091",
@@ -4209,7 +6701,88 @@
       "marker_len_mm": null,
       "array_span_mm": 54.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 16
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      }
     },
     {
       "elmodel": "PMT 2102-16-092",
@@ -4343,7 +6916,88 @@
       "marker_len_mm": null,
       "array_span_mm": 61.55,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 16
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      }
     },
     {
       "elmodel": "PMT 2102-16-093",
@@ -4477,7 +7131,88 @@
       "marker_len_mm": null,
       "array_span_mm": 68.45,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 16
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      }
     },
     {
       "elmodel": "PMT 2102-16-131",
@@ -4611,7 +7346,88 @@
       "marker_len_mm": null,
       "array_span_mm": 54.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 16
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      }
     },
     {
       "elmodel": "PMT 2102-16-142",
@@ -4745,7 +7561,88 @@
       "marker_len_mm": null,
       "array_span_mm": 84.95,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 16
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      }
     },
     {
       "elmodel": "SDE-08 S10",
@@ -4837,7 +7734,64 @@
       "marker_len_mm": null,
       "array_span_mm": 33.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 10
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      }
     },
     {
       "elmodel": "SDE-08 S10 Legacy",
@@ -4929,7 +7883,64 @@
       "marker_len_mm": null,
       "array_span_mm": 33.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 10
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9"
+        ],
+        "2": [
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19"
+        ]
+      }
     },
     {
       "elmodel": "SDE-08 S12",
@@ -5035,7 +8046,72 @@
       "marker_len_mm": null,
       "array_span_mm": 40.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 12
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ],
+        "2": [
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ],
+        "2": [
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23"
+        ]
+      }
     },
     {
       "elmodel": "SDE-08 S12 Legacy",
@@ -5141,7 +8217,72 @@
       "marker_len_mm": null,
       "array_span_mm": 40.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 12
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ],
+        "2": [
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11"
+        ],
+        "2": [
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23"
+        ]
+      }
     },
     {
       "elmodel": "SDE-08 S14",
@@ -5261,7 +8402,80 @@
       "marker_len_mm": null,
       "array_span_mm": 47.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 16
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29"
+        ]
+      }
     },
     {
       "elmodel": "SDE-08 S16",
@@ -5395,7 +8609,88 @@
       "marker_len_mm": null,
       "array_span_mm": 54.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 16
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      }
     },
     {
       "elmodel": "SDE-08 S16 Legacy",
@@ -5529,7 +8824,88 @@
       "marker_len_mm": null,
       "array_span_mm": 54.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 16
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7",
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29",
+          "K30",
+          "K31"
+        ]
+      }
     },
     {
       "elmodel": "SDE-08 S8",
@@ -5607,7 +8983,56 @@
       "marker_len_mm": null,
       "array_span_mm": 26.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      }
     },
     {
       "elmodel": "SDE-08 S8 Legacy",
@@ -5685,7 +9110,56 @@
       "marker_len_mm": null,
       "array_span_mm": 26.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 8
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ]
+      }
     },
     {
       "elmodel": "SceneRay SR1200",
@@ -5735,7 +9209,40 @@
       "marker_len_mm": null,
       "array_span_mm": 7.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 4,
+        "2": 0
+      },
+      "contact_names": {
+        "1": [
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ]
+      }
     },
     {
       "elmodel": "SceneRay SR1202",
@@ -5813,7 +9320,56 @@
       "marker_len_mm": null,
       "array_span_mm": 15.5,
       "tail_level": 7,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 8,
+        "2": 0
+      },
+      "contact_names": {
+        "1": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ]
+      }
     },
     {
       "elmodel": "SceneRay SR1210",
@@ -5863,7 +9419,40 @@
       "marker_len_mm": null,
       "array_span_mm": 10.5,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 4,
+        "2": 0
+      },
+      "contact_names": {
+        "1": [
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ]
+      }
     },
     {
       "elmodel": "SceneRay SR1211",
@@ -5913,7 +9502,40 @@
       "marker_len_mm": null,
       "array_span_mm": 9.0,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 4,
+        "2": 0
+      },
+      "contact_names": {
+        "1": [
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ]
+      }
     },
     {
       "elmodel": "SceneRay SR1212",
@@ -5991,7 +9613,56 @@
       "marker_len_mm": null,
       "array_span_mm": 22.5,
       "tail_level": 7,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 8,
+        "2": 0
+      },
+      "contact_names": {
+        "1": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K8",
+          "K9",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3",
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ]
+      }
     },
     {
       "elmodel": "SceneRay SR1242",
@@ -6041,7 +9712,40 @@
       "marker_len_mm": null,
       "array_span_mm": 22.0,
       "tail_level": 3,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 4,
+        "2": 0
+      },
+      "contact_names": {
+        "1": [
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K4",
+          "K5",
+          "K6",
+          "K7"
+        ],
+        "2": [
+          "K0",
+          "K1",
+          "K2",
+          "K3"
+        ]
+      }
     },
     {
       "elmodel": "SmartFlow Cannula NGS-NC-06",
@@ -6077,7 +9781,32 @@
       "marker_len_mm": null,
       "array_span_mm": 13.0,
       "tail_level": 1,
-      "segment_arc_deg": null
+      "segment_arc_deg": null,
+      "name_style": "numeric",
+      "name_start": {
+        "1": 0,
+        "2": 3
+      },
+      "contact_names": {
+        "1": [
+          "K0",
+          "K1"
+        ],
+        "2": [
+          "K3",
+          "K4"
+        ]
+      },
+      "level_names": {
+        "1": [
+          "K0",
+          "K1"
+        ],
+        "2": [
+          "K3",
+          "K4"
+        ]
+      }
     }
   ]
 }

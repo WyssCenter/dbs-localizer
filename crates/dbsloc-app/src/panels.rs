@@ -4216,48 +4216,8 @@ pub struct ScenePanel {
     pending_backdrop_select: Option<String>,
     backdrop_dl: BackdropDownloadUi,
     want_browse_backdrop: bool,
-    kept_atlas: Option<KeptAtlas>,
     fibre_layers: Vec<std::sync::Arc<dbsloc_viz::scene_layers::FibreLayer>>,
     map_layers: Vec<std::sync::Arc<dbsloc_viz::scene_layers::MapLayer>>,
-}
-
-/// A saved atlas set the loaded scene does not list: the scene shows its default set and the
-/// saved choice is kept for a scene that lists it, until the user picks another set.
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct KeptAtlas {
-    wanted: String,
-    shown: Option<String>,
-}
-
-impl KeptAtlas {
-    fn new(wanted: &str) -> Self {
-        Self {
-            wanted: wanted.to_owned(),
-            shown: None,
-        }
-    }
-
-    /// `false` once the user switched away from the set shown in place of the wanted one.
-    fn still_kept(&mut self, current: Option<&str>) -> bool {
-        let Some(cur) = current.filter(|c| *c != self.wanted) else {
-            return true;
-        };
-        match &self.shown {
-            None => {
-                self.shown = Some(cur.to_owned());
-                true
-            }
-            Some(shown) => shown == cur,
-        }
-    }
-
-    fn persisted(&self, current: Option<String>) -> Option<String> {
-        if current.is_none() || current == self.shown || current.as_deref() == Some(&self.wanted) {
-            Some(self.wanted.clone())
-        } else {
-            current
-        }
-    }
 }
 
 /// A folder dialog on a worker thread; the result is taken with [`FolderPick::poll`].
@@ -4341,7 +4301,8 @@ impl ScenePanel {
         state.scene.manifest_path_is_manual = true;
         self.embedded = None;
         self.auto_attempted = Some(state.scene.manifest_path.trim().to_owned());
-        self.start_load(path, ctx, None);
+        let restore = state.scene.view.clone();
+        self.start_load(path, ctx, restore);
     }
 
     pub fn is_loading(&self) -> bool {
@@ -4475,26 +4436,7 @@ impl ScenePanel {
 
     /// Capture the live camera / atlas state so it can be persisted.
     pub fn capture_view_state(&self) -> Option<SceneViewState> {
-        self.embedded.as_ref().map(|a| {
-            let mut view = a.view_state();
-            if let Some(kept) = &self.kept_atlas {
-                view.atlas_id = kept.persisted(view.atlas_id.take());
-            }
-            view
-        })
-    }
-
-    fn track_atlas_choice(&mut self) {
-        let Some(kept) = self.kept_atlas.as_mut() else {
-            return;
-        };
-        let current = self
-            .embedded
-            .as_ref()
-            .and_then(Scene3DEframeApp::current_atlas_id);
-        if !kept.still_kept(current.as_deref()) {
-            self.kept_atlas = None;
-        }
+        self.embedded.as_ref().map(Scene3DEframeApp::view_state)
     }
 
     fn sync_tracking(&mut self, state: &mut DbslocAppState) {
@@ -4537,7 +4479,6 @@ impl ScenePanel {
             }
             self.backdrop_dl = BackdropDownloadUi::default();
             self.want_browse_backdrop = false;
-            self.kept_atlas = None;
             state.scene.manifest_path_is_manual = false;
         } else if state.scene.manifest_path_is_manual
             && !Path::new(state.scene.manifest_path.trim()).is_file()
@@ -4615,7 +4556,6 @@ impl ScenePanel {
 
     pub fn poll_load(&mut self, ctx: &egui::Context) {
         self.service_backdrop(ctx);
-        self.track_atlas_choice();
         self.prune_removed_layers();
         let Some(rx) = &self.pending else {
             return;
@@ -4640,7 +4580,6 @@ impl ScenePanel {
                         app.set_navigation(self.navigation);
                         app.set_backdrop_choices(choices, true);
                         self.backdrop_source = Some(source);
-                        self.kept_atlas = None;
                         if let Some(view) = self.restore_on_load.take() {
                             self.custom_backdrop = view
                                 .backdrop_id
@@ -4648,9 +4587,7 @@ impl ScenePanel {
                                 .filter(|id| id.starts_with(CUSTOM_PREFIX));
                             app.restore_view_state_deferred(&view);
                             if let Some(id) = view.atlas_id.as_deref() {
-                                if !app.select_atlas(id) {
-                                    self.kept_atlas = Some(KeptAtlas::new(id));
-                                }
+                                app.select_atlas(id);
                             }
                         }
                         self.embedded = Some(app);
@@ -5045,29 +4982,6 @@ mod tests {
         assert_eq!(
             state.scene.view.unwrap().atlas_id.as_deref(),
             Some("external:Morel")
-        );
-    }
-
-    #[test]
-    fn an_unlisted_atlas_id_is_saved_until_the_user_picks_another_set() {
-        let mut kept = KeptAtlas::new("external:Morel");
-        assert!(kept.still_kept(Some("external:Morel")));
-        assert_eq!(
-            kept.persisted(Some("external:Morel".to_owned())).as_deref(),
-            Some("external:Morel")
-        );
-        assert!(kept.still_kept(Some("leaddbs:DISTAL Minimal (Ewert 2017)")));
-        assert!(kept.still_kept(Some("leaddbs:DISTAL Minimal (Ewert 2017)")));
-        assert_eq!(
-            kept.persisted(Some("leaddbs:DISTAL Minimal (Ewert 2017)".to_owned()))
-                .as_deref(),
-            Some("external:Morel")
-        );
-        assert_eq!(kept.persisted(None).as_deref(), Some("external:Morel"));
-        assert!(!kept.still_kept(Some("ahead")));
-        assert_eq!(
-            kept.persisted(Some("ahead".to_owned())).as_deref(),
-            Some("ahead")
         );
     }
 

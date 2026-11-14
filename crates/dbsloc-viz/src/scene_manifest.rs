@@ -349,6 +349,8 @@ pub struct SceneManifestV1 {
     /// Multiple Lead-layout atlas roots (GUI switches between them).
     #[serde(default)]
     pub atlas_lead_sets: Vec<AtlasLeadSetV1>,
+    #[serde(default)]
+    pub atlas_default_id: Option<String>,
     /// Single Lead-layout root if `atlas_lead_sets` empty (backward compat).
     #[serde(default)]
     pub atlas_lead_nii_dir: Option<PathBuf>,

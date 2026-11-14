@@ -53,6 +53,28 @@ pub struct ElectrodeGeometry {
     tail_level_index: usize,
     #[serde(rename = "segment_arc_deg")]
     segment_arc: Option<f64>,
+    #[serde(rename = "contact_names")]
+    contact_display_names: SideNames,
+    #[serde(rename = "level_names")]
+    level_display_names: SideNames,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct SideNames {
+    #[serde(rename = "1")]
+    right: Vec<String>,
+    #[serde(rename = "2")]
+    left: Vec<String>,
+}
+
+impl SideNames {
+    fn side(&self, side: &str) -> &[String] {
+        match side {
+            "1" => &self.right,
+            "2" => &self.left,
+            _ => &[],
+        }
+    }
 }
 
 pub const TRAJECTORY_POINTS: usize = 50;
@@ -90,6 +112,14 @@ impl ElectrodeGeometry {
 
     pub fn segment_arc_deg(&self) -> Option<f64> {
         self.segment_arc
+    }
+
+    pub fn contact_names(&self, side: &str) -> Vec<String> {
+        self.contact_display_names.side(side).to_vec()
+    }
+
+    pub fn level_names(&self, side: &str) -> Vec<String> {
+        self.level_display_names.side(side).to_vec()
     }
 
     pub fn trajectory_extension_factor(&self) -> f64 {
@@ -209,6 +239,19 @@ fn parse_catalog(json: &str) -> Result<Vec<ElectrodeGeometry>, String> {
         {
             return Err(format!("{}: segment arc out of range", e.elmodel));
         }
+        for (what, names, want) in [
+            ("contact", &e.contact_display_names, e.n_contacts),
+            ("level", &e.level_display_names, e.level_z_mm.len()),
+        ] {
+            if names.right.len() != want || names.left.len() != want {
+                return Err(format!(
+                    "{}: {} right and {} left {what} names, expected {want}",
+                    e.elmodel,
+                    names.right.len(),
+                    names.left.len()
+                ));
+            }
+        }
     }
     Ok(models)
 }
@@ -259,7 +302,9 @@ mod tests {
                 "tip_is_contact": false, "eldist_mm": 2.0, "level_z_mm": [0.0, 2.0],
                 "contact_level": {levels}, "contact_xyz_mm": {xyz}, "is_directed": false,
                 "marker_pos_mm": null, "marker_len_mm": null, "array_span_mm": 3.5,
-                "tail_level": 1, "segment_arc_deg": null}}]}}"#
+                "tail_level": 1, "segment_arc_deg": null,
+                "contact_names": {{"1": ["K0", "K1"], "2": ["K8", "K9"]}},
+                "level_names": {{"1": ["K0", "K1"], "2": ["K8", "K9"]}}}}]}}"#
             )
         };
         assert!(parse_catalog(&row("[0, 1]", "[[0,0,0],[0,0,2]]")).is_ok());
@@ -506,5 +551,34 @@ mod tests {
         );
         assert!(by_name("Not A Real Lead").is_none());
         assert!(by_name("").is_none());
+    }
+
+    #[test]
+    fn contact_and_level_names_follow_the_catalogue() {
+        let names = |model: &str, side: &str| by_name(model).unwrap().contact_names(side);
+        let levels = |model: &str, side: &str| by_name(model).unwrap().level_names(side);
+        assert_eq!(names("Medtronic 3389", "1"), ["K0", "K1", "K2", "K3"]);
+        assert_eq!(names("Medtronic 3389", "2"), ["K8", "K9", "K10", "K11"]);
+        assert_eq!(
+            names("medtronic_b33005", "2"),
+            ["K0", "K1A", "K1B", "K1C", "K2A", "K2B", "K2C", "K3"]
+        );
+        assert_eq!(levels("medtronic_b33005", "1"), ["K0", "K1", "K2", "K3"]);
+        assert_eq!(names("boston_vercise_directed", "1")[0], "K9");
+        assert_eq!(
+            levels("boston_vercise_directed", "1"),
+            ["K9", "K10-12", "K13-15", "K16"]
+        );
+        assert_eq!(names("boston_vercise_cartesia_hx", "1")[0], "K17");
+        assert_eq!(names("boston_vercise_cartesia_hx", "2")[15], "K16");
+        assert_eq!(names("smartflow_ngs-nc-06", "2"), ["K3", "K4"]);
+        assert!(names("Medtronic 3389", "3").is_empty());
+        assert!(levels("Medtronic 3389", "").is_empty());
+        for e in catalog() {
+            for side in ["1", "2"] {
+                assert_eq!(e.contact_names(side).len(), e.n_contacts, "{}", e.elmodel);
+                assert_eq!(e.level_names(side).len(), e.n_levels(), "{}", e.elmodel);
+            }
+        }
     }
 }

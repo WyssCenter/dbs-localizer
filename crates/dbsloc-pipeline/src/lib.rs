@@ -1373,6 +1373,46 @@ mod driver_tests {
         let _ = std::fs::remove_dir_all(&root);
     }
 
+    #[test]
+    fn an_approved_coreg_reruns_when_a_post_op_image_has_no_coregistered_output() {
+        let root = scratch("coreg_key_changed");
+        let locks = lock_dir(&root);
+        let post = root.join("rawdata/sub-1/ses-postop/anat");
+        std::fs::create_dir_all(&post).unwrap();
+        std::fs::write(post.join("sub-1_ses-postop_CT.nii.gz"), b"x").unwrap();
+        std::fs::write(post.join("sub-1_ses-postop_acq-ax_T1w.nii.gz"), b"x").unwrap();
+        let sub = resolve_subject_with(&root, "1", false).unwrap();
+        for out in [
+            derivatives::coreg_ct_image(&sub),
+            derivatives::coreg_mr_image(&sub, "ax_MRI"),
+        ] {
+            std::fs::create_dir_all(out.parent().unwrap()).unwrap();
+            std::fs::write(out, b"x").unwrap();
+        }
+        let approve = || std::fs::write(locks.join("coreg.json"), r#"{"approval": true}"#).unwrap();
+        let note = "dbsloc: note: coreg: no coregistered output for cor_MRI; the stage runs";
+        let has_note = |events: &[RunEvent]| {
+            events
+                .iter()
+                .any(|e| matches!(e, RunEvent::LogLine { line } if line == note))
+        };
+        approve();
+        let events = run_fake(&root, vec![Stage::Coregister], false);
+        assert_eq!(outcomes(&events)[0].1, "skip:approved");
+        assert!(!has_note(&events));
+
+        std::fs::rename(
+            post.join("sub-1_ses-postop_acq-ax_T1w.nii.gz"),
+            post.join("sub-1_ses-postop_acq-cor_T1w.nii.gz"),
+        )
+        .unwrap();
+        approve();
+        let events = run_fake(&root, vec![Stage::Coregister], false);
+        assert_eq!(outcomes(&events)[0].1, "ok:fake");
+        assert!(has_note(&events), "{events:?}");
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
     fn run_one(
         root: &Path,
         stage: Stage,
