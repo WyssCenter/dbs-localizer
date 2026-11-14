@@ -49,10 +49,10 @@ Every electrode is described by a scalar MATLAB struct `elspec`. The following t
 | `contactnames`     | cell string[]    | Length `2 × numContacts`. Names for right-side contacts followed by left-side contacts. Used for display and channel labelling                                          |
 | `etagenames`       | {cell,cell}      | `etagenames{1}` = right-side group names; `etagenames{2}` = left-side group names. One name per electrode *level* (ring or segmented group), not per segment            |
 | `etageidx`         | cell of int[]    | `etageidx{k}` = 1-based index vector into the per-side contact list for level `k`. Length equals number of stimulation levels                                           |
-| `markerpos`        | float            | (directed leads only) Distance in mm from the most-distal contact centre to the orientation marker's centre                                                             |
+| `markerpos`        | float            | (directed leads only) Distance in mm from the tip apex to the orientation marker's centre (§2.2)                                                                       |
 | `markerlen`        | float            | (directed leads only) Axial length of the orientation marker artifact (mm)                                                                                              |
 | `eldist`           | float            | Centre-to-centre distance between adjacent contacts (mm). Computed automatically: `contact_spacing + contact_length` (uses second spacing value for non-uniform arrays) |
-| `contact_span`     | float            | Total axial distance spanned from most-distal contact centre to most-proximal contact centre (mm). Computed automatically — see §3.4                                    |
+| `contact_span`     | float            | Axial length of the active array (mm), the manufacturer's array span. Computed automatically — see §2.1 and §2.2                                                        |
 
 
 ### 2.1 Computed Fields (auto-populated by `ea_resolve_elspec`)
@@ -76,6 +76,40 @@ else:
                     + contact_spacing * (n_levels - 1))
 ```
 
+### 2.2 Geometry rules (normative, 2026-11-14)
+
+These rules replace any conflicting statement elsewhere in this specification. They were checked against the reference catalogue, the reference contact meshes and the manufacturers' published dimensions (decisions of 2026-11-14).
+
+- **Array span (`contact_span`).** The axial length of the active array, from the distal edge of the most distal contact (the tip apex when the tip is a contact) to the proximal edge of the most proximal contact, computed over levels with the §2.1 formula. It equals the manufacturer's array span (Boston Vercise Directed 7.5 mm, Cartesia HX 15.5 mm, Cartesia X 11.5 mm, Medtronic 3389 / B33005 and Abbott 6172 7.5 mm, NuMed Mini Lead 3.5 mm). No model overrides it. It is used only for the trajectory extension (`05` §5) and never as the head-to-tail distance.
+- **Model fiducials.** In the model frame (+z proximal along the axis) the **head** fiducial is the centre of the most distal level. The **tail** fiducial is the centre of the **4th level** counted from the distal end, or of the last level when the model has fewer than 4 levels; SceneRay SR1202 and SR1212 use their 8th contact (their last level). The model `x` / `y` fiducials lie at radius `r = lead_diameter / 2` along model +x / +y at the head depth.
+- **Fiducial span (`fiducial_span`).** The tail fiducial depth minus the head fiducial depth (mm): 6.0 mm for Boston Vercise Directed, Vercise (8 rings), Cartesia HX and Cartesia X and for depth leads of 2 mm pitch, 3.0 mm for NuMed Mini Lead, 0 for a single-level model. It is the expected `|tail − head|`: reconstruction plausibility, TRAC/CORE tail placement, the axial stretch `s` of `05` §6 and every model-to-marker fit use it.
+- **Segment order.** On every directional level the first segment (A) lies at the model +Y direction, which is the orientation-marker direction and the zero of the roll angle. Viewed from the proximal end (model +x to the right, +y up), segments B and C follow at +120° and +240° (counter-clockwise: B at 210°, C at 330° measured from +x) for Boston Scientific and Medtronic leads, and at −120° and −240° (clockwise: B at 330°, C at 210°) for Abbott Directed 6172 / 6173 and Aleva directSTIM. Medtronic's distal marker piece faces segment B.
+- **Segment arc (`segment_arc_deg`).** Each segment of a directional level covers `segment_arc_deg` of the circumference, centred on its azimuth; the rest of the level is insulation. Values from the reference meshes: 90° (Boston Vercise Directed, Medtronic B33005 / B33015, Abbott 6172 / 6173), 100° (Boston Cartesia HX / X), 85° (Aleva directSTIM). The viewer and the volume conductor (`07`) use the same catalogue value.
+- **Marker position.** `markerpos` is measured from the tip apex to the centre of the orientation marker. Marker centres in the reference meshes: 11 mm Boston Vercise Directed, 14.4 mm Medtronic B33005 (two pieces, 12.0–14.3 mm and 14.5–16.8 mm), 10.75 mm Abbott 6172, 20 mm Cartesia HX, 16 mm Cartesia X.
+- **Aleva directSTIM.** Lead and tip diameter 1.35 mm with a rounded cap (the reference's tip diameter of 0.5 mm describes only the flat apex of that cap); no orientation-marker geometry; `markerpos` 13 mm is unverified and `markerlen` is not defined (null); automatic orientation detection (`06`) is not supported.
+- **Medtronic B33005 / B33015.** The manufacturer's manual gives a lead diameter of 1.36 mm and a distal tip of 1.0 mm; the catalogue keeps the reference values 1.3 mm and 0.9 mm for parity with existing reconstructions (known deviation).
+
+### 2.3 Contact display names (normative, 2026-11-14; implementation pending)
+
+Contact display names follow the reference implementation. A name is `K` + a number (+ the segment letter `A` / `B` / `C` for Medtronic and Abbott directional levels), numbered distal to proximal from the per-model start of the side in the table below, numbers contiguous within a side. The side suffix is ` (R)` / ` (L)` in labels and is dropped or compacted (`K0R`) in file names. Level names: the ring contact's name; for Boston Scientific and Aleva directional levels `K<first>-<last>` (their segments carry plain numbers); for Medtronic and Abbott directional levels the level number. Names appear in the 3D viewer labels, 2D slice export file names, reports and trajectory-planning level names. Stimulation settings, VTA files, the reconstruction file and group data stay positional (contacts 1..N per side) and never store names.
+
+| Models | Right start | Left start | Style |
+| ------ | ----------- | ---------- | ----- |
+| Medtronic 3387 / 3389 / 3391, PINS L301 / L302 / L303, NeuroPace (both) | K0 | K8 | numeric |
+| Medtronic B33005 / B33015 | K0 | K0 | level + letter (K0, K1A–C, K2A–C, K3) |
+| Boston Vercise, Vercise Directed | K9 | K1 | numeric (segments numbered) |
+| Boston Cartesia HX / X | K17 | K1 | numeric (segments numbered) |
+| Abbott ActiveTip (both) | K1 | K1 | numeric |
+| Abbott Directed 6172 / 6173 | K1 | K1 | level + letter (K1, K2A–C, K3A–C, K4) |
+| SceneRay SR1200 / SR1210 / SR1211 / SR1242 | K4 | K0 | numeric |
+| SceneRay SR1202 / SR1212 | K8 | K0 | numeric |
+| Aleva directSTIM Directed | K1 | K13 | numeric (segments numbered) |
+| NuMed Mini Lead, ELAINE rat, FHC WU rat | K0 | K0 | numeric |
+| SmartFlow NGS-NC-06 | K0 (K0, K1) | K3 (K3, K4) | numeric (the reference's gap is kept) |
+| SEEG / depth leads (SDE, PMT, EPC, DIXI, AdTech) | K0 | see below | numeric |
+
+Left start of SEEG / depth leads: SDE-08 S8 (both generations) 8, S10 10, S12 12, S14 16, S16 16; PMT -04 4, -06 6, -08 8, -10 10, -12 12, -14 14, every -16 16; EPC 05C 8, 15C 16; DIXI 05 5, 08 8, 10 10, 12 12, 15 15, 18 18; AdTech BF08 8, BF09 9, RD06 6, RD08 8, every RD10 10, SD06 6, SD08 8, SD10 (both) 10, SD14 14.
+
 ---
 
 ## 3. The `electrode` Struct — Field Reference
@@ -92,7 +126,7 @@ The `ea_elspec_*.m` builder functions produce a richer struct `electrode` that a
 | `lead_color`      | float     | Equals `elspec.lead_color`                                                                                                                                                                                                 |
 | `coords_mm`       | N×3 float | Contact centroid coordinates in the electrode's local frame (mm). N = `numContacts`. For directed contacts the centroid is offset radially to the surface of the lead shaft. Row `i` corresponds to contact `i` (1-based). |
 | `head_position`   | 1×3 float | Centre of the most-distal (deepest) contact in local frame                                                                                                                                                                 |
-| `tail_position`   | 1×3 float | Centre of the most-proximal contact in local frame                                                                                                                                                                         |
+| `tail_position`   | 1×3 float | Tail fiducial of §2.2 (centre of the 4th level, or of the last level when fewer)                                                                                                                                                                         |
 | `x_position`      | 1×3 float | A point on the +X half of the shaft at the depth of `head_position`, used to define the local coordinate axes                                                                                                              |
 | `y_position`      | 1×3 float | A point on the +Y half of the shaft at the depth of `head_position`                                                                                                                                                        |
 | `contacts`        | struct[]  | Length = `numContacts`. Each element: `.vertices` (M×3 float) and `.faces` (F×3 int) — triangle mesh of one contact                                                                                                        |
@@ -122,7 +156,7 @@ Segment B (index 1):  offset = [ -cx,  -cy,   0 ]   # 210° CCW from +Y
 Segment C (index 2):  offset = [ +cx,  -cy,   0 ]   # 330° CCW from +Y
 ```
 
-where `r = lead_diameter / 2`. The three segments are arranged 120° apart, counter-clockwise as seen from above (proximal end) — **except Aleva directSTIM which uses clockwise arrangement**.
+where `r = lead_diameter / 2`. The three segments are arranged 120° apart, counter-clockwise as seen from the proximal end for Boston Scientific and Medtronic leads; Abbott Directed 6172 / 6173 and Aleva directSTIM are clockwise (B and C swapped, §2.2).
 
 ### 3.3 Mesh File Format
 
@@ -238,7 +272,7 @@ class ElectrodeSpec:
     etageidx: tuple[tuple[int,...], ...]  # level → 1-based contact indices
 
     # Marker (directed leads only; None for undirected)
-    markerpos: float | None = None      # mm from tip contact centre to marker centre
+    markerpos: float | None = None      # mm from tip apex to marker centre
     markerlen: float | None = None      # mm axial length of marker
 ```
 
@@ -686,7 +720,7 @@ SD06R-SP26X has a mixed-spacing array `[2.59, 2.59, 7.59, 7.59, 7.59]` represent
 - **Contact layout:** 3-seg × 4 levels = 12 contacts; **no ring contacts at any level**
 - **etageidx:** `{1:3, 4:6, 7:9, 10:12}` → 4 groups, each fully segmented
 - **Geometry:**
-  - Shaft Ø 1.35 mm, tip Ø 0.5 mm (tapered), `tip_length=1.1 mm`, `tipiscontact=0`
+  - Shaft and tip Ø 1.35 mm with a rounded cap (§2.2), `tip_length=1.1 mm`, `tipiscontact=0`
   - Contact length 1.5 mm, spacing 0.5 mm → pitch 2.0 mm
 - **Contact z-coordinates (from `ea_elspec_aleva_directstim_directed.m`):**
   - Level 1 (K1/2/3): z = 1.82 mm
@@ -694,7 +728,7 @@ SD06R-SP26X has a mixed-spacing array `[2.59, 2.59, 7.59, 7.59, 7.59]` represent
   - Level 3 (K7/8/9): z = 5.82 mm
   - Level 4 (K10/11/12): z = 7.82 mm
 - **Segmented contact rotation:** **CLOCKWISE** from +Y viewed from proximal (A=+Y, B=lower-right, C=lower-left) — opposite to Boston/Medtronic
-- **Marker:** `markerpos = 13 mm` (marked TOCHECK in source — requires verification against hardware spec)
+- **Marker:** none; `markerpos = 13 mm` unverified, `markerlen` null, orientation detection unsupported (§2.2)
 - **Mesh source:** `Aleva_directSTIM_Directed/Contacts/*.face` + `Insulations/*.face`
 - **DiODe:** NOT supported (no implementation in `ea_diode_main.m`)
 
@@ -785,7 +819,7 @@ The codebase uses no explicit taxonomy, but models can be grouped functionally:
 
 | tipiscontact=0                                                                                                                                                                                                                   | tipiscontact=1                                                                                          |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Medtronic 3387/3389/3391, BSci Vercise, BSci Vercise Directed†, all BSci Cartesia, Medtronic B33005/B33015, Abbott Directed 6172/6173, SceneRay (all), PINS (all), SDE-08 Legacy (all), NeuroPace, AdTech BF/RD/SD, NuMed, Aleva | Abbott ActiveTip (both), SDE-08 current (all), PMT (all), EPC (all), DIXI (all), SmartFlow, ELAINE, FHC |
+| Medtronic 3387/3389/3391, BSci Vercise, all BSci Cartesia, Medtronic B33005/B33015, Abbott Directed 6172/6173, SceneRay (all), PINS (all), SDE-08 Legacy (all), NeuroPace, AdTech BF/RD/SD, NuMed, Aleva | BSci Vercise Directed†, Abbott ActiveTip (both), SDE-08 current (all), PMT (all), EPC (all), DIXI (all), SmartFlow, ELAINE, FHC |
 
 
 † Boston Vercise Directed is the only *directed* lead with `tipiscontact=1`.
@@ -831,27 +865,7 @@ where eldist = contact_spacing + contact_length   [uniform case]
 contact_centre_k = [0, 0, z_k]
 ```
 
-For `tipiscontact=1`, the first contact (k=1) is centred at:
-
-```
-z_1 = tip_length / 2    [halfway through the tip = first contact centre]
-```
-
-Wait — this is model-specific. Looking at the code: for tipiscontact=1 models, `coords_mm` is computed as:
-
-```
-z_k = tip_length * (k-1 > 0) + contact_length/2 + (k-1)*eldist
-# = 0 + contact_length/2      for k=1 (tip contact)
-# = tip_length + contact_length/2 + (k-1)*eldist  for k>1... 
-```
-
-More precisely, from the procedural generator code in `ea_elspec_medtronic_3389.m`:
-
-```
-z_k = tip_length + contact_length/2 + (k-1) * (contact_spacing + contact_length)
-```
-
-(The tip contact models shift this by using `tipiscontact` as a flag affecting `contact_span` but the per-model builder files hardcode the coordinates directly. See §7 per-model entries for exact values.)
+The first level's centre lies `tip_length + contact_length / 2` above the tip apex when the tip is insulating (`tipiscontact = 0`) and `tip_length / 2` above it when the tip is the first contact (`tipiscontact = 1`, the metal reaches the apex). Each further level centre adds the centre-to-centre pitch of its gap: `contact_length + contact_spacing[k−1]` when `contact_spacing` lists one gap per level gap, else `eldist`. See §7 for per-model values.
 
 ### 10.2 Segmented Contacts (directed leads)
 
@@ -862,18 +876,18 @@ r  = lead_diameter / 2
 cx = r * cos(π/6)   # = r * √3/2 ≈ 0.866 r
 cy = r * sin(π/6)   # = r * 0.5
 
-# Counter-clockwise convention (Boston Scientific, Medtronic, Abbott):
+# Counter-clockwise convention (Boston Scientific, Medtronic):
 seg_A = [  0,  +r,  z_lev ]   # 90° (Y+)
 seg_B = [ -cx, -cy, z_lev ]   # 210°
 seg_C = [ +cx, -cy, z_lev ]   # 330°
 
-# Clockwise convention (Aleva directSTIM):
+# Clockwise convention (Abbott Directed 6172 / 6173, Aleva directSTIM):
 seg_A = [  0,  +r,  z_lev ]   # 90° (Y+)  — same
 seg_B = [ +cx, -cy, z_lev ]   # 330°
 seg_C = [ -cx, -cy, z_lev ]   # 210°
 ```
 
-Each segment subtends an arc of **120°** (360°/3), though the exact arc angle is encoded in the 3-D mesh, not in the scalar elspec parameters.
+The segment centres are 120° apart; each segment covers `segment_arc_deg` (90°, 100° or 85°, §2.2) and the gaps between segments are insulation.
 
 ### 10.3 Non-uniform Contact Spacing
 
@@ -984,7 +998,8 @@ For each model, the following must hold:
   - `len(etagenames[0]) == len(etagenames[1]) == len(etageidx)`
 4. **Directed geometry sanity:**
   - For directed leads: `len(etageidx)` levels where some `len(idx) == 3` exist
-  - `markerpos` and `markerlen` are not None for all models with `isdirected=True`
+  - `markerpos` is not None for every model with `isdirected=True`; `markerlen` is not None for every such model except Aleva directSTIM (§2.2)
+  - `segment_arc_deg` and the segment order of §2.2 hold for every directional model
 5. **Round-trip lookup:** `get_elspec(elspec.elmodel).matfname == elspec.matfname`
 6. **Catalogue size:** `len(list_models()) == 73`
 7. **Specific numeric checks (spot tests):**
@@ -997,8 +1012,11 @@ For each model, the following must hold:
 | Medtronic 3387        | contact_span       | 10.5 mm                                                                |
 | Medtronic 3391        | contact_span       | 24.0 mm                                                                |
 | Medtronic B33005      | contact_span       | 7.5 mm                                                                 |
-| BSci Vercise Directed | contact_span       | 9.0 mm (tip=1.5, tip contact; 3 non-tip contacts: 3×1.5 + 3×0.5 + 1.5) |
-| BSci Cartesia HX      | contact_span       | 16.5 mm                                                                |
+| BSci Vercise Directed | contact_span       | 7.5 mm (tip contact 1.5 + 3 × 1.5 + 3 × 0.5)                           |
+| BSci Vercise Directed | fiducial_span      | 6.0 mm                                                                 |
+| BSci Cartesia HX      | contact_span       | 15.5 mm                                                                |
+| BSci Cartesia HX      | fiducial_span      | 6.0 mm (tail at the 4th of 8 levels)                                   |
+| BSci Cartesia X       | contact_span       | 11.5 mm                                                                |
 | Abbott Directed 6172  | contact_span       | 7.5 mm                                                                 |
 | PMT 2102-16-091       | eldist             | 3.5 mm                                                                 |
 | PMT 2102-16-092       | eldist             | 3.97 mm                                                                |
@@ -1006,7 +1024,8 @@ For each model, the following must hold:
 | NeuroPace DL-344-10   | contact_spacing    | 8.0 mm                                                                 |
 | ELAINE Rat            | lead_diameter      | 0.225 mm                                                               |
 | FHC WU Rat            | lead_diameter      | 0.125 mm                                                               |
-| NuMed Mini Lead       | contact_span       | 2.0 mm                                                                 |
+| NuMed Mini Lead       | contact_span       | 3.5 mm                                                                 |
+| NuMed Mini Lead       | fiducial_span      | 3.0 mm                                                                 |
 | SceneRay SR1242       | contact_spacing    | [2.0, 4.0, 4.0] mm                                                     |
 | AdTech BF08R-SP21X    | contact_spacing[0] | 1.43 mm                                                                |
 | AdTech SD06R-SP26X    | contact_spacing[2] | 7.59 mm                                                                |

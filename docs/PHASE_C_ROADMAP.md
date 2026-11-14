@@ -24,7 +24,7 @@ the synthetic pair). **Reconstruction is the broken stage**, and neither path re
 | D1 | **Rust is the pipeline vehicle**; Python `dbsloc` becomes a thin CLI over `dbsloc_pipeline_runner` | Fixes land once. Checkreg QC, locks, prereqs and the orientation MVP must be ported to Rust before `dbsloc/pipeline` is demoted. **Done 2026-10-05 (4.8 + 4.9):** every prerequisite is in Rust (the orientation MVP was replaced by an honest *skipped*), `dbsloc/pipeline` is deleted, and `dbsloc run` calls the pipeline in-process through the extension rather than spawning the runner. |
 | D2 | **Lead-Tutor** (OSF `jxecg`, `LeadTutor.zip`, 873 MiB, 10 subjects, pre-op MRI + post-op CT, BIDS, defaced) is the validation cohort | Point `HPDATA_LEADTUTOR` at the extracted root. |
 | D3 | **PaCER first** for reconstruction | The Rust implementation already exists; TRAC/CORE rebuild follows for post-op MRI coverage. |
-| D4 (2026-10-07) | **wgpu is the GPU vehicle for registration** (amends AGENTS §3 "CUDA — LOCKED"; CUDA optional later) | Plan and the twelve decisions: `docs/GPU_REG_PLAN.md`. Crates `fastwarp-reg` + `fastwarp-gpu`, option `--reg-backend auto|wgpu|ants`, outputs under the ANTs names; acceptance = Lead-Tutor mean ≤ 1.142 mm at 1.0 mm T1w + T2w (ANTs 1.092 + 0.05). Item 3.18. |
+| D4 (2026-10-07) | **wgpu is the GPU vehicle for registration** (amends AGENTS §3 "CUDA — LOCKED"; CUDA optional later) | Plan and decisions: dated entries of 2026-10-07 and later in `docs/PHASE_HISTORY.md` (the separate plan document was not carried into this repository). Crates `fastwarp-reg` + `fastwarp-gpu`, option `--reg-backend auto|wgpu|ants`, outputs under the ANTs names; acceptance = Lead-Tutor mean ≤ 1.142 mm at 1.0 mm T1w + T2w (ANTs 1.092 + 0.05). Item 3.18. |
 
 ---
 

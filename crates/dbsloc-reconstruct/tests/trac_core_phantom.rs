@@ -145,7 +145,7 @@ fn build_phantom_on(
             }
         }
     }
-    let span = e.contact_span_mm();
+    let span = e.fiducial_span_mm();
     let tail = [
         head[0] + u_shaft[0] * span,
         head[1] + u_shaft[1] * span,
@@ -247,10 +247,10 @@ fn every_cohort_lead_recovers_within_a_voxel_or_two() {
             );
             assert!(d < 1.2, "{name} dark={dark}: head off by {d:.3} mm");
             assert!(
-                (dist(r.head, r.tail) - e.contact_span_mm()).abs() < 0.2,
+                (dist(r.head, r.tail) - e.fiducial_span_mm()).abs() < 0.2,
                 "{name}: span {:.2} != model {:.2}",
                 dist(r.head, r.tail),
-                e.contact_span_mm()
+                e.fiducial_span_mm()
             );
             assert!(
                 (r.metal_extent_mm - r.model_metal_extent_mm).abs() < 1.5,
@@ -261,6 +261,43 @@ fn every_cohort_lead_recovers_within_a_voxel_or_two() {
         }
     }
     assert!(worst < 1.2, "worst {worst_name}: {worst:.3} mm");
+}
+
+#[test]
+fn eight_level_leads_put_the_tail_on_the_fourth_level() {
+    for name in [
+        "Boston Scientific Vercise",
+        "Boston Scientific Vercise Cartesia HX",
+    ] {
+        let e = electrode_by_name(name).expect("catalogued");
+        assert_eq!(e.n_levels(), 8, "{name}");
+        let (head, u) = left_lead(e);
+        let ph = build_phantom(e, head, u, false);
+        let r = trace_side(&ph.data, &ph.aff, 1, true, e, &cfg())
+            .unwrap_or_else(|err| panic!("{name}: {err}"));
+        let at = |mm: f64| {
+            [
+                head[0] + mm * u[0],
+                head[1] + mm * u[1],
+                head[2] + mm * u[2],
+            ]
+        };
+        assert!(
+            (dist(r.head, r.tail) - 6.0).abs() < 0.2,
+            "{name}: head to tail {:.2} mm",
+            dist(r.head, r.tail)
+        );
+        assert!(
+            dist(r.tail, at(6.0)) < 1.0,
+            "{name}: tail {:?} is {:.2} mm from the 4th level",
+            r.tail,
+            dist(r.tail, at(6.0))
+        );
+        assert!(
+            dist(r.tail, at(14.0)) > 7.0,
+            "{name}: tail sits near the last level"
+        );
+    }
 }
 
 #[test]
@@ -287,9 +324,9 @@ fn pitch_comes_from_the_matched_lead() {
         let r = trace_side(&ph.data, &ph.aff, 1, true, e, &cfg()).expect("trace succeeds");
         let span = dist(r.head, r.tail);
         assert!(
-            (span - e.contact_span_mm()).abs() < 0.2,
+            (span - e.fiducial_span_mm()).abs() < 0.2,
             "{name}: span {span:.2} != {:.2}",
-            e.contact_span_mm()
+            e.fiducial_span_mm()
         );
         assert!(
             dist(r.head, ph.head) < 1.0,
@@ -317,7 +354,8 @@ fn recovers_directional_lead_levels() {
     assert!((dist(r.head, r.tail) - 6.0).abs() < 0.2);
 }
 
-/// `head`/`tail` must be contact 0 and the last level, not the ends of the traced centreline.
+/// `head`/`tail` must be contact 0 and the tail fiducial level, not the ends of the traced
+/// centreline.
 /// The centreline spans the whole z window — about 24 mm — so the two are far apart.
 #[test]
 fn fiducials_are_contacts_not_centreline_extremes() {

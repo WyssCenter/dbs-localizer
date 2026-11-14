@@ -227,7 +227,7 @@ pub fn side_from_electrode(
         return Err(PacerError::EmptySkeleton);
     }
     let head = level_mm[0];
-    let tail = level_mm[level_mm.len() - 1];
+    let tail = level_mm[geom.tail_level().min(level_mm.len() - 1)];
     let (x, y) = ring_in_plane(head, tail, None, geom.lead_diameter_mm);
     Ok(PacerSide {
         head,
@@ -396,7 +396,7 @@ mod tests {
         let span = ((levels[levels.len() - 1][2] - levels[0][2]).powi(2)
             + (levels[levels.len() - 1][0] - levels[0][0]).powi(2))
         .sqrt();
-        assert!((span - e.contact_span_mm()).abs() < 0.05, "span {span}");
+        assert!((span - e.last_level_span_mm()).abs() < 0.05, "span {span}");
     }
 
     /// A non-cubic shape with one marked voxel: the value must come back at the *same* index
@@ -498,6 +498,17 @@ mod tests {
             side.head[2]
         );
         assert!((side.apex_s_mm - (3.0 - e.tip_length_mm)).abs() < 0.05);
+    }
+
+    #[test]
+    fn tail_is_the_fourth_level_of_a_long_lead() {
+        let e = electrode_by_name("Boston Scientific Vercise Cartesia HX").unwrap();
+        let el = electrode_on(straight_poly([0.0, 0.0, 0.0], [0.0, 0.0, 1.0], 40.0), 3.0);
+        let side = side_from_electrode(&el, Some(e), 0.0).expect("placed");
+        assert_eq!(side.level_mm.len(), 8);
+        assert_eq!(side.tail, side.level_mm[3]);
+        let span = (side.tail[2] - side.head[2]).abs();
+        assert!((span - 6.0).abs() < 0.05, "span {span}");
     }
 
     #[test]

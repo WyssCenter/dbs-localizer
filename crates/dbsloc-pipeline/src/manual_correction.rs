@@ -12,6 +12,7 @@ use dbsloc_reconstruct::native_frame::resolve_fiducials;
 use dbsloc_reconstruct::orientation::{
     roll_azimuth_deg, template_marker_directions, FLAG_VERTICAL_MARKER,
 };
+use dbsloc_reconstruct::tail_fiducial::TailConversion;
 use dbsloc_reconstruct::{
     add3, check_side, check_tilt, cross3, electrode_by_name, norm3, scale3, sub3, unit3,
     ElectrodeGeometry, PlausibilityLimits, MAX_TILT_FROM_VERTICAL_DEG,
@@ -84,6 +85,8 @@ pub struct ManualCorrectionContext {
     pub space: EditSpace,
     pub backdrop_nii: PathBuf,
     pub sides: Vec<ContextSide>,
+    #[serde(default)]
+    pub warnings: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -164,6 +167,10 @@ fn side_label(key: &str) -> &'static str {
 }
 
 fn load_reco(sub: &Subject) -> PipelineResult<(PathBuf, Value)> {
+    load_reco_converted(sub).map(|(path, reco, _)| (path, reco))
+}
+
+fn load_reco_converted(sub: &Subject) -> PipelineResult<(PathBuf, Value, Vec<TailConversion>)> {
     let path = sub.reconstruction_json();
     if !path.is_file() {
         return Err(fail(format!(
@@ -173,7 +180,7 @@ fn load_reco(sub: &Subject) -> PipelineResult<(PathBuf, Value)> {
     }
     let text = std::fs::read_to_string(&path)
         .map_err(|e| fail(format!("cannot read {}: {e}", path.display())))?;
-    let reco: Value = serde_json::from_str(&text)
+    let mut reco: Value = serde_json::from_str(&text)
         .map_err(|e| fail(format!("cannot parse {}: {e}", path.display())))?;
     if reco.get("version").and_then(Value::as_i64) != Some(2) {
         return Err(fail(format!(
@@ -181,7 +188,8 @@ fn load_reco(sub: &Subject) -> PipelineResult<(PathBuf, Value)> {
             path.display()
         )));
     }
-    Ok((path, reco))
+    let conversions = dbsloc_reconstruct::tail_fiducial::convert_legacy_tail(&mut reco, None);
+    Ok((path, reco, conversions))
 }
 
 fn has_sides(block: Option<&Value>) -> bool {
@@ -274,7 +282,16 @@ fn context(
 ) -> PipelineResult<ManualCorrectionContext> {
     let prefs = opts_with_prefs_model(sub, opts, None);
     let opts = prefs.as_ref().unwrap_or(opts);
-    let (_, reco) = load_reco(sub)?;
+    let (_, reco, conversions) = load_reco_converted(sub)?;
+    let warnings = conversions
+        .iter()
+        .map(|c| {
+            format!(
+                "{}: the tail marker was moved from the last to the 4th contact level, because the file was written before 2026-11-14. Save to keep the corrected marker.",
+                side_label(&c.side)
+            )
+        })
+        .collect();
     let space = file_space(&reco)?;
     let backdrop_nii = match backdrop_for(sub, space) {
         Ok(p) => p,
@@ -324,6 +341,7 @@ fn context(
         space,
         backdrop_nii,
         sides,
+        warnings,
     })
 }
 
@@ -414,7 +432,7 @@ fn compute_side(
     if let Some(p) = check_tilt(geometry.head, geometry.tail, MAX_TILT_FROM_VERTICAL_DEG) {
         warnings.push(format!("{label}: {p}"));
     }
-    let limits = PlausibilityLimits::for_level_z(&electrode.level_z_mm, electrode.lead_diameter_mm);
+    let limits = PlausibilityLimits::for_electrode(electrode);
     let level = Some(electrode.contact_level.as_slice());
     for p in check_side(
         geometry.head,
@@ -586,7 +604,10 @@ fn apply_inner<'w>(
             edits.push(edit);
         }
     }
-    let (path, reco) = load_reco(sub)?;
+    let (path, reco, tail_warnings) = load_reco_converted(sub)?;
+    for c in tail_warnings {
+        log(c.warning);
+    }
     let space = file_space(&reco)?;
     if space != req.space {
         return Err(fail(format!(
@@ -762,6 +783,7 @@ fn apply_inner<'w>(
         }
     }
 
+    dbsloc_reconstruct::tail_fiducial::mark_tail_fiducial(&mut out);
     write_replacing(
         &path,
         (serde_json::to_string_pretty(&out)? + "\n").as_bytes(),
@@ -1236,7 +1258,7 @@ pub(crate) fn kept_sides(
     space: EditSpace,
     log: &mut dyn FnMut(String),
 ) -> Option<KeptSides> {
-    let (_, old) = load_reco(sub).ok()?;
+    let (_, old, tail_warnings) = load_reco_converted(sub).ok()?;
     let reviewed: Vec<&'static str> = SIDE_KEYS
         .iter()
         .copied()
@@ -1304,7 +1326,13 @@ pub(crate) fn kept_sides(
             }
         }
     }
-    (!keys.is_empty()).then_some(KeptSides { old, keys })
+    if keys.is_empty() {
+        return None;
+    }
+    for c in tail_warnings {
+        log(c.warning);
+    }
+    Some(KeptSides { old, keys })
 }
 
 fn same_electrode(a: &str, b: &str) -> bool {
@@ -1576,7 +1604,7 @@ mod tests {
 
     fn geometry(head: [f64; 3], tilt: [f64; 3]) -> SideGeometry {
         let model = electrode_by_name(BOSTON).unwrap();
-        let span = model.level_z_mm.last().copied().unwrap();
+        let span = model.fiducial_span_mm();
         let tail = add3(head, scale3(unit3(tilt), span));
         let y = unit3(sub3([0.3, 1.0, 0.1], [0.0; 3]));
         let u = unit3(sub3(tail, head));
@@ -2477,6 +2505,46 @@ mod tests {
     }
 
     #[test]
+    fn pipeline_writers_record_the_tail_fiducial_convention() {
+        let fx = fixture("tail_field", EditSpace::Mni);
+        let post = fx.root.join("rawdata/sub-1/ses-postop/anat");
+        std::fs::create_dir_all(&post).unwrap();
+        std::fs::write(post.join("sub-1_ses-postop_acq-ax_T1w.nii.gz"), b"x").unwrap();
+        let sub = resolve_subject_with(&fx.root, "1", false).unwrap();
+        let fx = Fixture { sub, ..fx };
+        assert!(reload(&fx)["meta"].get("tail_fiducial").is_none());
+        apply(
+            &fx,
+            &request(
+                EditSpace::Mni,
+                vec![edit("1", &fx.geoms[0], [0.0, 0.0, 1.0], None), accept("2")],
+            ),
+        )
+        .unwrap();
+        assert_eq!(reload(&fx)["meta"]["tail_fiducial"], "fourth_level");
+
+        let mut stripped = reload(&fx);
+        stripped["meta"]
+            .as_object_mut()
+            .unwrap()
+            .remove("tail_fiducial");
+        std::fs::write(
+            fx.sub.reconstruction_json(),
+            serde_json::to_string_pretty(&stripped).unwrap(),
+        )
+        .unwrap();
+        let lock_path = stage_approval_path(&fx.sub.locks_dir(), "reconstruct");
+        let _ = std::fs::remove_file(&lock_path);
+        let outcome = crate::stage_impl::run_reconstruct(&fx.sub, &fx.opts, None, None).unwrap();
+        assert!(matches!(
+            outcome,
+            crate::protocol::StageOutcome::Completed(_)
+        ));
+        assert_eq!(reload(&fx)["meta"]["tail_fiducial"], "fourth_level");
+        cleanup(&fx);
+    }
+
+    #[test]
     fn orientation_keeps_every_reviewed_roll_and_an_overwrite_estimates_again() {
         let fx = fixture("orient_keep", EditSpace::Native);
         apply(
@@ -2702,12 +2770,7 @@ mod tests {
         let tail = add3(
             head,
             [
-                electrode_by_name(BOSTON)
-                    .unwrap()
-                    .level_z_mm
-                    .last()
-                    .copied()
-                    .unwrap(),
+                electrode_by_name(BOSTON).unwrap().fiducial_span_mm(),
                 0.0,
                 0.0,
             ],

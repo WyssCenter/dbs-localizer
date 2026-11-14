@@ -344,7 +344,7 @@ fn reconstruct_ct_unstamped(
         return Err(CtReconError::Invalid(PACER_UNAVAILABLE.to_owned()));
     }
     if matches!(req.method, CtMethod::Auto | CtMethod::Pacer) {
-        if let Some(v) = pacer_import(req)? {
+        if let Some(v) = pacer_import(req, log)? {
             log("[reconstruct] honouring a pre-exported PaCER Reco v2 JSON".into());
             return Ok(v);
         }
@@ -859,7 +859,7 @@ fn build_pacer_reco_json(
     let mut native = Map::new();
     let mut props = Map::new();
     for (key, s) in sides {
-        let (traj, tv) = trajectory_from_anchors(s.head, s.tail)
+        let (traj, tv) = trajectory_from_anchors(s.head, s.tail, electrode)
             .map_err(|e| CtReconError::Trace(format!("PaCER {} lead: {e}", side_name(key))))?;
         native.insert(
             (*key).to_owned(),
@@ -1021,7 +1021,7 @@ pub fn pacer_reco(
         .map_err(|e| fail(format!("PaCER: {e}")))?;
     let keyed = key_pacer_leads(&leads, midline_x).map_err(|e| fail(format!("PaCER: {e}")))?;
     let placed = place_pacer_leads(&keyed, req, log)?;
-    let limits = PlausibilityLimits::for_level_z(&electrode.level_z_mm, electrode.lead_diameter_mm);
+    let limits = PlausibilityLimits::for_electrode(electrode);
     let bounds = WorldBounds::from_grid(&vol.affine, vol.ni, vol.nj, vol.nk, 0.0);
     drop(vol);
     let mut problems: Vec<String> = Vec::new();
@@ -1128,7 +1128,10 @@ fn has_side_block(reco: &Value, block: &str) -> bool {
     })
 }
 
-fn pacer_import(req: &CtReconRequest) -> Result<Option<Value>, CtReconError> {
+fn pacer_import(
+    req: &CtReconRequest,
+    log: &mut dyn FnMut(String),
+) -> Result<Option<Value>, CtReconError> {
     let env = match std::env::var(PACER_IMPORT_ENV)
         .ok()
         .map(|s| PathBuf::from(s.trim()))
@@ -1151,6 +1154,9 @@ fn pacer_import(req: &CtReconRequest) -> Result<Option<Value>, CtReconError> {
         return Err(CtReconError::Invalid(
             "RecoFileV2: expected version 2".into(),
         ));
+    }
+    for c in dbsloc_reconstruct::tail_fiducial::convert_legacy_tail(&mut v, None) {
+        log(format!("{}: {}", path.display(), c.warning));
     }
     match v.get("subj_id").and_then(Value::as_str) {
         Some(id) if bare_subject(id) != bare_subject(&req.subj_id) => {

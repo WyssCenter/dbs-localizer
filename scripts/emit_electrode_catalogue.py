@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SPEC = ROOT / "specs" / "09_electrode_models.md"
 OUT = ROOT / "dbsloc" / "electrodes" / "data" / "catalogue.json"
 
-MARKERS: dict[str, tuple[float, float]] = {
+MARKERS: dict[str, tuple[float, float | None]] = {
     "medtronic_b33005": (14.4, 2.3),
     "medtronic_b33015": (17.4, 2.3),
     "boston_vercise_directed": (11.0, 3.0),
@@ -21,7 +21,7 @@ MARKERS: dict[str, tuple[float, float]] = {
     "boston_vercise_cartesia_x": (16.0, 3.0),
     "abbott_directed_05": (10.75, 1.5),
     "abbott_directed_15": (13.75, 1.5),
-    "aleva_directstim_directed": (13.0, 3.0),
+    "aleva_directstim_directed": (13.0, None),
 }
 
 ARCH = {
@@ -186,7 +186,7 @@ def main() -> int:
         print(f"{OUT} up to date")
         return 0
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(text, encoding="utf-8")
+    OUT.write_text(text, encoding="utf-8", newline="\n")
     print(OUT, len(rows))
     return 0
 

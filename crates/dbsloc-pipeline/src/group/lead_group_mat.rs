@@ -749,7 +749,18 @@ pub fn load_subject_data(record: &GroupRecord) -> (Vec<SubjectData>, Vec<Note>) 
                 .join(format!("{}_desc-reconstruction.json", p.subject));
             if let Ok(text) = std::fs::read_to_string(&reco_path) {
                 match serde_json::from_str::<Value>(&text) {
-                    Ok(v) => d.reco = Some(v),
+                    Ok(mut v) => {
+                        for c in
+                            dbsloc_reconstruct::tail_fiducial::convert_legacy_tail(&mut v, None)
+                        {
+                            notes.push(Note::plain(format!(
+                                "{}: {}",
+                                reco_path.display(),
+                                c.warning
+                            )));
+                        }
+                        d.reco = Some(v);
+                    }
                     Err(e) => notes.push(Note::plain(format!(
                         "{}: unreadable reconstruction: {e}",
                         reco_path.display()

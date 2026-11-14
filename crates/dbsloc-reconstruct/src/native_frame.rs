@@ -188,42 +188,17 @@ impl std::fmt::Display for GeometryError {
 
 impl std::error::Error for GeometryError {}
 
-pub const TRAJECTORY_POINTS: usize = 50;
-pub const TRAJECTORY_PAST_DISTAL_MM: f64 = 5.0;
-pub const TRAJECTORY_EXTEND_FACTOR: f64 = 2.0;
+pub use crate::electrode_catalog::TRAJECTORY_POINTS;
 
 pub fn trajectory_from_anchors(
     head: [f64; 3],
     tail: [f64; 3],
+    electrode: &ElectrodeGeometry,
 ) -> Result<(Vec<[f64; 3]>, [f64; 3]), GeometryError> {
-    let t_hat = unit3(sub3(tail, head));
-    let span = norm3(sub3(tail, head));
-    if span < 1e-6 {
-        return Err(GeometryError::HeadTailCoincide);
-    }
-    let a1 = [
-        head[0] - TRAJECTORY_PAST_DISTAL_MM * t_hat[0],
-        head[1] - TRAJECTORY_PAST_DISTAL_MM * t_hat[1],
-        head[2] - TRAJECTORY_PAST_DISTAL_MM * t_hat[2],
-    ];
-    let ext = span * TRAJECTORY_EXTEND_FACTOR;
-    let a2 = [
-        tail[0] + t_hat[0] * ext,
-        tail[1] + t_hat[1] * ext,
-        tail[2] + t_hat[2] * ext,
-    ];
-    let n = TRAJECTORY_POINTS;
-    let traj = (0..n)
-        .map(|i| {
-            let s = i as f64 / (n - 1) as f64;
-            [
-                a1[0] + (a2[0] - a1[0]) * s,
-                a1[1] + (a2[1] - a1[1]) * s,
-                a1[2] + (a2[2] - a1[2]) * s,
-            ]
-        })
-        .collect();
-    Ok((traj, t_hat))
+    let traj = electrode
+        .trajectory(head, tail)
+        .ok_or(GeometryError::HeadTailCoincide)?;
+    Ok((traj, unit3(sub3(tail, head))))
 }
 
 pub fn resolve_fiducials(
@@ -241,7 +216,7 @@ pub fn resolve_fiducials(
     let dst = [head, tail, x, y];
     let (r, t) = estimate_rigid_kabsch(&src, &dst).map_err(GeometryError::Kabsch)?;
     let coords_mm = apply_rigid_r_rows(&r, &t, &electrode.contact_xyz_mm);
-    let (trajectory, trajvector) = trajectory_from_anchors(head, tail)?;
+    let (trajectory, trajvector) = trajectory_from_anchors(head, tail, electrode)?;
     Ok(SideGeometry {
         coords_mm,
         trajectory,
@@ -287,7 +262,7 @@ pub fn contacts_from_markers(
     {
         return None;
     }
-    let model_span = electrode.contact_span_mm();
+    let model_span = electrode.fiducial_span_mm();
     let s = if model_span.is_finite() && model_span.abs() > 1e-9 {
         span / model_span
     } else {
@@ -624,7 +599,7 @@ pub fn trace_native_sides(
         });
     }
 
-    let limits = PlausibilityLimits::for_level_z(&electrode.level_z_mm, electrode.lead_diameter_mm);
+    let limits = PlausibilityLimits::for_electrode(electrode);
     let (ni, nj, nk) = data.dim();
     let bounds = WorldBounds::from_grid(aff, ni, nj, nk, 0.0);
     let min_on_axis = Some(MIN_METAL_ON_AXIS_HU);
@@ -767,7 +742,7 @@ mod tests {
         assert!((norm3(sub3(g.x, head)) - 0.5 * e.lead_diameter_mm).abs() < 1e-12);
         assert_eq!(g.trajectory.len(), TRAJECTORY_POINTS);
         assert!(norm3(sub3(g.trajectory[0], [10.0, -2.0, -11.0])) < 1e-9);
-        assert!(norm3(sub3(g.trajectory[49], [10.0, -2.0, 21.0])) < 1e-9);
+        assert!(norm3(sub3(g.trajectory[49], [10.0, -2.0, 24.0])) < 1e-9);
         assert_eq!(g.trajvector, [0.0, 0.0, 1.0]);
         assert_eq!(
             resolve_fiducials([head, head, head, head], e),
@@ -849,7 +824,7 @@ mod tests {
             head[1] + 0.7 * side[1],
             head[2] + 0.7 * side[2],
         ];
-        let span = e.contact_span_mm();
+        let span = e.fiducial_span_mm();
         let tail_bad = [
             head_bad[0] + span * u_bad[0],
             head_bad[1] + span * u_bad[1],
@@ -908,9 +883,9 @@ mod tests {
         let r = 0.5 * e.lead_diameter_mm;
         let y_dir = crate::math::cross3(u, x_dir);
         let tail = [
-            head[0] + u[0] * e.contact_span_mm(),
-            head[1] + u[1] * e.contact_span_mm(),
-            head[2] + u[2] * e.contact_span_mm(),
+            head[0] + u[0] * e.fiducial_span_mm(),
+            head[1] + u[1] * e.fiducial_span_mm(),
+            head[2] + u[2] * e.fiducial_span_mm(),
         ];
         let x = [
             head[0] + r * x_dir[0],
@@ -943,7 +918,7 @@ mod tests {
         let e = by_name("Medtronic 3387").expect("catalogued");
         let head = [1.0, 2.0, 3.0];
         let mut m = marker_set(e, head, [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]);
-        m[1] = [head[0], head[1], head[2] + 1.3 * e.contact_span_mm()];
+        m[1] = [head[0], head[1], head[2] + 1.3 * e.fiducial_span_mm()];
         let c = contacts_from_markers(e, m[0], m[1], m[2], m[3]).expect("contacts");
         for (got, model) in c.iter().zip(&e.contact_xyz_mm) {
             let want = [

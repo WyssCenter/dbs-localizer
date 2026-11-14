@@ -28,8 +28,8 @@ use crate::stage_impl::{log, opts_with_prefs_model};
 use crate::template_catalog::REFERENCE_SPACE;
 use crate::vat::basis_cache::CachePaths;
 use crate::vat::engine::{
-    compute_side, engine_source, find_lead, gm_volume, DeviceProvider, Fail, LeadSpec, SideOutcome,
-    SideRequest, ENGINE_VERSION,
+    compute_side, engine_source, find_lead, geometry_fingerprint, gm_volume, DeviceProvider, Fail,
+    LeadSpec, SideOutcome, SideRequest, ENGINE_VERSION,
 };
 use crate::vat::mesh;
 use crate::vat::outputs::{
@@ -292,6 +292,18 @@ impl Run<'_> {
         v
     }
 
+    fn electrode_geometry(&self) -> Value {
+        let mut out = serde_json::Map::new();
+        for side in Side::ALL {
+            let fp = match find_lead(&self.reco, self.opts, side) {
+                Ok(Some(lead)) => geometry_fingerprint(&lead.model),
+                _ => Value::Null,
+            };
+            out.insert(side.name().to_owned(), fp);
+        }
+        Value::Object(out)
+    }
+
     fn up_to_date(&mut self, stim: &Stimulation, settings_sha: &str, ms_json: &Value) -> bool {
         let names = Names::new(&self.sub.subj_id, stim.model.slug());
         let sidecar = label_dir(&self.sub.subj_dir, "native", &stim.label).join(names.vta_json());
@@ -301,6 +313,7 @@ impl Run<'_> {
         let want_atlas = self.opts.vat_stats_atlas.clone().unwrap_or_default();
         let paths = self.input_paths(stim);
         rec["engine_version"] == ENGINE_VERSION
+            && rec["electrode_geometry"] == self.electrode_geometry()
             && rec["settings_sha256"] == settings_sha
             && rec["model_settings"] == *ms_json
             && rec["stats_atlas_request"] == want_atlas
@@ -948,6 +961,7 @@ impl Run<'_> {
                     "seconds": seconds,
                 },
                 "engine_version": ENGINE_VERSION,
+                "electrode_geometry": self.electrode_geometry(),
                 "stats_atlas_request": self.opts.vat_stats_atlas.clone().unwrap_or_default(),
                 "sides": Value::Object(sides_json),
                 "inputs": inputs,
@@ -1037,12 +1051,18 @@ impl<'a> Run<'a> {
                 reco_path.display()
             ))
         })?;
-        let reco: Value = serde_json::from_str(&text).map_err(|e| {
+        let mut reco: Value = serde_json::from_str(&text).map_err(|e| {
             PipelineError::Message(format!(
                 "vat: cannot parse the Reco JSON {}: {e}",
                 reco_path.display()
             ))
         })?;
+        for c in dbsloc_reconstruct::tail_fiducial::convert_legacy_tail(
+            &mut reco,
+            opts.el_model.as_deref(),
+        ) {
+            log(tx, c.warning);
+        }
         Ok(Run {
             sub,
             opts,

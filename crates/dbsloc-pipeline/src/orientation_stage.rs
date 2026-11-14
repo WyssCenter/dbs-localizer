@@ -11,7 +11,8 @@ use serde_json::{json, Map, Value};
 
 use dbsloc_reconstruct::orientation::{
     estimate_marker_orientation, roll_azimuth_deg, roll_from_anterior_deg, support,
-    template_marker_directions, Estimate, MarkerSpec, Support, FLAG_VERTICAL_MARKER, METHOD,
+    template_marker_directions, Estimate, MarkerSpec, Support, AXIS_REFIT_SPAN_MM,
+    FLAG_VERTICAL_MARKER, METHOD,
 };
 use dbsloc_reconstruct::{add3, cross3, electrode_by_name, norm3, scale3, sub3, unit3};
 use fastwarp_core::{apply_rowmajor, dot3, invert_rowmajor, Mat4};
@@ -388,8 +389,10 @@ fn load_ct(path: &Path, transform: &Path, leads: &[LeadSpan<'_>]) -> PipelineRes
             let shaft = sub3(tail, head);
             let u = unit3(shaft);
             let reach = 0.5 * l.spec.marker_len_mm + SLICE_MARGIN_MM;
-            let s_lo = (l.spec.marker_pos_mm - reach).min(0.0);
-            let s_hi = (l.spec.marker_pos_mm + reach).max(norm3(shaft));
+            let s_lo = (l.spec.marker_offset_mm - reach).min(0.0);
+            let s_hi = (l.spec.marker_offset_mm + reach)
+                .max(norm3(shaft))
+                .max(AXIS_REFIT_SPAN_MM);
             (add3(head, scale3(u, s_lo)), add3(head, scale3(u, s_hi)))
         })
         .collect();
@@ -450,6 +453,11 @@ pub fn run_orientation(
             reco_path.display()
         ))
     })?;
+    for c in
+        dbsloc_reconstruct::tail_fiducial::convert_legacy_tail(&mut reco, opts.el_model.as_deref())
+    {
+        log(tx, c.warning);
+    }
     let Some(native) = reco.get("native").and_then(Value::as_object).cloned() else {
         return Err(missing("native markers in the Reco JSON", &reco_path));
     };
@@ -725,6 +733,7 @@ pub fn run_orientation(
             &mut |line| log(tx, line),
         );
     }
+    dbsloc_reconstruct::tail_fiducial::mark_tail_fiducial(&mut out);
     write_replacing(
         &reco_path,
         (serde_json::to_string_pretty(&out)? + "\n").as_bytes(),
@@ -881,6 +890,7 @@ mod tests {
     const SHIFT_LPS: [f64; 3] = [2.0, -1.0, 0.5];
     const MNI_SHIFT: [f64; 3] = [10.0, -5.0, 2.0];
     const BOSTON: &str = "Boston Scientific Vercise Directed";
+    const BOSTON_MARKER_OFFSET_MM: f64 = 10.25;
 
     fn scratch(name: &str) -> PathBuf {
         let d = std::env::temp_dir().join(format!("dbsloc_orient_{name}_{}", std::process::id()));
@@ -903,18 +913,18 @@ mod tests {
         let y_true = y_truth(roll_deg);
         let tangent = cross3([0.0, 0.0, 1.0], y_true);
         let model = electrode_by_name(BOSTON).unwrap();
-        let (mp, ml) = (model.marker_pos_mm.unwrap(), model.marker_len_mm.unwrap());
+        let (mp, ml) = (BOSTON_MARKER_OFFSET_MM, model.marker_len_mm.unwrap());
         let metal = |p: [f64; 3]| -> bool {
             let q = sub3(p, CT_HEAD);
             let rho_vec = [q[0], q[1], 0.0];
             let rho = dot3(rho_vec, rho_vec).sqrt();
-            if !(-3.0..=16.0).contains(&q[2]) {
+            if !(-3.0..=25.0).contains(&q[2]) {
                 return false;
             }
             if rho <= 0.65 {
                 return true;
             }
-            if (q[2] - mp).abs() <= 0.5 * ml && rho <= 0.80 {
+            if (q[2] - mp).abs() <= 0.5 * ml && rho <= 0.95 {
                 let cos_a = dot3(rho_vec, y_true) / rho;
                 return cos_a.clamp(-1.0, 1.0).acos().to_degrees() < 70.0;
             }
@@ -951,7 +961,10 @@ mod tests {
             let streak = if (q[2] - mp).abs() <= 0.5 * ml {
                 let across = dot3([q[0], q[1], 0.0], y_true);
                 let along = dot3([q[0], q[1], 0.0], tangent);
-                -600.0 * (-(across * across) / (2.0 * 0.6 * 0.6)).exp() * (-along.abs() / 5.0).exp()
+                -600.0
+                    * (-(across * across) / (2.0 * 0.6 * 0.6)).exp()
+                    * (-along.abs() / 5.0).exp()
+                    * (-((q[2] - mp) / 0.75).powi(2)).exp()
             } else {
                 0.0
             };
@@ -1540,7 +1553,7 @@ mod tests {
 
     fn mirror_phantom(aff: &Mat4, leads: &[&Truth]) -> Array3<f64> {
         let model = electrode_by_name(BOSTON).unwrap();
-        let (mp, ml) = (model.marker_pos_mm.unwrap(), model.marker_len_mm.unwrap());
+        let (mp, ml) = (BOSTON_MARKER_OFFSET_MM, model.marker_len_mm.unwrap());
         let n = unit3([aff[0][2], aff[1][2], aff[2][2]]);
         let world = |i: f64, j: f64, k: f64| {
             [
@@ -1554,13 +1567,13 @@ mod tests {
             let z = dot3(q, l.u);
             let rho_vec = sub3(q, scale3(l.u, z));
             let rho = len(rho_vec);
-            if !(-3.0..=16.0).contains(&z) {
+            if !(-3.0..=25.0).contains(&z) {
                 return false;
             }
             if rho <= 0.65 {
                 return true;
             }
-            if (z - mp).abs() <= 0.5 * ml && rho <= 0.80 {
+            if (z - mp).abs() <= 0.5 * ml && rho <= 0.95 {
                 let cos_a = dot3(rho_vec, l.y) / rho;
                 return cos_a.clamp(-1.0, 1.0).acos().to_degrees() < 70.0;
             }
@@ -1587,7 +1600,8 @@ mod tests {
                         let along = dot3(w, tangent);
                         streak -= 600.0
                             * (-(across * across) / (2.0 * 0.6 * 0.6)).exp()
-                            * (-along.abs() / 5.0).exp();
+                            * (-along.abs() / 5.0).exp()
+                            * (-((s - mp) / 0.75).powi(2)).exp();
                     }
                 }
             }

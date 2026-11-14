@@ -859,9 +859,17 @@ fn process_subject(
     let reco: Option<Value> = std::fs::read_to_string(&reco_file)
         .ok()
         .and_then(|t| serde_json::from_str(&t).ok());
-    let Some(reco) = reco else {
+    let Some(mut reco) = reco else {
         return fail(CalcPhase::NotRun, None, "no reconstruction".to_owned());
     };
+    for c in dbsloc_reconstruct::tail_fiducial::convert_legacy_tail(&mut reco, None) {
+        log(c.warning.clone());
+        notes.push(Note::plain(format!(
+            "{}: {}",
+            reco_file.display(),
+            c.warning
+        )));
+    }
     let mut outcome = SubjectOutcome::new(name, CalcPhase::Kept);
     if job.mode == Mode::Calculate {
         if let Err((code, msg)) = &prepared.stim {

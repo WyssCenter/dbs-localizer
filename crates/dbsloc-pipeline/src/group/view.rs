@@ -389,12 +389,17 @@ struct Reco {
     leads: [Option<Lead>; 2],
     block: &'static str,
     model: Option<String>,
+    tail_warnings: Vec<String>,
 }
 
 fn read_reco(path: &Path, group_space: &str) -> Result<Reco, String> {
     let text = std::fs::read_to_string(path).map_err(|e| format!("no reconstruction ({e})"))?;
-    let root: Value = serde_json::from_str(&text)
+    let mut root: Value = serde_json::from_str(&text)
         .map_err(|e| format!("reconstruction {}: {e}", path.display()))?;
+    let tail_warnings = dbsloc_reconstruct::tail_fiducial::convert_legacy_tail(&mut root, None)
+        .into_iter()
+        .map(|c| format!("{}: {}", path.display(), c.warning))
+        .collect();
     let declared = root
         .pointer("/meta/side_keys")
         .and_then(Value::as_str)
@@ -428,6 +433,7 @@ fn read_reco(path: &Path, group_space: &str) -> Result<Reco, String> {
         leads,
         block,
         model,
+        tail_warnings,
     })
 }
 
@@ -532,13 +538,14 @@ fn write_mirrored_reco(
     if let Some(m) = model {
         meta["elmodel"] = json!(m);
     }
-    let doc = json!({
+    let mut doc = json!({
         "version": 2,
         "subj_id": format!("{subject}{MIRRORED_SUFFIX}"),
         "method": "group_mirror",
         "mni": Value::Object(mni),
         "meta": meta,
     });
+    dbsloc_reconstruct::tail_fiducial::mark_tail_fiducial(&mut doc);
     let text = serde_json::to_string_pretty(&doc).map_err(|e| GroupError::Json(e.to_string()))?;
     write_replacing(path, text.as_bytes())
         .map_err(|e| GroupError::Io(format!("cannot write {}: {e}", path.display())))
@@ -692,6 +699,7 @@ pub fn write_group_view(
                 continue;
             }
         };
+        notes.extend(reco.tail_warnings.iter().cloned().map(Note::plain));
         let sid = subject_id(&patient.subject);
         let stim = load_stimulation(&dir, sid, &label).ok();
         let counts = counts_of(&reco, patient, &mut notes);

@@ -230,8 +230,11 @@ pub fn load_block_side_geometry_from_str_opt(
     block: &str,
 ) -> VizResult<Option<MniSideGeometry>> {
     let hemi = Hemisphere::parse(side)?;
-    let mut raw: RecoV2Raw =
+    let mut value: serde_json::Value =
         serde_json::from_str(text).map_err(|e| VizError::Json(e.to_string()))?;
+    let converted = dbsloc_reconstruct::tail_fiducial::convert_legacy_tail(&mut value, None);
+    let mut raw: RecoV2Raw =
+        serde_json::from_value(value).map_err(|e| VizError::Json(e.to_string()))?;
     if block == "reference" {
         let reference = raw
             .reference
@@ -253,6 +256,9 @@ pub fn load_block_side_geometry_from_str_opt(
     let Some(key) = hemisphere_key(&raw, hemi)? else {
         return Ok(None);
     };
+    for c in converted.iter().filter(|c| c.side == key) {
+        eprintln!("{}", c.warning);
+    }
     let s = raw
         .mni
         .get(&key)

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
 # SPDX-License-Identifier: GPL-3.0-only
 
-"""Geometry + etage from catalogue rows (`specs/09` §2.1, §5)."""
+"""Geometry + etage from catalogue rows (`specs/09` §2.1, §2.2, §5)."""
 
 from __future__ import annotations
 
@@ -24,14 +24,17 @@ ELDIST_OVERRIDE: Final[dict[str, float]] = {
     "fhc_wu_rat_electrode": 0.0,
     "numed_minilead": 1.0,
 }
-SPAN_OVERRIDE: Final[dict[str, float]] = {
-    "boston_vercise_directed": 9.0,
-    "boston_vercise_cartesia_hx": 16.5,
-    "boston_vercise_cartesia_x": 11.5,
-    "elaine_rat_electrode": 0.1125,
-    "fhc_wu_rat_electrode": 0.25,
-    "numed_minilead": 2.0,
+DEFAULT_SEGMENT_ARC_DEG: Final[float] = 90.0
+SEGMENT_ARC_DEG: Final[dict[str, float]] = {
+    "boston_vercise_cartesia_hx": 100.0,
+    "boston_vercise_cartesia_x": 100.0,
+    "aleva_directstim_directed": 85.0,
 }
+TAIL_FIDUCIAL_LEVEL: Final[int] = 3
+TAIL_AT_LAST_LEVEL: Final[frozenset[str]] = frozenset(
+    {"sceneray_sr1202", "sceneray_sr1212"}
+)
+MARKERLEN_UNDEFINED: Final[frozenset[str]] = frozenset({"aleva_directstim_directed"})
 
 
 def _ring_pair_names(n: int) -> tuple[str, ...]:
@@ -157,6 +160,18 @@ def _span(
     return float(tip_len * t + cl * (n_lev - t) + c * (n_lev - 1))
 
 
+def tail_level(matfname: str, n_levels: int) -> int:
+    if matfname in TAIL_AT_LAST_LEVEL or n_levels <= TAIL_FIDUCIAL_LEVEL:
+        return max(0, n_levels - 1)
+    return TAIL_FIDUCIAL_LEVEL
+
+
+def segment_arc_deg(matfname: str, isdirected: bool) -> float | None:
+    if not isdirected:
+        return None
+    return SEGMENT_ARC_DEG.get(matfname, DEFAULT_SEGMENT_ARC_DEG)
+
+
 def row_to_spec(d: dict[str, Any]) -> ElectrodeSpec:
     arch = str(d["archetype"])
     n = int(d["numContacts"])
@@ -170,13 +185,14 @@ def row_to_spec(d: dict[str, Any]) -> ElectrodeSpec:
     mfn = str(d["matfname"])
     if mfn in ELDIST_OVERRIDE:
         eid = ELDIST_OVERRIDE[mfn]
-    if mfn in SPAN_OVERRIDE:
-        sp = SPAN_OVERRIDE[mfn]
     mp, ml = d.get("markerpos"), d.get("markerlen")
     mpos = None if mp is None else float(mp)
     mlen = None if ml is None else float(ml)
-    if bool(d["isdirected"]) and mpos is None and mlen is None:
-        raise ValueError(f"directed model missing marker: {mfn!r}")
+    directed = bool(d["isdirected"])
+    if directed and mpos is None:
+        raise ValueError(f"directed model missing markerpos: {mfn!r}")
+    if directed and mlen is None and mfn not in MARKERLEN_UNDEFINED:
+        raise ValueError(f"directed model missing markerlen: {mfn!r}")
     return ElectrodeSpec(
         elmodel=str(d["elmodel"]),
         matfname=mfn,
@@ -190,7 +206,7 @@ def row_to_spec(d: dict[str, Any]) -> ElectrodeSpec:
         contact_spacing=cs,
         eldist=eid,
         contact_span=sp,
-        isdirected=bool(d["isdirected"]),
+        isdirected=directed,
         forstimulation=bool(d.get("forstimulation", True)),
         isdio_supported=bool(d.get("isdio_supported", False)),
         contactnames=cn,
@@ -198,6 +214,8 @@ def row_to_spec(d: dict[str, Any]) -> ElectrodeSpec:
         etageidx=eix,  # type: ignore[type-arg]
         markerpos=mpos,
         markerlen=mlen,
+        tail_level=tail_level(mfn, n_lev),
+        segment_arc_deg=segment_arc_deg(mfn, directed),
     )
 
 
@@ -208,12 +226,18 @@ def load_catalogue() -> list[dict[str, object]]:
 
 
 __all__ = [
+    "DEFAULT_SEGMENT_ARC_DEG",
     "ELDIST_OVERRIDE",
-    "SPAN_OVERRIDE",
+    "MARKERLEN_UNDEFINED",
+    "SEGMENT_ARC_DEG",
+    "TAIL_AT_LAST_LEVEL",
+    "TAIL_FIDUCIAL_LEVEL",
     "_as_cs",
     "_eldist",
     "_span",
     "build_etage",
     "load_catalogue",
     "row_to_spec",
+    "segment_arc_deg",
+    "tail_level",
 ]

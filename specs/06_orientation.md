@@ -37,7 +37,7 @@ Compute **roll** angle of **segmented (directional) leads** around the shaft axi
 
 - **Unit vector** `u = normalize(tail - head)` — **distal to proximal** (or inverted consistently in implementation — **one** docstring).  
 - **Perpendicular basis:** `ea_calcxy`-class: two orthonormal vectors in plane ⟂ `u` for RHC frame.  
-- Slices: **reformat** oblique to perpendicular plane of lead at `markerpos` offset from head along **−u** (toward contact ring level).
+- Slices: **reformat** oblique to perpendicular plane of lead at the marker centre, `s_m` mm proximal of the head along **+u** (§10.4).
 
 ---
 
@@ -144,16 +144,22 @@ For the supported families the orientation marker faces **segment A** (the `+Y` 
 
 `h`, `t` = head and tail mapped into CT world; `u = unit(t − h)` (points proximally). `n` = unit third column of the CT voxel → world affine (slice normal); `e1` = unit first column; `e2 = n × e1`. **Polar angle** `α = acos(|u·n|)` in degrees; `α > 55°` adds the flag `high_polar_angle` (the result is still computed).
 
+### 10.3a Axis refit (normative, 2026-11-14, reference behaviour)
+
+Before §10.4, `h` and `u` are refitted to the metal of the lead itself, because the marker's centre-of-mass signal (about 0.16 mm off the axis in the reference meshes) is smaller than the lateral error of a reconstructed line. For `s = 0, 0.5, …, 20` mm, take the CT axial slice nearest to `h + s·u`; each distinct slice so visited counts once, and slices outside the image are not counted. Per slice: the centroid (world mm) of the voxels `≥ 2000` HU within 3 mm in-plane of the point where that slice meets the line. When more than half of the visited slices have no such voxel, the threshold drops to `1000` HU for all of them. A straight line is fitted to the centroids, one per slice, by least squares (principal axis); the refitted `u` is its direction oriented like the old `u`, the refitted `h` the point of the fitted line nearest to the old `h`. With fewer than 5 centroids (distinct slices), or a refitted `u` more than 10° from the old one, `h` and `u` are kept and the flag `axis_refit_unavailable` is set. §10.4 and §10.5 use the refitted `h`, `u`; the written markers keep the reconstructed head and tail (only `x` / `y` change, §10.6), and the chosen direction is projected perpendicular to the reconstructed axis before §10.6 writes them. `marker_slice_mm` and `com_offset_mm` are measured along and across the refitted axis from the refitted `h`; `polar_angle_deg` uses the reconstructed axis.
+
 ### 10.4 Marker axis (axial slices)
 
-1. For every CT slice index `k` whose plane meets the line `h + s·u` at `s ∈ [markerpos − markerlen/2 − 1, markerpos + markerlen/2 + 1]` mm: `c_k` = that intersection point.
+**Marker offset (normative, 2026-11-14).** The marker centre lies `s_m = markerpos − z_1` mm proximal of the head marker along `u`. `markerpos` is measured from the tip apex (`09` §2.2) and `z_1` is the apex-to-centre distance of the most distal contact level (`09` §10.1: `tip_length + contact_length/2` for an insulating tip, `tip_length/2` when the tip is the first contact). So `s_m` = 10.25 mm Boston Vercise Directed, 18.15 mm Cartesia HX, 14.15 mm Cartesia X, 9.0 mm Abbott 6172, 12.0 mm Abbott 6173 (12.75 / 15.75 mm Medtronic B33005 / B33015, unsupported here). This is the reference implementation's rule and puts the marker on the marker of the reference meshes. Until 2026-11-14 this implementation used `s_m = markerpos`, 0.75–1.85 mm too far proximal (on Abbott 6172 the centre-of-mass box of §10.5 then missed the marker).
+
+1. For every CT slice index `k` whose plane meets the line `h + s·u` at `s ∈ [s_m − markerlen/2 − 1, s_m + markerlen/2 + 1]` mm: `c_k` = that intersection point.
 2. Angular profile `P_k(φ_j)`, `φ_j = j°`, `j = 0 … 359`: mean of trilinear CT samples at `c_k + r·(cos φ_j·e1 + sin φ_j·e2)` over `r = 2.00, 2.25, …, 6.00` mm.
 3. `C_k = Σ_j (P_k(φ_j) − mean P_k)·exp(−2iφ_j)`; amplitude `A_k = 2|C_k| / 360`. The slice with the largest `A_k` is used (`marker_slice_mm` = its `s`, `harmonic_amplitude` = `A_k`).
 4. Axial direction `d = cos(β)·e1 + sin(β)·e2` with `β = −arg(C_k)/2` (with the `exp(−2iφ)` kernel, `arg(C_k) = −2ψ` for a profile `cos 2(φ − ψ)`; β is the axis of the profile maxima, i.e. perpendicular to the two dark streaks). Marker axis perpendicular to the lead: `m = unit(d − u·(d·u))` (the vector ⟂ u whose projection along `u` onto the slice plane is `d`). Candidates `m` and `−m`.
 
 ### 10.5 Half-plane choice (centre of mass)
 
-`c_m = h + markerpos·u`. Orthonormal `a, b ⟂ u`. Sample the CT on `c_m + g1·a + g2·b + z·u`, `g1, g2 ∈ [−2, 2]` step 0.1 mm, `z ∈ [−markerlen/2, markerlen/2]` step 0.2 mm; keep samples `> 2000` HU; `v` = mean of kept points minus `c_m`, projected ⟂ u (`com_offset_mm = |v|`). If `|v| ≥ 0.05` mm the candidate with `m·v > 0` is chosen; status `resolved` when the angle between `v` and the chosen candidate is `< 60°`, else `ambiguous`. If `|v| < 0.05` mm or no sample exceeds 2000 HU: `m` is kept, status `ambiguous`, flag `com_unavailable`.
+`c_m = h + s_k·u` with `s_k` = `marker_slice_mm` of §10.4 step 3 (the marker slice found inside the window around `s_m`). Orthonormal `a, b ⟂ u`. Sample the CT in the single plane ⟂ u through `c_m`: `c_m + g1·a + g2·b`, `g1, g2 ∈ [−5, 5]` step 0.1 mm (reference behaviour, 2026-11-14; until then a ±2 mm box ±markerlen/2 along `u` around `h + s_m·u`); keep samples `≥ 2000` HU; `v` = mean of kept points minus `c_m`, projected ⟂ u (`com_offset_mm = |v|`). If `|v| ≥ 0.05` mm the candidate with `m·v > 0` is chosen; status `resolved` when the angle between `v` and the chosen candidate is `< 60°`, else `ambiguous`. If `|v| < 0.05` mm or no sample exceeds 2000 HU: `m` is kept, status `ambiguous`, flag `com_unavailable`.
 
 ### 10.6 Outputs
 
@@ -165,7 +171,7 @@ For the supported families the orientation marker faces **segment A** (the `+Y` 
 
 ### 10.7 Acceptance
 
-- Phantom (synthetic CT, 0.45 × 0.45 × 1 mm, HU background 30): metal cylinder `r = 0.65` mm, marker band 140° arc of 0.15 mm wall at `markerpos`, plus two dark streaks (−600 HU, Gaussian width 0.6 mm, fading with distance) along the in-slice tangent at the marker's middle; leads at polar angles 0°, 30°, 50° and roll 0°, 75°, −130°: `roll_deg` within 3° and the correct half chosen.
+- Phantom (synthetic CT, 0.45 × 0.45 × 1 mm, HU background 30): metal cylinder `r = 0.65` mm at least 25 mm long, marker band 140° arc of 0.30 mm wall centred `s_m` (§10.4) proximal of the head (2026-11-14: a 0.15 mm wall puts the single-plane centre-of-mass offset of §10.5 at 0.02–0.10 mm, at the 0.05 mm threshold; 0.30 mm gives 0.08–0.18 mm, near the 0.16 mm of the reference meshes), plus two dark streaks (−600 HU, Gaussian width 0.6 mm, fading with distance) along the in-slice tangent at the marker's middle, their strength tapered along the lead by `exp(−((s − s_m)/0.75 mm)²)`; leads at polar angles 0°, 30°, 50° and roll 0°, 75°, −130°: `roll_deg` within 3° and the correct half chosen.
 - Transform round trip: head / tail through the CT map and back within 1e-6 mm.
 - Mirror phantom: one CT stored LAS (negative first voxel axis) holding two leads at x = ±12 mm, tilted laterally 15° and anteriorly 20°, mirror images of each other in geometry and roll (rolls ±40°, then an asymmetric pair 40° / −110°): each `roll_deg` within 3° of its truth, `roll_deg` of the mirrored pair of opposite sign, correct half chosen on both sides; the same with an oblique CT affine (10° about S).
 - Template-space markers (§10.6): with an identity native → template map they equal the native markers for a vertical lead; for a pure rotation of 30° about S the template `x_dir` keeps the native azimuth (not rotated); `x_dir ⟂ t`, `y_dir = t × x_dir`.

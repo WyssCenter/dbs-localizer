@@ -25,7 +25,7 @@ struct Fixture {
 fn markers(head: [f64; 3]) -> Value {
     let model = electrode_by_name(MODEL).unwrap();
     let r = 0.5 * model.lead_diameter_mm;
-    let tail = [head[0], head[1], head[2] + model.contact_span_mm()];
+    let tail = [head[0], head[1], head[2] + model.fiducial_span_mm()];
     json!({
         "head": head,
         "tail": tail,
@@ -537,9 +537,9 @@ fn lead_side(model: &str, head: [f64; 3], dir: [f64; 3]) -> Value {
     let g = electrode_by_name(model).unwrap();
     let dir = unit(dir);
     let tail = [
-        head[0] + dir[0] * g.contact_span_mm(),
-        head[1] + dir[1] * g.contact_span_mm(),
-        head[2] + dir[2] * g.contact_span_mm(),
+        head[0] + dir[0] * g.fiducial_span_mm(),
+        head[1] + dir[1] * g.fiducial_span_mm(),
+        head[2] + dir[2] * g.fiducial_span_mm(),
     ];
     let perp = unit(cross(dir, [0.0, 1.0, 0.0]));
     let x_raw = [head[0] + perp[0], head[1] + perp[1], head[2] + perp[2]];

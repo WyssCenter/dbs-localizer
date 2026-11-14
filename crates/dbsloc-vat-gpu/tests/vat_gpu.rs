@@ -26,7 +26,7 @@ const HEAD: [f64; 3] = [10.0, -20.0, 5.0];
 fn lead_3389() -> (LeadFrame, dbsloc_reconstruct::ElectrodeGeometry) {
     let model = electrode_by_name("Medtronic 3389").cloned().unwrap();
     let r = 0.5 * model.lead_diameter_mm;
-    let span = model.contact_span_mm();
+    let span = model.fiducial_span_mm();
     let frame = LeadFrame::from_markers(
         HEAD,
         [HEAD[0], HEAD[1], HEAD[2] + span],

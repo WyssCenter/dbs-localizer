@@ -37,7 +37,7 @@ fn label() -> String {
 fn markers(head: [f64; 3]) -> Value {
     let model = electrode_by_name(MODEL).unwrap();
     let r = 0.5 * model.lead_diameter_mm;
-    let tail = [head[0], head[1], head[2] + model.contact_span_mm()];
+    let tail = [head[0], head[1], head[2] + model.fiducial_span_mm()];
     json!({
         "head": head,
         "tail": tail,

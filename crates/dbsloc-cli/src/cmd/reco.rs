@@ -51,7 +51,7 @@ pub struct CorrectArgs {
     /// distal fiducial in millimetres: X,Y,Z
     #[arg(long, value_name = "X,Y,Z", allow_hyphen_values = true)]
     pub head: Option<String>,
-    /// proximal fiducial in millimetres: X,Y,Z
+    /// tail fiducial in millimetres: X,Y,Z (centre of the 4th contact level, or of the top level on leads with fewer)
     #[arg(long, value_name = "X,Y,Z", allow_hyphen_values = true)]
     pub tail: Option<String>,
     /// mark a lead as checked without changing it: right or left (repeatable)

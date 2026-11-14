@@ -132,10 +132,10 @@ fn recovers_ring_lead_levels_in_native_space() {
     let worst = worst_level_error(&s.level_mm, e, apex, u);
     assert!(worst < 0.8, "worst level error {worst:.2} mm");
     assert!(
-        (dist(s.head, s.tail) - e.contact_span_mm()).abs() < 0.3,
+        (dist(s.head, s.tail) - e.fiducial_span_mm()).abs() < 0.3,
         "span {:.2} != model {:.2}",
         dist(s.head, s.tail),
-        e.contact_span_mm()
+        e.fiducial_span_mm()
     );
     assert!(s.shaft_len_mm > 10.0, "shaft {:.1} mm", s.shaft_len_mm);
 }
@@ -149,10 +149,10 @@ fn span_follows_the_pinned_lead() {
     let sides = pacer_sides(&vol, &cfg(), Some(name)).expect("pacer runs");
     let s = &sides[0];
     assert!(
-        (dist(s.head, s.tail) - e.contact_span_mm()).abs() < 0.3,
+        (dist(s.head, s.tail) - e.fiducial_span_mm()).abs() < 0.3,
         "{name}: span {:.2} != {:.2}",
         dist(s.head, s.tail),
-        e.contact_span_mm()
+        e.fiducial_span_mm()
     );
 }
 

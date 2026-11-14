@@ -30,7 +30,7 @@ use crate::vat::settings::{self as cfg, ConductivityMode, ModelKind, ModelSettin
 use crate::vat::warp::SpaceWarp;
 
 /// The engine revision recorded with every result; a change recomputes every label.
-pub const ENGINE_VERSION: &str = "dbsloc-vat-cpu-1";
+pub const ENGINE_VERSION: &str = "dbsloc-vat-cpu-2";
 const MAX_ARROWS: usize = 1500;
 const DOMAIN_GROWTH: f64 = 1.5;
 const GM_BOX_MARGIN_MM: f64 = 25.0;
@@ -355,6 +355,20 @@ fn frame(lead: &LeadSpec) -> Result<LeadFrame, Fail> {
     })
 }
 
+pub fn geometry_fingerprint(model: &ElectrodeGeometry) -> Value {
+    json!({
+        "lead_diameter_mm": model.lead_diameter_mm,
+        "contact_length_mm": model.contact_length_mm,
+        "tip_length_mm": model.tip_length_mm,
+        "tip_is_contact": model.tip_is_contact,
+        "n_contacts": model.n_contacts,
+        "contact_level": model.contact_level,
+        "contact_xyz_mm": model.contact_xyz_mm,
+        "segment_arc_deg": model.segment_arc_deg(),
+        "fiducial_span_mm": model.fiducial_span_mm(),
+    })
+}
+
 fn cache_key(req: &SideRequest<'_>, grid: &GridSpec, solver: &SolverSettings) -> Value {
     let c = &req.ms.conductivity;
     json!({
@@ -367,6 +381,7 @@ fn cache_key(req: &SideRequest<'_>, grid: &GridSpec, solver: &SolverSettings) ->
             "y": req.lead.y,
         },
         "elmodel": req.lead.model.elmodel,
+        "electrode_geometry": geometry_fingerprint(&req.lead.model),
         "conductivity": {
             "mode": format!("{:?}", c.mode),
             "gm_s_per_m": c.gm_s_per_m,

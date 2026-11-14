@@ -119,6 +119,9 @@ pub fn recompute_template_contacts(
             }
         }
         obj.insert("coords_mm".into(), json!(contacts));
+        if let Some(trajectory) = electrode.trajectory(head, tail) {
+            obj.insert("trajectory".into(), json!(trajectory));
+        }
         done = true;
     }
     if done {

@@ -12,6 +12,8 @@ use crate::sampling::trilinear_sample_in_bounds;
 pub const METHOD: &str = "diode_marker_v1";
 pub const FLAG_HIGH_POLAR_ANGLE: &str = "high_polar_angle";
 pub const FLAG_COM_UNAVAILABLE: &str = "com_unavailable";
+pub const FLAG_AXIS_REFIT_UNAVAILABLE: &str = "axis_refit_unavailable";
+pub const AXIS_REFIT_SPAN_MM: f64 = 20.0;
 
 const HIGH_POLAR_ANGLE_DEG: f64 = 55.0;
 const HU_MIN: f64 = -1024.0;
@@ -23,10 +25,16 @@ const RING_R_COUNT: usize = 17;
 const ANGLE_STEPS: usize = 360;
 const MIN_HARMONIC: f64 = 1e-9;
 const COM_HU: f64 = 2000.0;
-const COM_HALF_WIDTH_STEPS: i32 = 20;
+const COM_HALF_WIDTH_STEPS: i32 = 50;
 const COM_GRID_STEP_MM: f64 = 0.1;
-const COM_Z_STEP_MM: f64 = 0.2;
 const COM_MIN_OFFSET_MM: f64 = 0.05;
+const AXIS_REFIT_STEP_MM: f64 = 0.5;
+const AXIS_REFIT_RADIUS_MM: f64 = 3.0;
+const AXIS_REFIT_HU: f64 = 2000.0;
+const AXIS_REFIT_FALLBACK_HU: f64 = 1000.0;
+const AXIS_REFIT_MIN_CENTROIDS: usize = 5;
+const AXIS_REFIT_MAX_ANGLE_DEG: f64 = 10.0;
+const AXIS_REFIT_POWER_ITERATIONS: usize = 200;
 const RESOLVED_MAX_ANGLE_DEG: f64 = 60.0;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -72,7 +80,7 @@ pub fn support(model: &ElectrodeGeometry) -> Support {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct MarkerSpec {
-    pub marker_pos_mm: f64,
+    pub marker_offset_mm: f64,
     pub marker_len_mm: f64,
     pub lead_radius_mm: f64,
 }
@@ -80,7 +88,7 @@ pub struct MarkerSpec {
 impl MarkerSpec {
     pub fn from_model(model: &ElectrodeGeometry) -> Option<MarkerSpec> {
         Some(MarkerSpec {
-            marker_pos_mm: model.marker_pos_mm?,
+            marker_offset_mm: model.marker_offset_mm()?,
             marker_len_mm: model.marker_len_mm?,
             lead_radius_mm: 0.5 * model.lead_diameter_mm,
         })
@@ -204,27 +212,162 @@ fn perpendicular_basis(u: [f64; 3]) -> ([f64; 3], [f64; 3]) {
     (a, b)
 }
 
-pub fn estimate_marker_orientation(
+fn slice_centroid(
+    data: &Array3<f64>,
+    aff: &Mat4,
+    inv: &Mat4,
+    head: [f64; 3],
+    u: [f64; 3],
+    k: f64,
+    threshold: f64,
+) -> Option<[f64; 3]> {
+    let dims = data.dim();
+    let k_head = apply_rowmajor(inv, head)[2];
+    let dk = inv[2][0] * u[0] + inv[2][1] * u[1] + inv[2][2] * u[2];
+    if dk.abs() < 1e-9 {
+        return None;
+    }
+    let q = add3(head, scale3(u, (k - k_head) / dk));
+    let q_ijk = apply_rowmajor(inv, q);
+    let reach = |c: usize| {
+        let len = norm3(column(aff, c));
+        if len > 1e-9 {
+            (AXIS_REFIT_RADIUS_MM / len).ceil() + 1.0
+        } else {
+            0.0
+        }
+    };
+    let (ri, rj) = (reach(0), reach(1));
+    let lo_i = (q_ijk[0] - ri).floor().max(0.0) as usize;
+    let hi_i = (q_ijk[0] + ri).ceil().min(dims.0 as f64 - 1.0);
+    let lo_j = (q_ijk[1] - rj).floor().max(0.0) as usize;
+    let hi_j = (q_ijk[1] + rj).ceil().min(dims.1 as f64 - 1.0);
+    if !(hi_i >= 0.0 && hi_j >= 0.0) {
+        return None;
+    }
+    let (hi_i, hi_j, kk) = (hi_i as usize, hi_j as usize, k as usize);
+    let mut sum = [0.0f64; 3];
+    let mut count = 0usize;
+    for i in lo_i..=hi_i {
+        for j in lo_j..=hi_j {
+            if data[[i, j, kk]] >= threshold {
+                let w = apply_rowmajor(aff, [i as f64, j as f64, k]);
+                if norm3(sub3(w, q)) <= AXIS_REFIT_RADIUS_MM {
+                    sum = add3(sum, w);
+                    count += 1;
+                }
+            }
+        }
+    }
+    (count > 0).then(|| scale3(sum, 1.0 / count as f64))
+}
+
+pub fn refit_axis(
     data: &Array3<f64>,
     aff: &Mat4,
     head: [f64; 3],
+    u: [f64; 3],
+) -> Option<([f64; 3], [f64; 3])> {
+    let inv = invert_rowmajor(aff)?;
+    let dk = inv[2][0] * u[0] + inv[2][1] * u[1] + inv[2][2] * u[2];
+    if dk.abs() < 1e-9 {
+        return None;
+    }
+    let n_slices = data.dim().2 as f64;
+    let n_steps = (AXIS_REFIT_SPAN_MM / AXIS_REFIT_STEP_MM).round() as usize;
+    let mut slices: Vec<f64> = Vec::new();
+    for i in 0..=n_steps {
+        let s = i as f64 * AXIS_REFIT_STEP_MM;
+        let k = apply_rowmajor(&inv, add3(head, scale3(u, s)))[2].round();
+        if k >= 0.0 && k < n_slices && !slices.contains(&k) {
+            slices.push(k);
+        }
+    }
+    let at = |threshold: f64| -> Vec<Option<[f64; 3]>> {
+        slices
+            .iter()
+            .map(|&k| slice_centroid(data, aff, &inv, head, u, k, threshold))
+            .collect()
+    };
+    let mut centroids = at(AXIS_REFIT_HU);
+    let empty = centroids.iter().filter(|c| c.is_none()).count();
+    if 2 * empty > centroids.len() {
+        centroids = at(AXIS_REFIT_FALLBACK_HU);
+    }
+    let points: Vec<[f64; 3]> = centroids.into_iter().flatten().collect();
+    if points.len() < AXIS_REFIT_MIN_CENTROIDS {
+        return None;
+    }
+    let mean = scale3(
+        points.iter().fold([0.0; 3], |acc, p| add3(acc, *p)),
+        1.0 / points.len() as f64,
+    );
+    let mut cov = [[0.0f64; 3]; 3];
+    for p in &points {
+        let d = sub3(*p, mean);
+        for (r, row) in cov.iter_mut().enumerate() {
+            for (c, cell) in row.iter_mut().enumerate() {
+                *cell += d[r] * d[c];
+            }
+        }
+    }
+    let mut v = u;
+    for _ in 0..AXIS_REFIT_POWER_ITERATIONS {
+        let next = [dot3(cov[0], v), dot3(cov[1], v), dot3(cov[2], v)];
+        let len = norm3(next);
+        if !(len.is_finite() && len > 1e-12) {
+            return None;
+        }
+        v = scale3(next, 1.0 / len);
+    }
+    if dot3(v, u) < 0.0 {
+        v = scale3(v, -1.0);
+    }
+    let angle = dot3(v, u).clamp(-1.0, 1.0).acos().to_degrees();
+    if angle.is_nan() || angle > AXIS_REFIT_MAX_ANGLE_DEG {
+        return None;
+    }
+    let h = add3(mean, scale3(v, dot3(sub3(head, mean), v)));
+    Some((h, v))
+}
+
+fn perpendicular_to(v: [f64; 3], axis: [f64; 3]) -> [f64; 3] {
+    let p = sub3(v, scale3(axis, dot3(v, axis)));
+    if norm3(p) > 1e-9 {
+        unit3(p)
+    } else {
+        v
+    }
+}
+
+pub fn estimate_marker_orientation(
+    data: &Array3<f64>,
+    aff: &Mat4,
+    head_in: [f64; 3],
     tail: [f64; 3],
     spec: &MarkerSpec,
 ) -> Result<Estimate, OrientationError> {
-    let axis = sub3(tail, head);
+    let axis = sub3(tail, head_in);
     if norm3(axis) < 1e-6 {
         return Err(OrientationError::DegenerateLead);
     }
-    let u = unit3(axis);
+    let u0 = unit3(axis);
     let inv = invert_rowmajor(aff).ok_or(OrientationError::SingularAffine)?;
     let e1 = unit3(column(aff, 0));
     let n = unit3(column(aff, 2));
     let e2 = cross3(n, e1);
-    let polar_angle_deg = dot3(u, n).abs().min(1.0).acos().to_degrees();
+    let polar_angle_deg = dot3(u0, n).abs().min(1.0).acos().to_degrees();
     let mut flags: Vec<&'static str> = Vec::new();
     if polar_angle_deg > HIGH_POLAR_ANGLE_DEG {
         flags.push(FLAG_HIGH_POLAR_ANGLE);
     }
+    let (head, u) = match refit_axis(data, aff, head_in, u0) {
+        Some(fit) => fit,
+        None => {
+            flags.push(FLAG_AXIS_REFIT_UNAVAILABLE);
+            (head_in, u0)
+        }
+    };
 
     let dims = data.dim();
     let sample = |p: [f64; 3]| -> f64 {
@@ -241,8 +384,8 @@ pub fn estimate_marker_orientation(
     if dk.abs() < 1e-9 {
         return Err(OrientationError::NoSlice);
     }
-    let s_lo = spec.marker_pos_mm - 0.5 * spec.marker_len_mm - SLICE_MARGIN_MM;
-    let s_hi = spec.marker_pos_mm + 0.5 * spec.marker_len_mm + SLICE_MARGIN_MM;
+    let s_lo = spec.marker_offset_mm - 0.5 * spec.marker_len_mm - SLICE_MARGIN_MM;
+    let s_hi = spec.marker_offset_mm + 0.5 * spec.marker_len_mm + SLICE_MARGIN_MM;
     let k_a = k_head + s_lo * dk;
     let k_b = k_head + s_hi * dk;
     let k_first = (k_a.min(k_b) - 1e-9).ceil() as i64;
@@ -308,25 +451,19 @@ pub fn estimate_marker_orientation(
     }
     let m = unit3(m_raw);
 
-    let c_m = add3(head, scale3(u, spec.marker_pos_mm));
+    let c_m = add3(head, scale3(u, marker_slice_mm));
     let (a, b) = perpendicular_basis(u);
-    let z_steps = (spec.marker_len_mm / COM_Z_STEP_MM + 1e-9).floor() as i32;
     let mut kept = 0usize;
     let mut sum = [0.0f64; 3];
     for i1 in -COM_HALF_WIDTH_STEPS..=COM_HALF_WIDTH_STEPS {
         for i2 in -COM_HALF_WIDTH_STEPS..=COM_HALF_WIDTH_STEPS {
-            for iz in 0..=z_steps {
-                let off = add3(
-                    add3(
-                        scale3(a, i1 as f64 * COM_GRID_STEP_MM),
-                        scale3(b, i2 as f64 * COM_GRID_STEP_MM),
-                    ),
-                    scale3(u, -0.5 * spec.marker_len_mm + iz as f64 * COM_Z_STEP_MM),
-                );
-                if sample(add3(c_m, off)) > COM_HU {
-                    kept += 1;
-                    sum = add3(sum, off);
-                }
+            let off = add3(
+                scale3(a, i1 as f64 * COM_GRID_STEP_MM),
+                scale3(b, i2 as f64 * COM_GRID_STEP_MM),
+            );
+            if sample(add3(c_m, off)) >= COM_HU {
+                kept += 1;
+                sum = add3(sum, off);
             }
         }
     }
@@ -353,14 +490,16 @@ pub fn estimate_marker_orientation(
             }
         }
     }
-    let x_dir = cross3(y_dir, u);
+    let y_dir = perpendicular_to(y_dir, u0);
+    let x_dir = cross3(y_dir, u0);
+    let m0 = perpendicular_to(m, u0);
 
     Ok(Estimate {
         status,
-        axis: u,
+        axis: u0,
         y_dir,
         x_dir,
-        candidates: [m, scale3(m, -1.0)],
+        candidates: [m0, scale3(m0, -1.0)],
         polar_angle_deg,
         marker_slice_mm,
         harmonic_amplitude: amplitude,
@@ -379,7 +518,7 @@ mod tests {
     const SPACING: [f64; 3] = [0.45, 0.45, 1.0];
     const ORIGIN: [f64; 3] = [-14.0, -11.0, -20.0];
     const HEAD: [f64; 3] = [-5.0, -4.0, -8.0];
-    const MARKER_POS: f64 = 8.0;
+    const MARKER_OFFSET: f64 = 8.0;
     const MARKER_LEN: f64 = 3.0;
 
     struct Phantom {
@@ -433,14 +572,14 @@ mod tests {
             let z = dot3(q, u);
             let rho_vec = sub3(q, scale3(u, z));
             let rho = norm3(rho_vec);
-            if !(-3.0..=16.0).contains(&z) {
+            if !(-3.0..=25.0).contains(&z) {
                 return false;
             }
             if rho <= 0.65 {
                 return true;
             }
-            let in_band = (z - MARKER_POS).abs() <= 0.5 * MARKER_LEN;
-            if band && in_band && rho <= 0.80 {
+            let in_band = (z - MARKER_OFFSET).abs() <= 0.5 * MARKER_LEN;
+            if band && in_band && rho <= 0.95 {
                 let cos_a = dot3(rho_vec, y_true) / rho;
                 return cos_a.clamp(-1.0, 1.0).acos().to_degrees() < 70.0;
             }
@@ -478,12 +617,13 @@ mod tests {
                     let s = (p[2] - HEAD[2]) / u[2];
                     let centre = add3(HEAD, scale3(u, s));
                     let w = sub3(p, centre);
-                    let streak = if (s - MARKER_POS).abs() <= 0.5 * MARKER_LEN {
+                    let streak = if (s - MARKER_OFFSET).abs() <= 0.5 * MARKER_LEN {
                         let across = dot3(w, d_true);
                         let along = dot3(w, tangent);
                         -600.0
                             * (-(across * across) / (2.0 * 0.6 * 0.6)).exp()
                             * (-along.abs() / 5.0).exp()
+                            * (-((s - MARKER_OFFSET) / 0.75).powi(2)).exp()
                     } else {
                         0.0
                     };
@@ -504,7 +644,7 @@ mod tests {
 
     fn spec() -> MarkerSpec {
         MarkerSpec {
-            marker_pos_mm: MARKER_POS,
+            marker_offset_mm: MARKER_OFFSET,
             marker_len_mm: MARKER_LEN,
             lead_radius_mm: 0.65,
         }
@@ -594,13 +734,13 @@ mod tests {
             let z = dot3(q, lead.u);
             let rho_vec = sub3(q, scale3(lead.u, z));
             let rho = norm3(rho_vec);
-            if !(-3.0..=16.0).contains(&z) {
+            if !(-3.0..=25.0).contains(&z) {
                 return false;
             }
             if rho <= 0.65 {
                 return true;
             }
-            if (z - MARKER_POS).abs() <= 0.5 * MARKER_LEN && rho <= 0.80 {
+            if (z - MARKER_OFFSET).abs() <= 0.5 * MARKER_LEN && rho <= 0.95 {
                 let cos_a = dot3(rho_vec, lead.y_true) / rho;
                 return cos_a.clamp(-1.0, 1.0).acos().to_degrees() < 70.0;
             }
@@ -624,12 +764,13 @@ mod tests {
                     let tangent = unit3(cross3(n, d_true));
                     let s = dot3(q, n) / dot3(lead.u, n);
                     let w = sub3(q, scale3(lead.u, s));
-                    if (s - MARKER_POS).abs() <= 0.5 * MARKER_LEN {
+                    if (s - MARKER_OFFSET).abs() <= 0.5 * MARKER_LEN {
                         let across = dot3(w, d_true);
                         let along = dot3(w, tangent);
                         streak -= 600.0
                             * (-(across * across) / (2.0 * 0.6 * 0.6)).exp()
-                            * (-along.abs() / 5.0).exp();
+                            * (-along.abs() / 5.0).exp()
+                            * (-((s - MARKER_OFFSET) / 0.75).powi(2)).exp();
                     }
                 }
             }
@@ -748,6 +889,171 @@ mod tests {
         let want = roll_from_anterior_deg(ph.u, ph.y_true);
         let err = angle_diff(got, want).min(180.0 - angle_diff(got, want));
         assert!(err <= 3.0, "axis error {err}");
+    }
+
+    fn rod(head: [f64; 3], u: [f64; 3]) -> Array3<f64> {
+        let aff = affine();
+        Array3::from_shape_fn(DIMS, |(i, j, k)| {
+            let p = apply_rowmajor(&aff, [i as f64, j as f64, k as f64]);
+            let q = sub3(p, head);
+            let z = dot3(q, u);
+            let rho = norm3(sub3(q, scale3(u, z)));
+            if rho <= 0.7 && (-3.0..=25.0).contains(&z) {
+                3000.0
+            } else {
+                30.0
+            }
+        })
+    }
+
+    fn distance_to_line(p: [f64; 3], origin: [f64; 3], u: [f64; 3]) -> f64 {
+        let q = sub3(p, origin);
+        norm3(sub3(q, scale3(u, dot3(q, u))))
+    }
+
+    #[test]
+    fn axis_refit_recovers_a_tilted_offset_rod() {
+        let (u_true, _) = lead_frame(20.0, 0.0);
+        let data = rod(HEAD, u_true);
+        let side = unit3(cross3(u_true, [0.0, 1.0, 0.0]));
+        let u_bad = rotate_about(u_true, unit3(cross3(u_true, side)), 5.0);
+        let head_bad = add3(HEAD, scale3(side, 0.8));
+        let (h, v) = refit_axis(&data, &affine(), head_bad, u_bad).expect("refit");
+        let angle = dot3(v, u_true).clamp(-1.0, 1.0).acos().to_degrees();
+        assert!(angle < 1.0, "axis off by {angle:.2} deg");
+        let off = distance_to_line(h, HEAD, u_true);
+        assert!(off < 0.3, "head {off:.2} mm off the rod axis");
+        assert!(dot3(v, u_bad) > 0.0);
+        let along = dot3(sub3(h, head_bad), v).abs();
+        assert!(along < 1e-9, "head not the nearest point: {along}");
+    }
+
+    #[test]
+    fn axis_refit_falls_back_without_metal() {
+        let empty = Array3::<f64>::zeros(DIMS);
+        assert!(refit_axis(&empty, &affine(), HEAD, [0.0, 0.0, 1.0]).is_none());
+        let ph = phantom(30.0, 75.0, 900.0, true);
+        let est =
+            estimate_marker_orientation(&ph.data, &ph.aff, ph.head, ph.tail, &spec()).unwrap();
+        assert!(
+            est.flags.contains(&FLAG_AXIS_REFIT_UNAVAILABLE),
+            "{:?}",
+            est.flags
+        );
+        assert!(est.flags.contains(&FLAG_COM_UNAVAILABLE), "{:?}", est.flags);
+        let ok = phantom(30.0, 75.0, 3071.0, true);
+        let est =
+            estimate_marker_orientation(&ok.data, &ok.aff, ok.head, ok.tail, &spec()).unwrap();
+        assert!(
+            !est.flags.contains(&FLAG_AXIS_REFIT_UNAVAILABLE),
+            "{:?}",
+            est.flags
+        );
+    }
+
+    #[test]
+    fn axis_refit_falls_back_to_one_thousand_hounsfield_units() {
+        let (u_true, _) = lead_frame(20.0, 0.0);
+        let data = rod(HEAD, u_true).mapv(|v| if v > 1000.0 { 1500.0 } else { v });
+        let (h, v) = refit_axis(&data, &affine(), HEAD, u_true).expect("1000 HU fallback");
+        let angle = dot3(v, u_true).clamp(-1.0, 1.0).acos().to_degrees();
+        assert!(angle < 1.0, "axis off by {angle:.2} deg");
+        assert!(distance_to_line(h, HEAD, u_true) < 0.3);
+        let faint = rod(HEAD, u_true).mapv(|v| if v > 1000.0 { 900.0 } else { v });
+        assert!(refit_axis(&faint, &affine(), HEAD, u_true).is_none());
+    }
+
+    #[test]
+    fn axis_refit_rejects_more_than_ten_degrees() {
+        let (u_true, _) = lead_frame(20.0, 0.0);
+        let data = rod(HEAD, u_true);
+        let side = unit3(cross3(u_true, [0.0, 1.0, 0.0]));
+        let u_bad = rotate_about(u_true, unit3(cross3(u_true, side)), 20.0);
+        assert!(refit_axis(&data, &affine(), HEAD, u_bad).is_none());
+        let (_, v) = refit_axis(&data, &affine(), HEAD, u_true).expect("correct start refits");
+        assert!(dot3(v, u_true) > 0.9998);
+    }
+
+    fn paint_lump(ph: &mut Phantom, dir: [f64; 3], radius_mm: f64, z_lo: f64, z_hi: f64) {
+        let aff = ph.aff;
+        for ((i, j, k), v) in ph.data.indexed_iter_mut() {
+            let p = apply_rowmajor(&aff, [i as f64, j as f64, k as f64]);
+            let q = sub3(p, ph.head);
+            let z = dot3(q, ph.u);
+            let centre = add3(scale3(ph.u, z), scale3(dir, radius_mm));
+            if (z_lo..=z_hi).contains(&z) && norm3(sub3(q, centre)) <= 0.35 {
+                *v = 3071.0;
+            }
+        }
+    }
+
+    #[test]
+    fn centre_of_mass_uses_one_plane_five_millimetres_wide() {
+        let mut ph = phantom(0.0, 45.0, 3071.0, true);
+        let band_only = estimate_marker_orientation(&ph.data, &ph.aff, ph.head, ph.tail, &spec())
+            .unwrap()
+            .com_offset_mm
+            .expect("band centre of mass");
+        let (a, b) = perpendicular_basis(ph.u);
+        let diagonal = unit3(add3(a, b));
+        assert!(dot3(diagonal, ph.y_true) > 0.999);
+        let band = (
+            MARKER_OFFSET - 0.5 * MARKER_LEN,
+            MARKER_OFFSET + 0.5 * MARKER_LEN,
+        );
+        paint_lump(&mut ph, diagonal, 6.5, band.0, band.1);
+        let est =
+            estimate_marker_orientation(&ph.data, &ph.aff, ph.head, ph.tail, &spec()).unwrap();
+        assert_eq!(est.status, Resolution::Resolved, "{:?}", est.flags);
+        let offset = est.com_offset_mm.expect("centre of mass");
+        assert!(
+            offset > band_only + 0.15,
+            "offset {offset:.2} mm, band alone {band_only:.2} mm"
+        );
+        let got = roll_from_anterior_deg(ph.u, est.y_dir);
+        let want = roll_from_anterior_deg(ph.u, ph.y_true);
+        assert!(angle_diff(got, want) <= 3.0, "got {got:.1} want {want:.1}");
+        let axis = roll_from_anterior_deg(ph.u, est.candidates[0]);
+        let axis_err = angle_diff(axis, want).min(180.0 - angle_diff(axis, want));
+        assert!(axis_err <= 3.0, "harmonic axis off by {axis_err:.1}");
+
+        let s_k = est.marker_slice_mm;
+        let off_plane = if s_k + 1.0 <= band.1 {
+            s_k + 1.0
+        } else {
+            s_k - 1.0
+        };
+        assert!((off_plane - s_k).abs() > 0.5);
+        assert!((off_plane - s_k).abs() <= 0.5 * MARKER_LEN);
+        let mut decoy = Phantom {
+            data: ph.data.clone(),
+            aff: ph.aff,
+            head: ph.head,
+            tail: ph.tail,
+            y_true: ph.y_true,
+            u: ph.u,
+        };
+        paint_lump(
+            &mut decoy,
+            scale3(diagonal, -1.0),
+            4.0,
+            off_plane - 0.3,
+            off_plane + 0.3,
+        );
+        assert!(decoy.data != ph.data);
+        let with_decoy =
+            estimate_marker_orientation(&decoy.data, &decoy.aff, decoy.head, decoy.tail, &spec())
+                .unwrap();
+        assert!((with_decoy.marker_slice_mm - s_k).abs() < 1e-9);
+        assert_eq!(with_decoy.status, Resolution::Resolved);
+        assert_eq!(with_decoy.flags, est.flags);
+        let decoy_offset = with_decoy.com_offset_mm.expect("centre of mass");
+        assert!(
+            (decoy_offset - offset).abs() < 1e-9,
+            "{decoy_offset} vs {offset}"
+        );
+        assert!(norm3(sub3(with_decoy.candidates[0], est.candidates[0])) < 1e-9);
+        assert!(norm3(sub3(with_decoy.y_dir, est.y_dir)) < 1e-9);
     }
 
     #[test]

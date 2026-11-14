@@ -639,9 +639,9 @@ mod tests {
         let r = core_on_line(&neg, &aff, deep, shallow, true, e, &cfg).expect("core");
         assert!(norm3(sub3(r.head, head)) < 0.6);
         let tail = [
-            head[0] + e.contact_span_mm() * u[0],
-            head[1] + e.contact_span_mm() * u[1],
-            head[2] + e.contact_span_mm() * u[2],
+            head[0] + e.fiducial_span_mm() * u[0],
+            head[1] + e.fiducial_span_mm() * u[1],
+            head[2] + e.fiducial_span_mm() * u[2],
         ];
         assert!(norm3(sub3(r.tail, tail)) < 0.6);
         let short = core_on_line(

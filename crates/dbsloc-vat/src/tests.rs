@@ -9,7 +9,7 @@ use dbsloc_reconstruct::electrode_by_name;
 use crate::analytic::{analytic, AnalyticInput, AnalyticKind};
 use crate::conductivity::{ConductivityModel, Encapsulation};
 use crate::field::{cell_efield, fill_holes, open_ball};
-use crate::geometry::{BodyKind, GridSpec, LeadFrame};
+use crate::geometry::{Body, BodyKind, GridSpec, LeadFrame, Material};
 use crate::solver::{Control, SolverSettings};
 use crate::{
     apply, prepare, solve, solve_basis_subset, CaseSetting, ContactSetting, EngineInput, Grid,
@@ -23,7 +23,7 @@ fn lead_3389() -> (LeadFrame, dbsloc_reconstruct::ElectrodeGeometry) {
         .cloned()
         .expect("3389 catalogued");
     let r = 0.5 * model.lead_diameter_mm;
-    let span = model.contact_span_mm();
+    let span = model.fiducial_span_mm();
     let frame = LeadFrame::from_markers(
         HEAD,
         [HEAD[0], HEAD[1], HEAD[2] + span],
@@ -556,6 +556,50 @@ fn hole_filling_and_opening_on_a_blob() {
 }
 
 #[test]
+fn segment_arc_and_order_come_from_the_catalogue() {
+    for (name, arc, b_deg, c_deg) in [
+        ("Boston Scientific Vercise Directed", 90.0, 210.0, 330.0),
+        ("Medtronic B33005", 90.0, 210.0, 330.0),
+        ("Abbott Directed 6172 (short)", 90.0, 330.0, 210.0),
+        ("Abbott Directed 6173 (long)", 90.0, 330.0, 210.0),
+        ("Boston Scientific Vercise Cartesia HX", 100.0, 210.0, 330.0),
+        ("Boston Scientific Vercise Cartesia X", 100.0, 210.0, 330.0),
+        ("Aleva directSTIM Directed", 85.0, 330.0, 210.0),
+    ] {
+        let model = electrode_by_name(name).expect("catalogued");
+        let body = Body::new(BodyKind::Catalogue, model, 1.0).expect("body");
+        let first = (0..model.n_contacts)
+            .find(|&i| {
+                let lv = model.contact_level[i];
+                model.contact_level.iter().filter(|&&l| l == lv).count() == 3
+            })
+            .expect("segmented level");
+        let z = model.contact_xyz_mm[first][2];
+        let rho = 0.9 * 0.5 * model.lead_diameter_mm;
+        let at = |deg: f64| {
+            let a = deg.to_radians();
+            body.material([rho * a.cos(), rho * a.sin(), z])
+        };
+        for (k, centre) in [90.0, b_deg, c_deg].into_iter().enumerate() {
+            let want = Material::Contact(first + k);
+            assert_eq!(at(centre), want, "{name} segment {k}");
+            assert_eq!(at(centre + 0.5 * arc - 0.5), want, "{name} segment {k}");
+            assert_eq!(at(centre - 0.5 * arc + 0.5), want, "{name} segment {k}");
+            assert_eq!(
+                at(centre + 0.5 * arc + 0.5),
+                Material::Insulation,
+                "{name} segment {k}"
+            );
+            assert_eq!(
+                at(centre - 0.5 * arc - 0.5),
+                Material::Insulation,
+                "{name} segment {k}"
+            );
+        }
+    }
+}
+
+#[test]
 fn directed_lead_has_distinct_segments_and_unresolved_contact_errors() {
     let model = electrode_by_name("Boston Scientific Vercise Directed")
         .cloned()
@@ -563,7 +607,7 @@ fn directed_lead_has_distinct_segments_and_unresolved_contact_errors() {
     let r = 0.5 * model.lead_diameter_mm;
     let frame = LeadFrame::from_markers(
         [0.0; 3],
-        [0.0, 0.0, model.contact_span_mm()],
+        [0.0, 0.0, model.fiducial_span_mm()],
         Some([r, 0.0, 0.0]),
         Some([0.0, r, 0.0]),
         &model,
