@@ -10,6 +10,7 @@ import json
 import pytest
 
 from dbsloc.electrodes.layout import layout_from_spec
+from dbsloc.electrodes.names import SIDES, contact_names, level_names, naming_rule
 from dbsloc.electrodes.registry import get_elspec
 from scripts import emit_electrode_geometry as emit
 
@@ -52,3 +53,10 @@ def test_exported_geometry_agrees_with_the_python_model() -> None:
         assert len(row["contact_xyz_mm"]) == layout.n_contacts, row["elmodel"]
         for got, want in zip(row["contact_xyz_mm"], layout.contact_xyz_mm, strict=True):
             assert got == pytest.approx(list(want)), row["elmodel"]
+        spec = get_elspec(row["elmodel"])
+        rule = naming_rule(spec)
+        assert row["name_style"] == rule.style, row["elmodel"]
+        for side in SIDES:
+            assert row["name_start"][side] == rule.start(side), row["elmodel"]
+            assert row["contact_names"][side] == list(contact_names(spec, side))
+            assert row["level_names"][side] == list(level_names(spec, side))

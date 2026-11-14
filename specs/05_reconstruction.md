@@ -56,6 +56,7 @@ Per **side** (L/R) the pipeline produces:
 | CT | `pacer` | Rust PaCER (§7) in native space, `mni` block from the §6 point warp |
 | MRI | `auto`, `trac_core` | template-space TRAC/CORE (§4.1–4.3) |
 | MRI | `pacer` / `trac_core_native` | `E_PACER_mri` / `E_RECON` |
+| any | any other value (after trimming and lower-casing; the empty string, `trac` and `core` are accepted aliases of `auto`, `trac_core` and `trac_core`) | `E_RECON: unknown recon_method "<value>" (auto, trac_core, trac_core_native, pacer)` before the post-op modality is looked at (normative 2026-11-14; before, the MRI path ran template-space TRAC/CORE for any value) |
 
 **PaCER import validation.** The import file must be Reco `version` 2, its `subj_id` (with or without `sub-`) must equal the requested subject, its `mni` block must be a non-empty object and its `native` block must hold at least one side object; otherwise the stage fails with `Invalid` (`RecoFileV2 <path>: <why>`, e.g. `the import is for subject "<id>", not "<id>"`, `missing or empty mni block`, `no native block with a lead side; …`). A file named by `$DBSLOC_PACER_RECO_JSON` without `subj_id` is `Invalid` (it cannot be matched to the subject); the per-subject file in `<recon_dir>` may omit `subj_id` (its location names the subject). Per-side problems (a side that is not an object, or lacks `markers.head` / `markers.tail`) are not errors: they are listed in `meta.pacer_import_warnings`.
 

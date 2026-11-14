@@ -125,7 +125,10 @@ fn run(args: Args) -> eframe::Result<()> {
                 .get(sh.active_atlas_group)
                 .map_or(0, |g| g.meshes.iter().filter(|m| m.mesh.is_some()).count());
             (
-                sh.atlas_id.clone().unwrap_or_default(),
+                groups
+                    .get(sh.active_atlas_group)
+                    .map(|g| g.id().to_owned())
+                    .unwrap_or_default(),
                 sh.show_atlas.iter().filter(|v| **v).count(),
                 meshed,
             )

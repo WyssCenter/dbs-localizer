@@ -561,7 +561,7 @@ fn build_atlas_groups(
         source_ijk_subtract: m.atlas_lead_resample_ijk_subtract,
         native_vertex_ijk_shift: m.atlas_lead_native_mc_ijk_shift,
     };
-    let active = default_atlas_group(&groups);
+    let active = default_atlas_group(&groups, m.atlas_default_id.as_deref());
     for (gi, g) in groups.iter_mut().enumerate() {
         if g.lead_set_dir.is_none() {
             continue;
@@ -579,32 +579,39 @@ fn build_atlas_groups(
 }
 
 /// The group shown when no set was chosen (`specs/11` §1.3).
-fn default_atlas_group(groups: &[AtlasSurfaceGroup]) -> usize {
-    default_set_index(groups.iter().map(|g| g.label.as_str()))
+fn default_atlas_group(groups: &[AtlasSurfaceGroup], default_id: Option<&str>) -> usize {
+    default_id
+        .and_then(|id| groups.iter().position(|g| g.id() == id))
+        .unwrap_or_else(|| default_set_index(groups.iter().map(|g| g.label.as_str())))
 }
 
 /// Points `active_atlas_group` at the set named by `atlas_id` (unknown or unset → the default
-/// set) and records that set's id. Returns `true` when the active group changed.
-fn resolve_active_atlas(sh: &mut SceneShared, groups: &[AtlasSurfaceGroup]) -> bool {
+/// set, `specs/08` §11). Returns `true` when the active group changed.
+fn resolve_active_atlas(
+    sh: &mut SceneShared,
+    groups: &[AtlasSurfaceGroup],
+    default_id: Option<&str>,
+) -> bool {
     if groups.is_empty() {
-        return false;
-    }
-    if sh.atlas_id.as_deref().is_some_and(|id| {
-        groups
-            .get(sh.active_atlas_group)
-            .is_some_and(|g| g.id() == id)
-    }) {
         return false;
     }
     let want = sh
         .atlas_id
         .as_deref()
         .and_then(|id| groups.iter().position(|g| g.id() == id))
-        .unwrap_or_else(|| default_atlas_group(groups));
+        .unwrap_or_else(|| default_atlas_group(groups, default_id));
     let changed = sh.active_atlas_group != want;
     sh.active_atlas_group = want;
-    sh.atlas_id = Some(groups[want].id().to_string());
     changed
+}
+
+fn atlas_pick_records(
+    clicked: usize,
+    shown: usize,
+    recorded: Option<&str>,
+    ids: &[String],
+) -> bool {
+    clicked != shown || recorded != ids.get(clicked).map(String::as_str)
 }
 
 /// Visibility, opacity and colour vectors of `gix` at their defaults.
@@ -665,21 +672,42 @@ struct RecoGeometry {
     points_r: Vec<Vec3>,
     contacts_l: Vec<Vec3>,
     contacts_r: Vec<Vec3>,
+    contact_labels_l: Vec<String>,
+    contact_labels_r: Vec<String>,
     mesh_l: bool,
     mesh_r: bool,
     electrode_meshes: Vec<ElectrodeMeshGroup>,
 }
 
-fn side_geometry(
-    side: Option<&MniSideGeometry>,
-) -> (Vec<Vec3>, Vec<Vec3>, Vec<ElectrodeMeshGroup>) {
+type SideScene = (Vec<Vec3>, Vec<Vec3>, Vec<String>, Vec<ElectrodeMeshGroup>);
+
+fn side_geometry(side: Option<&MniSideGeometry>, side_key: &str) -> SideScene {
     let Some(side) = side else {
-        return (Vec::new(), Vec::new(), Vec::new());
+        return (Vec::new(), Vec::new(), Vec::new(), Vec::new());
     };
     let points = side_to_world_points(side);
     let contacts = side_to_contact_points(side);
+    let labels = contact_labels(side.elmodel.as_deref(), side_key, contacts.len());
     let meshes = build_electrode_meshes(side, &points);
-    (points, contacts, meshes)
+    (points, contacts, labels, meshes)
+}
+
+fn contact_labels(elmodel: Option<&str>, side_key: &str, n: usize) -> Vec<String> {
+    let (suffix, prefix) = if side_key == "1" {
+        (" (R)", "R")
+    } else {
+        (" (L)", "L")
+    };
+    let names = elmodel
+        .map(str::trim)
+        .filter(|m| !m.is_empty())
+        .and_then(dbsloc_reconstruct::electrode_by_name)
+        .map(|e| e.contact_names(side_key))
+        .filter(|names| names.len() == n);
+    match names {
+        Some(names) => names.into_iter().map(|k| format!("{k}{suffix}")).collect(),
+        None => (1..=n).map(|i| format!("{prefix}{i}")).collect(),
+    }
 }
 
 fn load_reco_geometry(path: &Path) -> VizResult<RecoGeometry> {
@@ -691,8 +719,8 @@ fn load_reco_geometry(path: &Path) -> VizResult<RecoGeometry> {
             path.display()
         )));
     }
-    let (points_l, contacts_l, meshes_l) = side_geometry(left.as_ref());
-    let (points_r, contacts_r, meshes_r) = side_geometry(right.as_ref());
+    let (points_l, contacts_l, contact_labels_l, meshes_l) = side_geometry(left.as_ref(), "2");
+    let (points_r, contacts_r, contact_labels_r, meshes_r) = side_geometry(right.as_ref(), "1");
     let (mesh_l, mesh_r) = (!meshes_l.is_empty(), !meshes_r.is_empty());
     let mut electrode_meshes = meshes_l;
     electrode_meshes.extend(meshes_r);
@@ -701,6 +729,8 @@ fn load_reco_geometry(path: &Path) -> VizResult<RecoGeometry> {
         points_r,
         contacts_l,
         contacts_r,
+        contact_labels_l,
+        contact_labels_r,
         mesh_l,
         mesh_r,
         electrode_meshes,
@@ -714,6 +744,8 @@ fn load_scene_leads(m: &SceneManifestV1) -> VizResult<(RecoGeometry, Option<Grou
             points_r: Vec::new(),
             contacts_l: Vec::new(),
             contacts_r: Vec::new(),
+            contact_labels_l: Vec::new(),
+            contact_labels_r: Vec::new(),
             mesh_l: false,
             mesh_r: false,
             electrode_meshes: Vec::new(),
@@ -1209,6 +1241,7 @@ pub struct Scene3DPayload {
     space: String,
     manifest_backdrops: Vec<SceneBackdropV1>,
     atlas_ids: Vec<String>,
+    atlas_default_id: Option<String>,
     pub atlas_groups: Mutex<Vec<AtlasSurfaceGroup>>,
     /// Trajectory samples (the drawn polyline).
     pub points_l: Vec<Vec3>,
@@ -1218,6 +1251,8 @@ pub struct Scene3DPayload {
     /// Reconstructed contact centres — labelled and marked, never drawn as line.
     pub contacts_l: Vec<Vec3>,
     pub contacts_r: Vec<Vec3>,
+    contact_labels_l: Vec<String>,
+    contact_labels_r: Vec<String>,
     /// Procedural lead bodies (`electrode_mesh`), one per side; empty when the model or the
     /// rigid-frame markers are missing from the reconstruction.
     pub electrode_meshes: Vec<ElectrodeMeshGroup>,
@@ -1821,6 +1856,7 @@ impl Scene3DPayload {
             space: m.space.clone(),
             manifest_backdrops: m.backdrops.clone(),
             atlas_ids: manifest_atlas_ids(m),
+            atlas_default_id: m.atlas_default_id.clone(),
             atlas_groups: Mutex::new(atlas_groups),
             points_l: reco.points_l,
             points_r: reco.points_r,
@@ -1828,6 +1864,8 @@ impl Scene3DPayload {
             mesh_r: reco.mesh_r,
             contacts_l: reco.contacts_l,
             contacts_r: reco.contacts_r,
+            contact_labels_l: reco.contact_labels_l,
+            contact_labels_r: reco.contact_labels_r,
             electrode_meshes: reco.electrode_meshes,
             shared: Arc::new(Mutex::new(shared)),
             view_defaults,
@@ -1906,7 +1944,7 @@ impl Scene3DPayload {
             revision: 1,
             slice_world: DEFAULT_SLICE_MM,
         };
-        resolve_active_atlas(&mut shared, &atlas_groups);
+        resolve_active_atlas(&mut shared, &atlas_groups, m.atlas_default_id.as_deref());
         let active = shared.active_atlas_group;
         reset_atlas_vectors(&mut shared, &atlas_groups, active);
         Ok(Self::assemble(
@@ -2050,7 +2088,7 @@ impl Scene3DPayload {
                         .atlas_groups
                         .lock()
                         .unwrap_or_else(PoisonError::into_inner);
-                    resolve_active_atlas(&mut sh, &groups);
+                    resolve_active_atlas(&mut sh, &groups, this.atlas_default_id.as_deref());
                     let gix = sh.active_atlas_group;
                     let n = groups.get(gix).map_or(0, |g| g.meshes.len());
                     if sh.atlas_vectors_group != Some(gix) || sh.show_atlas.len() != n {
@@ -4281,7 +4319,7 @@ impl Scene3DEframeApp {
             .atlas_groups
             .lock()
             .unwrap_or_else(PoisonError::into_inner);
-        resolve_active_atlas(&mut sh, &groups);
+        resolve_active_atlas(&mut sh, &groups, self.payload.atlas_default_id.as_deref());
         drop(groups);
         sh.bump();
         true
@@ -4689,11 +4727,7 @@ impl Scene3DEframeApp {
         ))
     }
 
-    /// Mark and number the reconstructed **contacts** (Lead-DBS `eltext` parity).
-    ///
-    /// The index is the contact's position in the reconstruction's own list, not
-    /// the manufacturer's contact numbering — the scene manifest does not carry
-    /// the electrode model, so claiming device numbering here would be a guess.
+    /// Mark and name the reconstructed **contacts** (Lead-DBS `eltext` parity).
     fn paint_contact_labels(&self, ui: &egui::Ui, rect: egui::Rect, vp: Mat4) {
         let painter = ui.painter_at(rect);
         let color = ui.visuals().strong_text_color();
@@ -4707,11 +4741,11 @@ impl Scene3DEframeApp {
         let unit = Self::unit(ui);
         let font = egui::FontId::monospace(unit * 0.8);
         let mut placed: Vec<egui::Rect> = Vec::new();
-        for (side, pts) in [
-            ("L", &self.payload.contacts_l),
-            ("R", &self.payload.contacts_r),
+        for (labels, pts) in [
+            (&self.payload.contact_labels_l, &self.payload.contacts_l),
+            (&self.payload.contact_labels_r, &self.payload.contacts_r),
         ] {
-            for (i, p) in pts.iter().enumerate() {
+            for (label, p) in labels.iter().zip(pts.iter()) {
                 let Some(pos) = Self::project(rect, vp, *p) else {
                     continue;
                 };
@@ -4722,8 +4756,7 @@ impl Scene3DEframeApp {
                     egui::Stroke::new(1.0_f32, if dark { halo } else { color }),
                 );
 
-                let galley =
-                    painter.layout_no_wrap(format!("{side}{}", i + 1), font.clone(), color);
+                let galley = painter.layout_no_wrap(label.clone(), font.clone(), color);
                 let candidates = [
                     pos + egui::vec2(unit * 0.4, -unit * 0.35),
                     pos + egui::vec2(-unit * 0.4 - galley.size().x, -unit * 0.35),
@@ -4922,7 +4955,7 @@ impl eframe::App for Scene3DEframeApp {
                 .atlas_groups
                 .lock()
                 .unwrap_or_else(PoisonError::into_inner);
-            if resolve_active_atlas(&mut sh, &ag) {
+            if resolve_active_atlas(&mut sh, &ag, self.payload.atlas_default_id.as_deref()) {
                 sh.bump();
             }
             let requested_group = sh.active_atlas_group;
@@ -5430,10 +5463,10 @@ changed |= labelled_slider(
                             changed |= ui
                                 .checkbox(&mut sh.show_contact_labels, "Mark and number contacts")
                                 .on_hover_text(
-                                    "Mark each reconstructed contact and number it by its \
-                                         position in the reconstruction's contact list (L1…, \
-                                         R1…). That is not the manufacturer's contact \
-                                         numbering.",
+                                    "Mark each reconstructed contact and label it with its \
+                                         contact name, e.g. K0 (R). A lead whose electrode \
+                                         model is not catalogued is numbered by its position \
+                                         in the reconstruction's contact list (L1…, R1…).",
                                 )
                                 .changed();
                             let (cl, cr) =
@@ -5666,6 +5699,7 @@ changed |= labelled_slider(
 
                             let sel = sh.active_atlas_group.min(n_groups - 1);
                             let mut pick_group: Option<usize> = None;
+                            let recorded = sh.atlas_id.clone();
                             let set_label_id = ui.label("Atlas set").id;
                             let set_hover = match &groups_view.citations[sel] {
                                 Some(c) => format!(
@@ -5688,7 +5722,14 @@ changed |= labelled_slider(
                                         if let Some(c) = &groups_view.citations[i] {
                                             resp = resp.on_hover_text(c);
                                         }
-                                        if resp.clicked() && i != sel {
+                                        if resp.clicked()
+                                            && atlas_pick_records(
+                                                i,
+                                                sel,
+                                                recorded.as_deref(),
+                                                &groups_view.ids,
+                                            )
+                                        {
                                             pick_group = Some(i);
                                         }
                                     }
@@ -6977,6 +7018,7 @@ mod atlas_data_tests {
             atlas_nii: None,
             atlas_max_labels: None,
             atlas_lead_sets: vec![],
+            atlas_default_id: None,
             atlas_lead_nii_dir: None,
             atlas_default_on_substrings: None,
             atlas_mesh_smooth_iters: 0,
@@ -7037,13 +7079,13 @@ mod atlas_data_tests {
         assert!(state.atlas_id.is_none());
         let mut sh = super::default_slice_tests::shared_for_tests();
         sh.restore(&state);
-        assert!(super::resolve_active_atlas(&mut sh, &groups));
+        assert!(super::resolve_active_atlas(&mut sh, &groups, None));
         assert_eq!(sh.active_atlas_group, 1);
-        assert_eq!(sh.atlas_id.as_deref(), Some("leaddbs:distal"));
-        assert!(!super::resolve_active_atlas(&mut sh, &groups));
+        assert_eq!(sh.atlas_id, None);
+        assert!(!super::resolve_active_atlas(&mut sh, &groups, None));
 
         sh.atlas_id = Some("ahead".into());
-        assert!(super::resolve_active_atlas(&mut sh, &groups));
+        assert!(super::resolve_active_atlas(&mut sh, &groups, None));
         assert_eq!(sh.active_atlas_group, 0);
         let snap = sh.snapshot();
         assert_eq!(snap.atlas_id.as_deref(), Some("ahead"));
@@ -7052,13 +7094,157 @@ mod atlas_data_tests {
         assert_eq!(back.atlas_id.as_deref(), Some("ahead"));
 
         sh.atlas_id = Some("gone".into());
-        super::resolve_active_atlas(&mut sh, &groups);
+        super::resolve_active_atlas(&mut sh, &groups, None);
         assert_eq!(sh.active_atlas_group, 1);
-        assert_eq!(sh.atlas_id.as_deref(), Some("leaddbs:distal"));
+        assert_eq!(sh.atlas_id.as_deref(), Some("gone"));
         super::reset_atlas_vectors(&mut sh, &groups, 1);
         assert_eq!(sh.show_atlas, vec![true; 3]);
         assert_eq!(sh.atlas_rgb[0], [0.1, 0.2, 0.3]);
         assert_eq!(sh.atlas_vectors_group, Some(1));
+    }
+
+    #[test]
+    fn contact_labels_use_the_catalogue_names_with_the_side_suffix() {
+        assert_eq!(
+            super::contact_labels(Some("Medtronic 3389"), "1", 4),
+            ["K0 (R)", "K1 (R)", "K2 (R)", "K3 (R)"]
+        );
+        assert_eq!(
+            super::contact_labels(Some(" Medtronic 3389 "), "2", 4),
+            ["K8 (L)", "K9 (L)", "K10 (L)", "K11 (L)"]
+        );
+        assert_eq!(
+            super::contact_labels(Some("Abbott Directed 6172 (short)"), "1", 8)[1..4],
+            ["K2A (R)", "K2B (R)", "K2C (R)"]
+        );
+        assert_eq!(
+            super::contact_labels(Some("Medtronic 3389"), "1", 3),
+            ["R1", "R2", "R3"]
+        );
+        assert_eq!(super::contact_labels(None, "2", 2), ["L1", "L2"]);
+        assert_eq!(super::contact_labels(Some("Unknown lead"), "1", 1), ["R1"]);
+    }
+
+    #[test]
+    fn the_manifest_default_atlas_id_names_the_default_set() {
+        let groups = vec![
+            group(
+                crate::atlas_sets::DEFAULT_ATLAS_SET_NAME,
+                "leaddbs:distal",
+                3,
+            ),
+            group("AHEAD", "ahead", 2),
+        ];
+        assert_eq!(super::default_atlas_group(&groups, Some("ahead")), 1);
+        assert_eq!(super::default_atlas_group(&groups, None), 0);
+        assert_eq!(super::default_atlas_group(&groups, Some("not-listed")), 0);
+
+        let mut sh = super::default_slice_tests::shared_for_tests();
+        assert!(super::resolve_active_atlas(&mut sh, &groups, Some("ahead")));
+        assert_eq!(sh.active_atlas_group, 1);
+        assert_eq!(sh.atlas_id, None);
+        sh.atlas_id = Some("leaddbs:distal".into());
+        assert!(super::resolve_active_atlas(&mut sh, &groups, Some("ahead")));
+        assert_eq!(sh.active_atlas_group, 0);
+    }
+
+    #[test]
+    fn without_a_manifest_default_the_label_heuristic_picks_the_set() {
+        let groups = vec![
+            group("AHEAD", "ahead", 2),
+            group("Other", "other", 1),
+            group(
+                crate::atlas_sets::DEFAULT_ATLAS_SET_NAME,
+                "leaddbs:distal",
+                3,
+            ),
+        ];
+        let mut sh = super::default_slice_tests::shared_for_tests();
+        super::resolve_active_atlas(&mut sh, &groups, None);
+        assert_eq!(sh.active_atlas_group, 2);
+        let m: super::SceneManifestV1 = serde_json::from_str(
+            r#"{"subj_id": "1", "space": "s", "template_nii": "t.nii", "reco_json": "r.json"}"#,
+        )
+        .unwrap();
+        assert_eq!(m.atlas_default_id, None);
+        let m: super::SceneManifestV1 = serde_json::from_str(
+            r#"{"subj_id": "1", "space": "s", "template_nii": "t.nii", "reco_json": "r.json",
+                "atlas_default_id": "ahead"}"#,
+        )
+        .unwrap();
+        assert_eq!(m.atlas_default_id.as_deref(), Some("ahead"));
+    }
+
+    #[test]
+    fn clicking_the_shown_default_records_it_when_another_set_is_saved() {
+        let ids = vec!["leaddbs:distal".to_owned(), "ahead".to_owned()];
+        assert!(super::atlas_pick_records(
+            1,
+            0,
+            Some("leaddbs:distal"),
+            &ids
+        ));
+        assert!(!super::atlas_pick_records(
+            0,
+            0,
+            Some("leaddbs:distal"),
+            &ids
+        ));
+        assert!(super::atlas_pick_records(
+            0,
+            0,
+            Some("external:Morel"),
+            &ids
+        ));
+        assert!(super::atlas_pick_records(0, 0, None, &ids));
+    }
+
+    #[test]
+    fn a_saved_atlas_id_missing_from_one_scene_is_selected_in_the_next() {
+        let without = vec![
+            group(
+                crate::atlas_sets::DEFAULT_ATLAS_SET_NAME,
+                "leaddbs:distal",
+                3,
+            ),
+            group("AHEAD", "ahead", 2),
+        ];
+        let with = vec![
+            group(
+                crate::atlas_sets::DEFAULT_ATLAS_SET_NAME,
+                "leaddbs:distal",
+                3,
+            ),
+            group("AHEAD", "ahead", 2),
+            group("Morel", "external:Morel", 4),
+        ];
+        let mut sh = super::default_slice_tests::shared_for_tests();
+        sh.atlas_id = Some("external:Morel".into());
+        super::resolve_active_atlas(&mut sh, &without, Some("leaddbs:distal"));
+        assert_eq!(sh.active_atlas_group, 0);
+        assert_eq!(sh.atlas_id.as_deref(), Some("external:Morel"));
+        assert!(!super::resolve_active_atlas(
+            &mut sh,
+            &without,
+            Some("leaddbs:distal")
+        ));
+        let saved = sh.snapshot();
+        assert_eq!(saved.atlas_id.as_deref(), Some("external:Morel"));
+
+        let mut next = super::default_slice_tests::shared_for_tests();
+        next.restore(&saved);
+        super::resolve_active_atlas(&mut next, &with, Some("leaddbs:distal"));
+        assert_eq!(next.active_atlas_group, 2);
+        assert_eq!(next.atlas_id.as_deref(), Some("external:Morel"));
+
+        sh.active_atlas_group = 1;
+        sh.atlas_id = Some("ahead".into());
+        assert!(!super::resolve_active_atlas(
+            &mut sh,
+            &without,
+            Some("leaddbs:distal")
+        ));
+        assert_eq!(sh.snapshot().atlas_id.as_deref(), Some("ahead"));
     }
 
     pub(super) fn layer_payload(tag: &str) -> std::sync::Arc<Scene3DPayload> {
@@ -7453,6 +7639,7 @@ mod atlas_data_tests {
             atlas_nii: None,
             atlas_max_labels: None,
             atlas_lead_sets: vec![],
+            atlas_default_id: None,
             atlas_lead_nii_dir: None,
             atlas_default_on_substrings: None,
             atlas_mesh_smooth_iters: 0,

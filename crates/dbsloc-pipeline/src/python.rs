@@ -55,8 +55,7 @@ pub fn reconstruct_ct_py(
 ) -> PyResult<String> {
     let m = CtMethod::parse(method).ok_or_else(|| {
         PyValueError::new_err(format!(
-            "E_RECON: unknown recon_method {method:?} for a post-op CT \
-             (auto, trac_core, trac_core_native, pacer)"
+            "E_RECON: unknown recon_method {method:?} (auto, trac_core, trac_core_native, pacer)"
         ))
     })?;
     let req = CtReconRequest {

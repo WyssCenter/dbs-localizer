@@ -24,6 +24,12 @@ from pathlib import Path
 from typing import Any
 
 from dbsloc.electrodes.layout import UnsupportedElectrodeLayout, layout_from_spec
+from dbsloc.electrodes.names import (
+    SIDES,
+    contact_names,
+    level_names,
+    naming_rule,
+)
 from dbsloc.electrodes.registry import get_elspec, list_models
 
 OUT_PATH = (
@@ -53,6 +59,7 @@ def build_payload() -> dict[str, Any]:
                 {"elmodel": name, "matfname": matfname, "reason": str(e)}
             )
             continue
+        rule = naming_rule(spec)
         models.append(
             {
                 "elmodel": layout.elmodel,
@@ -80,12 +87,21 @@ def build_payload() -> dict[str, Any]:
                     if layout.segment_arc_deg is None
                     else _r(layout.segment_arc_deg)
                 ),
+                "name_style": rule.style,
+                "name_start": {side: rule.start(side) for side in SIDES},
+                "contact_names": {
+                    side: list(contact_names(spec, side)) for side in SIDES
+                },
+                "level_names": {side: list(level_names(spec, side)) for side in SIDES},
             }
         )
     return {
-        "schema": 2,
+        "schema": 3,
         "generator": "scripts/emit_electrode_geometry.py",
-        "source": "dbsloc/electrodes/data/catalogue.json via dbsloc.electrodes.layout",
+        "source": (
+            "dbsloc/electrodes/data/catalogue.json via dbsloc.electrodes.layout"
+            " and dbsloc.electrodes.names"
+        ),
         "unsupported": unsupported,
         "models": models,
     }
