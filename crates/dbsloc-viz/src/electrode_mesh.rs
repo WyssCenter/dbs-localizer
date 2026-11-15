@@ -338,10 +338,21 @@ pub fn build_electrode(
         return None;
     }
     let contact_len = geom.contact_length_mm as f32;
-    let half = (0.5 * contact_len).max(0.05);
+    let level_half = |lv: usize| {
+        let len = if lv == 0 && geom.tip_is_contact {
+            geom.tip_length_mm as f32
+        } else {
+            contact_len
+        };
+        (0.5 * len).max(0.05)
+    };
     let apex_z = -(geom.apex_to_first_level_mm() as f32);
-    let first_contact_distal = -half;
-    let tip_top = first_contact_distal.max(apex_z + 0.1);
+    let first_contact_distal = -level_half(0);
+    let tip_top = if geom.tip_is_contact {
+        apex_z + (geom.tip_length_mm as f32).min(r).max(0.1)
+    } else {
+        first_contact_distal.max(apex_z + 0.1)
+    };
     let max_level = geom.level_z_mm.iter().copied().fold(0.0_f64, f64::max) as f32;
     let prox = (proximal_mm / frame.stretch).max(max_level + contact_len + 1.0);
 
@@ -361,6 +372,12 @@ pub fn build_electrode(
     let arc = segment_arc_rad(geom);
     for (lv, &z) in geom.level_z_mm.iter().enumerate() {
         let z = z as f32;
+        let half = level_half(lv);
+        let z_lo = if lv == 0 && geom.tip_is_contact {
+            (z - half).max(tip_top).min(z + half)
+        } else {
+            z - half
+        };
         let indices: Vec<usize> = geom
             .contact_level
             .iter()
@@ -377,7 +394,7 @@ pub fn build_electrode(
                 let angle = (p[1] as f32).atan2(p[0] as f32);
                 metal.sector_solid(
                     &frame,
-                    z - half,
+                    z_lo,
                     z + half,
                     r * PAD_INNER_FACTOR,
                     r_out,
@@ -389,7 +406,7 @@ pub fn build_electrode(
         } else {
             metal.sector_solid(
                 &frame,
-                z - half,
+                z_lo,
                 z + half,
                 0.0,
                 r_out,
@@ -707,5 +724,44 @@ mod tests {
             .map(|p| p.z)
             .fold(f32::MAX, f32::min);
         assert!((min_z + g.apex_to_first_level_mm() as f32).abs() < 1e-4);
+    }
+
+    fn metal_z(name: &str) -> Vec<f32> {
+        let g = geom(name);
+        let m = build_electrode(
+            g,
+            Vec3::ZERO,
+            Vec3::Z * g.fiducial_span_mm() as f32,
+            Some(Vec3::X),
+            None,
+            30.0,
+        )
+        .expect("mesh");
+        m.metal.positions.iter().map(|p| p.z).collect()
+    }
+
+    #[test]
+    fn tip_contact_metal_spans_the_tip_length() {
+        let band_edges = |name: &str| {
+            let g = geom(name);
+            let dome_top = -1.5 + (g.tip_length_mm as f32).min(0.5 * g.lead_diameter_mm as f32);
+            let mut zs: Vec<f32> = metal_z(name)
+                .into_iter()
+                .filter(|&z| z >= dome_top - 1e-3)
+                .collect();
+            zs.sort_by(f32::total_cmp);
+            zs.dedup_by(|a, b| (*a - *b).abs() < 1e-3);
+            (dome_top, zs)
+        };
+        let close = |got: &[f32], want: &[f32]| {
+            assert_eq!(got.len(), want.len(), "{got:?} vs {want:?}");
+            for (g, w) in got.iter().zip(want) {
+                assert!((g - w).abs() < 1e-3, "{got:?} vs {want:?}");
+            }
+        };
+        let (top, zs) = band_edges("SmartFlow Cannula NGS-NC-06");
+        close(&zs, &[top, 1.5, 11.5]);
+        let (top, zs) = band_edges("Abbott ActiveTip (6146-6149)");
+        close(&zs[..4], &[top, 1.5, 2.0, 3.5]);
     }
 }

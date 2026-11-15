@@ -60,3 +60,31 @@ def test_exported_geometry_agrees_with_the_python_model() -> None:
             assert row["name_start"][side] == rule.start(side), row["elmodel"]
             assert row["contact_names"][side] == list(contact_names(spec, side))
             assert row["level_names"][side] == list(level_names(spec, side))
+
+
+@pytest.mark.parametrize(
+    ("name", "want"),
+    [
+        ("Abbott ActiveTip (6146-6149)", [0.0, 2.75, 4.75, 6.75]),
+        ("Abbott ActiveTip (6142-6145)", [0.0, 3.75, 6.75, 9.75]),
+        ("SmartFlow Cannula NGS-NC-06", [0.0, 6.5]),
+    ],
+)
+def test_levels_after_a_tip_contact_follow_the_tip_length(
+    name: str, want: list[float]
+) -> None:
+    layout = layout_from_spec(get_elspec(name))
+    assert list(layout.level_z_mm) == pytest.approx(want)
+
+
+def test_array_span_equals_last_level_depth_plus_end_half_lengths() -> None:
+    payload = json.loads(emit.OUT_PATH.read_text(encoding="utf-8"))
+    for row in payload["models"]:
+        z = row["level_z_mm"]
+        if len(z) < 2:
+            continue
+        cl = row["contact_length_mm"]
+        first = row["tip_length_mm"] if row["tip_is_contact"] else cl
+        assert row["array_span_mm"] == pytest.approx(
+            z[-1] + 0.5 * first + 0.5 * cl, abs=1e-6
+        ), row["elmodel"]

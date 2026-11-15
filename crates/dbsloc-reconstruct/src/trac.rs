@@ -970,8 +970,8 @@ fn trac_walk(
 
 /// Axial extent of metal in the model frame, one interval per level.
 ///
-/// The most-distal level is widened to the tip length when the tip *is* the contact
-/// (`specs/09` §2, `tipiscontact`), because then the metal reaches the apex.
+/// The most-distal level spans the tip length when the tip *is* the contact
+/// (`specs/09` §10.1, `tipiscontact`), because then the metal reaches the apex.
 fn metal_intervals(e: &ElectrodeGeometry) -> Vec<(f64, f64)> {
     let cl = e.contact_length_mm;
     e.level_z_mm
@@ -979,9 +979,8 @@ fn metal_intervals(e: &ElectrodeGeometry) -> Vec<(f64, f64)> {
         .enumerate()
         .map(|(k, &z)| {
             if k == 0 && e.tip_is_contact {
-                let half = 0.5 * e.tip_length_mm.max(cl);
-                let apex = z - 0.5 * e.tip_length_mm;
-                ((z - half).max(apex), z + half)
+                let half = 0.5 * e.tip_length_mm;
+                (z - half, z + half)
             } else {
                 (z - 0.5 * cl, z + 0.5 * cl)
             }
@@ -1280,8 +1279,23 @@ mod tests {
         }
         let boston = by_name("Boston Scientific Vercise Directed").expect("catalogued");
         let iv = metal_intervals(boston);
-        let h = 0.5 * boston.tip_length_mm.max(boston.contact_length_mm);
+        let h = 0.5 * boston.tip_length_mm;
         assert_eq!(iv[0], (-h, h));
+    }
+
+    #[test]
+    fn tip_contact_metal_spans_the_tip_length_around_level_zero() {
+        for name in [
+            "Abbott ActiveTip (6146-6149)",
+            "SmartFlow Cannula NGS-NC-06",
+        ] {
+            let e = by_name(name).expect("catalogued");
+            let iv = metal_intervals(e);
+            assert!(
+                (iv[0].0 + 1.5).abs() < 1e-9 && (iv[0].1 - 1.5).abs() < 1e-9,
+                "{name}"
+            );
+        }
     }
 
     #[test]

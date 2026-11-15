@@ -276,7 +276,7 @@ Side `"1"` is the right hemisphere (positive RAS *x*) and side `"2"` the left, t
 | `side_source`, `metal_axis`, `side_notes` | native CT | §4.4 |
 | `sides_found`, `midline_x_mm`, `pacer_mask` | PaCER | §7 |
 | `pacer`, `pacer_import_warnings` | import | §3.4 |
-| `orientation` | TRAC/CORE paths for directional models, orientation stage, manual correction | §8.9 |
+| `orientation` | TRAC/CORE and PaCER writers for directional models, orientation stage, manual correction | §8.9 |
 | `reconstruct` | every `reconstruct` write | §8.6 |
 | `template_contacts` | §6.3 | `from_markers` |
 | `template_space` | every `reconstruct` write with a template | the template's space id (`04` §3.1), kept when already present |
@@ -317,9 +317,7 @@ Every reader that combines the markers with the electrode model converts: the Pa
 
 ### 8.9 Orientation note
 
-For a directional lead, `x` / `y` are an arbitrary in-plane basis until the orientation stage (`06`) solves the segment azimuth. The TRAC/CORE writers then set `meta.orientation` to the string `unresolved: x/y markers are an arbitrary in-plane basis; segment azimuth needs the orientation stage (specs/06)`, so no consumer reads `x` as the segment direction. The orientation stage and manual correction replace it with per-side objects (`06` §10.6; §9a of this spec).
-
-Implementation status: the PaCER writer (`ct_recon.rs`, `fn build_pacer_reco_json`) does not set this note.
+For a directional lead, `x` / `y` are an arbitrary in-plane basis until the orientation stage (`06`) solves the segment azimuth. The TRAC/CORE writers and the PaCER writer (`ct_recon.rs`, `fn build_pacer_reco_json`, since 2026-11-15) then set `meta.orientation` to the string `unresolved: x/y markers are an arbitrary in-plane basis; segment azimuth needs the orientation stage (specs/06)`, so no consumer reads `x` as the segment direction. The orientation stage and manual correction replace it with per-side objects (`06` §10.6; §9a of this spec). A PaCER import (§3.4) is taken as it is and gets no note.
 
 ### 8.10 MATLAB twin (normative 2026-10-22)
 

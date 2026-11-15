@@ -884,6 +884,9 @@ fn build_pacer_reco_json(
     electrode_meta(&mut meta, electrode);
     meta.insert("tracer".into(), json!("pacer_rust"));
     meta.insert("traced_space".into(), json!("native"));
+    if electrode.is_directed {
+        meta.insert("orientation".into(), json!(ORIENTATION_UNRESOLVED));
+    }
     Ok(json!({
         "version": 2,
         "subj_id": subj_id,
@@ -2071,6 +2074,22 @@ mod tests {
         .unwrap();
         assert_eq!(mni.keys().collect::<Vec<_>>(), [SIDE_LEFT]);
         assert_eq!(mni[SIDE_LEFT]["coords_mm"], native[SIDE_LEFT]["coords_mm"]);
+    }
+
+    #[cfg(feature = "pacer")]
+    #[test]
+    fn pacer_reco_marks_orientation_only_for_directed_models() {
+        let leads = vec![lead_at(-12.0, true)];
+        let keyed = key_pacer_leads(&leads, 0.0).expect("keyed");
+        let side = keyed[0].1.side.as_ref().expect("placed");
+        let build = |name: &str| {
+            let e = electrode_by_name(name).expect("catalogued");
+            build_pacer_reco_json("01", &[(keyed[0].0, side)], e, Path::new("ct.nii"), 0.0).unwrap()
+        };
+        let plain = build("Medtronic 3387");
+        assert!(plain["meta"].get("orientation").is_none());
+        let directed = build("Boston Scientific Vercise Directed");
+        assert_eq!(directed["meta"]["orientation"], ORIENTATION_UNRESOLVED);
     }
 
     #[cfg(feature = "pacer")]

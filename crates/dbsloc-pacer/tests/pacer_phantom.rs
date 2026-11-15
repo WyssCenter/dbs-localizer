@@ -45,7 +45,7 @@ fn phantom(e: &ElectrodeGeometry, apex: [f64; 3], dir: [f64; 3]) -> (CtVolume, [
     let half: Vec<f64> = (0..e.n_levels())
         .map(|k| {
             if k == 0 && e.tip_is_contact {
-                0.5 * e.tip_length_mm.max(e.contact_length_mm)
+                0.5 * e.tip_length_mm
             } else {
                 0.5 * e.contact_length_mm
             }

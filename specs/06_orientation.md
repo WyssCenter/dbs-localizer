@@ -132,7 +132,7 @@ Order in the orientation stage, after (a):
 3. The `mni` `coords_mm` and `trajectory` are recomputed from the markers (`05` §6.3).
 4. If the file has a `reference` block, it is rebuilt (`05` §8.5) when the normalization template exists; otherwise the run logs `dbsloc: warning: orientation: no template to rebuild the reference block; its x / y markers and contacts are updated in place` and drops `coords_mm_warped` there for the sides whose native contacts were rebuilt. Either way the estimated sides' `reference` `x` / `y` follow the construction above, and its contacts are recomputed.
 
-**(c) `meta.orientation`.** An object keyed by side (`"1"`, `"2"`), one entry for every side in `native`, replacing the previous value (the TRAC/CORE writers leave a string note there, `05` §8.9). Numbers are `null` where not computed.
+**(c) `meta.orientation`.** An object keyed by side (`"1"`, `"2"`), one entry for every side in `native`, replacing the previous value (the TRAC/CORE and PaCER writers leave a string note there, `05` §8.9). Numbers are `null` where not computed.
 
 | Field | Content |
 | --- | --- |

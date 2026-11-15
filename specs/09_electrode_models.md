@@ -1,6 +1,6 @@
 # Specification 09 — Electrode Models
 
-**Status:** The catalogue of 73 lead models, its geometry rules (§2.2) and contact display names (§2.3) are implemented in Python (`dbsloc/electrodes/`) and embedded in Rust (`crates/dbsloc-reconstruct/src/electrode_catalog.rs`), except that the code does not yet follow the level spacing and tip-contact length of §10.1 / §11 for Abbott ActiveTip and SmartFlow (known deviation); display names in 2D slice export file names, reports and trajectory-planning level names are planned.
+**Status:** The catalogue of 73 lead models, its geometry rules (§2.2) and contact display names (§2.3) are implemented in Python (`dbsloc/electrodes/`) and embedded in Rust (`crates/dbsloc-reconstruct/src/electrode_catalog.rs`), including the level spacing and tip-contact length after a tip contact (§10.1, §11; Abbott ActiveTip and SmartFlow followed it only from 2026-11-15); display names in 2D slice export file names, reports and trajectory-planning level names are planned.
 **Depends on:** none. Used by `05` (reconstruction), `06` (orientation), `07` (VTA), `08` (viewer), `10` (PaCER), `12` (`.mat` export), `14` (Lead Group) and `16` (session reports).
 
 ---
@@ -350,7 +350,7 @@ Four rings, insulating 1.5 mm tip, Ø 1.27 mm. Pitch 3.0 / 2.0 / 7.0 mm, array s
 
 ### 7.4 Abbott (formerly St. Jude Medical)
 
-- **ActiveTip 6146-6149 / 6142-6145:** four rings, Ø 1.4 mm; the 3.0 mm tip is the first contact; contacts 1.5 mm, gaps 0.5 / 1.5 mm; array span 9.0 / 12.0 mm. Level spacing after the tip contact: §10.1, implementation status.
+- **ActiveTip 6146-6149 / 6142-6145:** four rings, Ø 1.4 mm; the 3.0 mm tip is the first contact; contacts 1.5 mm, gaps 0.5 / 1.5 mm; array span 9.0 / 12.0 mm; level centres from the apex 1.5, 4.25, 6.25, 8.25 / 1.5, 5.25, 8.25, 11.25 mm (§10.1); fiducial span 6.75 / 9.75 mm.
 - **Directed 6172 (short) / 6173 (long):** ring, 3 segments, 3 segments, ring; Ø 1.27 mm; insulating 1.0 mm tip; pitch 2.0 / 3.0 mm; level centres from the apex 1.75, 3.75, 5.75, 7.75 / 1.75, 4.75, 7.75, 10.75 mm; segments clockwise (B at 330°, C at 210°); arc 90°; marker 10.75 / 13.75 mm, length 1.5 mm; array span 7.5 / 10.5 mm.
 
 ### 7.5 SceneRay
@@ -398,7 +398,7 @@ All with an insulating tip.
 
 ### 7.14 SmartFlow NGS-NC-06
 
-An infusion cannula, not a stimulation lead. Two "contacts" stand for the 3.0 mm tip (a contact) and a 10.0 mm window above it with no gap; Ø 1.65 mm, contact Ø 0.27 mm, tip Ø 0.2 mm. Level centres from the apex: 1.5 mm and, by the rule of §10.1, 8.0 mm, where Lead-DBS's electrode template also puts the second contact; the implementation places it at 11.5 mm (§10.1, implementation status).
+An infusion cannula, not a stimulation lead. Two "contacts" stand for the 3.0 mm tip (a contact) and a 10.0 mm window above it with no gap; Ø 1.65 mm, contact Ø 0.27 mm, tip Ø 0.2 mm. Level centres from the apex: 1.5 mm and, by the rule of §10.1, 8.0 mm, where Lead-DBS's electrode template also puts the second contact; fiducial span 6.5 mm.
 
 ### 7.15 Research electrodes
 
@@ -455,7 +455,7 @@ z(k + 1) = z(k) + ℓ_k / 2 + g_k + ℓ_(k+1) / 2
 
 `z_1` is the distance from the tip apex to the centre of the most distal level (`electrode_catalog.rs` `apex_to_first_level_mm`), `z(k)` the model-frame depth of level k (`level_z_mm`), and `z_1 + z(k)` its distance from the apex (`apex_to_level_mm`). With this rule the array span of §2.1 equals `z(L) + ℓ_1 / 2 + ℓ_L / 2`, and `g_k` stays the edge-to-edge gap. For every model with an insulating tip, and for tip-contact models with `TL = CL`, each step is `CL + g_k`, which equals `eldist` for uniform leads. This rule replaces the earlier wording of this section ("each further level centre adds `eldist`"), which disagreed with the array span after a tip contact whose length differs from `CL`; it also matches Lead-DBS's SmartFlow template (second contact 8.0 mm from the apex, §7.14).
 
-Implementation status: `layout.py` `_level_pitches` steps by `CL + g_k` for every gap, also after a tip contact whose length differs from `CL`. This affects Abbott ActiveTip 6146-6149 and 6142-6145 (`TL` 3.0 mm, `CL` 1.5 mm: levels 2–4 lie 0.75 mm too far distal, on 6146-6149 level 2 overlaps the tip contact by 0.25 mm; fiducial span 6.0 / 9.0 mm instead of 6.75 / 9.75 mm) and SmartFlow NGS-NC-06 (`TL` 3.0 mm, `CL` 10.0 mm: second level at `z` = 10.0 mm instead of 6.5 mm, fiducial span 10.0 mm instead of 6.5 mm). The same depths feed `electrode_catalog.rs` `apex_to_level_mm` (the PaCER depths) and `trac.rs` `apex_to_proximal_metal_mm` (ActiveTip 6146-6149: 8.25 mm instead of 9.0 mm). The single-level rat electrodes are unaffected.
+`layout.py` `_level_pitches` computes these steps; the depths reach Rust through `electrode_geometry.json` (`level_z_mm`) and feed `apex_to_level_mm` (the PaCER depths), `trac.rs` `apex_to_proximal_metal_mm`, the fiducial span and every lead body (§11). Among models with more than one level, only Abbott ActiveTip 6146-6149 / 6142-6145 (`TL` 3.0 mm, `CL` 1.5 mm: `z` = 0, 2.75, 4.75, 6.75 / 0, 3.75, 6.75, 9.75 mm, fiducial span 6.75 / 9.75 mm) and SmartFlow NGS-NC-06 (`TL` 3.0 mm, `CL` 10.0 mm: `z` = 0, 6.5 mm, fiducial span 6.5 mm) have a tip contact whose length differs from `CL`. Until 2026-11-15 the implementation stepped by `CL + g_k` after their tip contact as well (ActiveTip levels 2–4 0.75 mm too far distal, fiducial span 6.0 / 9.0 mm; SmartFlow second level at 10.0 mm, fiducial span 10.0 mm), and the viewer and the volume conductor ended the tip contact at `+CL / 2` (the CORE metal model at `+max(TL, CL) / 2`). Reconstructions of these three models made before then hold a `tail` marker at the old depth and should be redone; nothing detects them on read. The single-level rat electrodes (`CL` = 0) also follow §11 since then: their tip contact ends at `+TL / 2` instead of `z = 0` in the viewer and the volume conductor (VTA refuses single-level models, `E_VAT_elmodel`).
 
 ### 10.2 Segment azimuths and arcs
 
@@ -483,11 +483,10 @@ No Lead-DBS mesh file is read or shipped; the Lead-DBS meshes served only to mea
 - Shaft: a cylinder of radius `r` from the top of the tip to the most proximal trajectory sample, and at least `CL + 1` mm beyond the last level centre.
 - Levels: level k occupies `z(k) ± ℓ_k / 2` (§10.1): a full band per ring level and, per segment, a pad covering `segment_arc_deg` (inner radius 0.8 `r`, outer 1.06 `r`). A tip contact therefore runs from the apex (`z = −z_1 = −ℓ_1 / 2`) to `+ℓ_1 / 2`, rounded at the apex.
 - Tip: when the tip is not a contact, a rounded insulating cap from the apex (`z = −z_1`) to the distal edge of the first level, `−ℓ_1 / 2`.
-- Implementation status: `build_electrode` uses `CL` for every level (`half = CL / 2`, cap from the apex to `max(−CL / 2, apex + 0.1 mm)`). Abbott ActiveTip: the tip metal spans −1.5 … +0.75 mm (2.25 mm instead of 3.0 mm). SmartFlow NGS-NC-06: the first band spans −5 … +5 mm although the apex lies at −1.5 mm.
 - Colours: insulation RGB (0.20, 0.21, 0.24), metal (0.80, 0.82, 0.86). The orientation marker is not drawn.
 - The group and refinement views draw one lead per model (`canonical_electrode`, 30 mm shaft) and place it with `lead_instance_matrix`.
 
-**Volume conductor** (`crates/dbsloc-vat/src/geometry.rs` `LeadBody`): a cylinder of radius `r` with a rounded cap of length `min(s·TL, r)` at the apex; contact k occupies `s·z(k) ± s·ℓ_k / 2` (a tip contact from the apex); a segment occupies its arc in the outer half of the radius; everything else, the orientation marker included, is insulation. Details: `07` §3.1. Implementation status: `LeadBody::new` ends every contact at `s·(z(k) + CL / 2)`, also the tip contact (`z_hi = z + half`). Abbott ActiveTip: tip contact −1.5 … +0.75 mm instead of −1.5 … +1.5 mm; SmartFlow NGS-NC-06: −1.5 … +5.0 mm instead of −1.5 … +1.5 mm (at `s = 1`).
+**Volume conductor** (`crates/dbsloc-vat/src/geometry.rs` `LeadBody`): a cylinder of radius `r` with a rounded cap of length `min(s·TL, r)` at the apex; contact k occupies `s·z(k) ± s·ℓ_k / 2` (a tip contact from the apex); a segment occupies its arc in the outer half of the radius; everything else, the orientation marker included, is insulation. Details: `07` §3.1. At `s = 1` the tip contact of Abbott ActiveTip and of SmartFlow NGS-NC-06 spans −1.5 … +1.5 mm.
 
 ---
 
@@ -515,7 +514,7 @@ The catalogue uses the Lead-DBS `elspec` field names where the meaning is the sa
 
 ## 13. Acceptance criteria
 
-Tests: `tests/test_electrodes_registry.py`, `tests/test_electrode_catalogue_export.py`, `tests/test_electrode_geometry_export.py`, `tests/test_electrode_names.py`, `tests/test_reconstruction_io_tail.py`, and the Rust unit tests in `electrode_catalog.rs`, `tail_fiducial.rs`, `orientation.rs` (`support_follows_the_family_table`), `electrode_mesh.rs` and `plausibility.rs`.
+Tests: `tests/test_electrodes_registry.py`, `tests/test_electrode_catalogue_export.py`, `tests/test_electrode_geometry_export.py`, `tests/test_electrode_names.py`, `tests/test_reconstruction_io_tail.py`, and the Rust unit tests in `electrode_catalog.rs`, `tail_fiducial.rs`, `orientation.rs` (`support_follows_the_family_table`), `trac.rs` (`tip_contact_metal_spans_the_tip_length_around_level_zero`), `electrode_mesh.rs`, `plausibility.rs` and `crates/dbsloc-vat/src/geometry.rs` (`tip_contact_spans_the_tip_length`).
 
 1. **Catalogue:** 73 models; each resolves by display name and by `matfname`; `catalogue.json` and `electrode_geometry.json` equal a fresh emitter run; `unsupported` is empty.
 2. **Level structure:** the levels cover contacts 1..N exactly once; every level has 1 or 3 contacts; every `contact_spacing` list has exactly `L − 1` entries; `level_z_mm[0] = 0`; each contact's z equals its level depth; rings lie on the axis and segments at radius `r`.
@@ -542,6 +541,9 @@ Tests: `tests/test_electrodes_registry.py`, `tests/test_electrode_catalogue_expo
 | NuMed Mini Lead | array span / fiducial span | 3.5 / 3.0 mm |
 | ELAINE rat, FHC WU rat | array span / `eldist` / tail level | 0.1125, 0.25 / 0 / 0 |
 | SmartFlow NGS-NC-06 | right / left contact names | K0, K1 / K3, K4 |
+| SmartFlow NGS-NC-06 | `level_z_mm` / fiducial span / tip contact (lead body, viewer, CORE metal model) | 0, 6.5 / 6.5 mm / −1.5 … +1.5 mm |
+| Abbott ActiveTip 6146-6149 | `level_z_mm` / fiducial span / tip contact (lead body, viewer, CORE metal model) | 0, 2.75, 4.75, 6.75 / 6.75 mm / −1.5 … +1.5 mm |
+| Abbott ActiveTip 6142-6145 | `level_z_mm` / fiducial span | 0, 3.75, 6.75, 9.75 / 9.75 mm |
 | SceneRay SR1242 | `contact_spacing` | [2.0, 4.0, 4.0] mm |
 | AdTech BF08R-SP21X | first two level pitches | 3.0 / 5.5 mm |
 | AdTech SD06R-SP26X | `contact_spacing[2]` | 7.59 mm |
