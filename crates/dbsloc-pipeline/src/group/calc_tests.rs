@@ -187,6 +187,31 @@ fn phases(r: &CalcReport) -> Vec<CalcPhase> {
 }
 
 #[test]
+fn a_calculation_records_one_methods_entry_per_subject_and_a_kept_rerun_none() {
+    let mut fx = fixture("methods", &["1"]);
+    let o = options(&fx);
+    let methods = subject_dir(&fx.root, "1")
+        .join("log")
+        .join("sub-1_desc-methods.txt");
+    let first = calculate(&mut fx, &o, None);
+    assert_eq!(
+        phases(&first),
+        vec![CalcPhase::Computed],
+        "{:?}",
+        first.outcomes
+    );
+    let text = std::fs::read_to_string(&methods).unwrap();
+    assert_eq!(
+        text.matches("] vat | Wyss DBS Localizer ").count(),
+        1,
+        "{text}"
+    );
+    assert!(text.contains("Kuncel et al. (2008)"), "{text}");
+    calculate(&mut fx, &o, None);
+    assert_eq!(std::fs::read_to_string(&methods).unwrap(), text);
+}
+
+#[test]
 fn two_subjects_are_calculated_and_a_second_run_keeps_everything() {
     let mut fx = fixture("two", &["1", "2"]);
     let o = options(&fx);

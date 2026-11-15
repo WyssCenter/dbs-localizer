@@ -5,7 +5,12 @@
 //!
 //! Port of `dbsloc/bundled_bin.py`.
 
+use std::collections::HashMap;
+use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
+use std::sync::{Mutex, OnceLock};
+use std::time::{Duration, Instant};
 
 /// Resolve a bundled ANTs binary by name.  Returns the absolute path or `None`.
 ///
@@ -71,6 +76,142 @@ pub fn find_binary(name: &str) -> Option<PathBuf> {
         return Some(p);
     }
     find_on_path(name)
+}
+
+const VERSION_LIMIT: Duration = Duration::from_secs(5);
+const VERSION_OUTPUT_CAP: usize = 64 * 1024;
+
+pub fn parse_ants_version(output: &str) -> Option<String> {
+    let rest = output.lines().find_map(|line| {
+        let line = line.trim();
+        let head = line.get(..13)?;
+        head.eq_ignore_ascii_case("ANTs Version:")
+            .then(|| line[13..].trim())
+    })?;
+    let token = rest.split_whitespace().next()?;
+    let (numbers, suffix) = match token.split_once('-') {
+        Some((n, s)) => (n, Some(s)),
+        None => (token, None),
+    };
+    let parts: Vec<&str> = numbers.split('.').collect();
+    let numeric = parts.len() >= 2
+        && parts
+            .iter()
+            .all(|p| !p.is_empty() && p.len() <= 6 && p.bytes().all(|b| b.is_ascii_digit()));
+    let suffix_ok = suffix.is_none_or(|s| {
+        !s.is_empty() && s.len() <= 16 && s.bytes().all(|b| b.is_ascii_alphanumeric())
+    });
+    (numeric && suffix_ok).then(|| token.to_owned())
+}
+
+enum VersionRun {
+    Exited(Option<String>),
+    TimedOut,
+    NotStarted,
+}
+
+const VERSION_TIMEOUTS: u32 = 2;
+
+fn run_for_version(binary: &Path) -> VersionRun {
+    let mut cmd = Command::new(binary);
+    cmd.arg("--version")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null());
+    crate::outputs::hide_console_window(&mut cmd);
+    let Ok(mut child) = cmd.spawn() else {
+        return VersionRun::NotStarted;
+    };
+    let mut stdout = child.stdout.take();
+    let reader = std::thread::spawn(move || {
+        let mut kept: Vec<u8> = Vec::new();
+        if let Some(out) = stdout.as_mut() {
+            let mut chunk = [0u8; 4096];
+            loop {
+                match out.read(&mut chunk) {
+                    Ok(0) | Err(_) => break,
+                    Ok(n) => {
+                        let room = VERSION_OUTPUT_CAP.saturating_sub(kept.len());
+                        kept.extend_from_slice(&chunk[..n.min(room)]);
+                    }
+                }
+            }
+        }
+        kept
+    });
+    let deadline = Instant::now() + VERSION_LIMIT;
+    let exited = loop {
+        match child.try_wait() {
+            Ok(Some(status)) => break Some(status.success()),
+            Ok(None) if Instant::now() < deadline => {
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            _ => {
+                let _ = child.kill();
+                let _ = child.wait();
+                break None;
+            }
+        }
+    };
+    let output = reader.join().unwrap_or_default();
+    match exited {
+        None => VersionRun::TimedOut,
+        Some(false) => VersionRun::Exited(None),
+        Some(true) => VersionRun::Exited(parse_ants_version(&String::from_utf8_lossy(&output))),
+    }
+}
+
+#[derive(Clone)]
+enum CachedVersion {
+    Known(Option<String>),
+    TimedOut(u32),
+}
+
+fn version_cache() -> &'static Mutex<HashMap<PathBuf, CachedVersion>> {
+    static CACHE: OnceLock<Mutex<HashMap<PathBuf, CachedVersion>>> = OnceLock::new();
+    CACHE.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn cached_version_with(binary: &Path, run: &dyn Fn(&Path) -> VersionRun) -> Option<String> {
+    let before = version_cache()
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .get(binary)
+        .cloned();
+    let timeouts = match before {
+        Some(CachedVersion::Known(v)) => return v,
+        Some(CachedVersion::TimedOut(n)) if n >= VERSION_TIMEOUTS => return None,
+        Some(CachedVersion::TimedOut(n)) => n,
+        None => 0,
+    };
+    let (entry, found) = match run(binary) {
+        VersionRun::Exited(v) => (Some(CachedVersion::Known(v.clone())), v),
+        VersionRun::TimedOut => (Some(CachedVersion::TimedOut(timeouts + 1)), None),
+        VersionRun::NotStarted => (None, None),
+    };
+    if let Some(entry) = entry {
+        version_cache()
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .insert(binary.to_path_buf(), entry);
+    }
+    found
+}
+
+fn cached_version(binary: &Path) -> Option<String> {
+    cached_version_with(binary, &run_for_version)
+}
+
+pub fn ants_version(binary: &Path) -> Option<String> {
+    if let Some(v) = cached_version(binary) {
+        return Some(v);
+    }
+    let stem = binary.file_stem()?.to_string_lossy().into_owned();
+    if stem == "antsRegistration" {
+        return None;
+    }
+    let sibling = try_in_dir(binary.parent()?, "antsRegistration")?;
+    cached_version(&sibling)
 }
 
 fn platform_dir() -> &'static str {
@@ -145,6 +286,114 @@ mod tests {
     #[test]
     fn platform_dir_nonempty() {
         assert!(!platform_dir().is_empty());
+    }
+
+    #[test]
+    fn the_version_is_parsed_from_the_captured_program_output() {
+        let real = "ANTs Version: 2.6.5-gfdce4d2\nCompiled: Jan 14 2026 17:26:52\n\n";
+        assert_eq!(parse_ants_version(real).as_deref(), Some("2.6.5-gfdce4d2"));
+        assert_eq!(
+            parse_ants_version("ANTs Version: 2.5.0\n").as_deref(),
+            Some("2.5.0")
+        );
+        assert_eq!(
+            parse_ants_version("noise\r\nants version: 2.4.1-abc\r\n").as_deref(),
+            Some("2.4.1-abc")
+        );
+    }
+
+    #[test]
+    fn anything_that_is_not_a_plausible_version_gives_none() {
+        for text in [
+            "",
+            "\n\n",
+            "ANTs Version:",
+            "ANTs Version: unknown",
+            "ANTs Version: 2",
+            "ANTs Version: 2.6.5-this-is-way-too-long-a-suffix",
+            "ANTs Version: 2.6.5-g!d",
+            "ERROR:  Invalid flag provided version\nERROR:  Invalid command line flags found!",
+            "Version: 2.6.5",
+            "ANTs Version: 2..5",
+            "ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ",
+        ] {
+            assert_eq!(parse_ants_version(text), None, "{text:?}");
+        }
+    }
+
+    #[test]
+    fn a_missing_program_has_no_version_and_is_not_cached() {
+        let missing = Path::new("definitely_missing_dir").join("antsRegistration");
+        assert_eq!(ants_version(&missing), None);
+        assert_eq!(ants_version(&missing), None);
+        assert!(version_cache()
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .get(&missing)
+            .is_none());
+    }
+
+    #[test]
+    fn only_a_program_that_exited_is_cached_and_timeouts_stop_after_two() {
+        use std::sync::atomic::{AtomicU32, Ordering};
+        let calls = AtomicU32::new(0);
+        let slow = Path::new("fake_dir_timeout").join("antsRegistration");
+        let timing_out = |_: &Path| {
+            calls.fetch_add(1, Ordering::SeqCst);
+            VersionRun::TimedOut
+        };
+        for _ in 0..4 {
+            assert_eq!(cached_version_with(&slow, &timing_out), None);
+        }
+        assert_eq!(calls.load(Ordering::SeqCst), VERSION_TIMEOUTS);
+
+        let calls = AtomicU32::new(0);
+        let unstarted = Path::new("fake_dir_spawn").join("antsRegistration");
+        let failing = |_: &Path| {
+            calls.fetch_add(1, Ordering::SeqCst);
+            VersionRun::NotStarted
+        };
+        assert_eq!(cached_version_with(&unstarted, &failing), None);
+        assert_eq!(cached_version_with(&unstarted, &failing), None);
+        assert_eq!(calls.load(Ordering::SeqCst), 2);
+
+        let calls = AtomicU32::new(0);
+        let silent = Path::new("fake_dir_silent").join("antsRegistration");
+        let no_version = |_: &Path| {
+            calls.fetch_add(1, Ordering::SeqCst);
+            VersionRun::Exited(None)
+        };
+        assert_eq!(cached_version_with(&silent, &no_version), None);
+        assert_eq!(cached_version_with(&silent, &no_version), None);
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+
+        let calls = AtomicU32::new(0);
+        let good = Path::new("fake_dir_good").join("antsRegistration");
+        let known = |_: &Path| {
+            calls.fetch_add(1, Ordering::SeqCst);
+            VersionRun::Exited(Some("2.6.5".to_owned()))
+        };
+        assert_eq!(cached_version_with(&good, &known).as_deref(), Some("2.6.5"));
+        assert_eq!(cached_version_with(&good, &known).as_deref(), Some("2.6.5"));
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    fn the_bundled_program_reports_a_version_and_the_apply_program_borrows_its_sibling() {
+        let Some(reg) = find_bundled_binary("antsRegistration") else {
+            return;
+        };
+        let version = ants_version(&reg).expect("bundled antsRegistration prints a version");
+        assert!(
+            version.starts_with(|c: char| c.is_ascii_digit()),
+            "{version}"
+        );
+        if let Some(apply) = find_bundled_binary("antsApplyTransforms") {
+            assert_eq!(ants_version(&apply).as_deref(), Some(version.as_str()));
+        }
+        if let Some(n4) = find_bundled_binary("N4BiasFieldCorrection") {
+            assert_eq!(ants_version(&n4).as_deref(), Some(version.as_str()));
+        }
     }
 
     #[test]

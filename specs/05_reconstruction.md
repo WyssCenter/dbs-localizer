@@ -223,7 +223,7 @@ After every write of a template-space side block (the `mni` block of the point w
 
 ## 7. PaCER
 
-The algorithm is specified in `10` (Husch et al. 2018). This section is the interface.
+The algorithm is specified in `10` (Husch et al. 2017). This section is the interface.
 
 **Build.** `crates/dbsloc-pacer` is licensed AGPL-3.0-only (`docs/LICENSING.md`, *PaCER and the AGPL*) and is an optional dependency of `dbsloc-pipeline` behind the cargo feature `pacer`, on by default and forwarded by `dbsloc-cli`, `dbsloc-app` and `dbsloc-server` (owner decision 2026-11-13). Without it (`ct_recon.rs`, `PACER_AVAILABLE`), `recon_method = pacer` fails with `E_RECON_pacer_unavailable: the reconstruction method pacer (--recon-method pacer) needs the optional PaCER component (licensed AGPL-3.0-only), which this build does not include; use auto or trac_core`: `dbsloc run` exits 2 before planning, the pipeline driver fails a run that includes `reconstruct` before its first stage (`crates/dbsloc-pipeline/src/lib.rs`), and the stage repeats the check (§3.2). `auto` never runs PaCER; it only honours a pre-exported result (§3.4).
 
@@ -292,7 +292,7 @@ Side `"1"` is the right hemisphere (positive RAS *x*) and side `"2"` the left, t
 
 Every file `reconstruct` writes carries `meta.reconstruct = {status: {<k>: "traced" | "kept" | "failed"}, failed: {<k>: <reason>}, flags: {<k>: [<flag>, …]}, inputs: [<fingerprint>]}`, side keys of §8.3 with `"1"` first.
 
-- `status` has an entry per side the run handled: `traced` (traced in this run), `kept` (kept from a manual review, §9a), `failed` (left out, §4.4 *One lead*). A side PaCER did not find has no entry (`meta.sides_found` tells which were found). An import gets empty `status` and `flags` maps when the file had none.
+- `status` has an entry per side the run handled: `traced` (the side's position was produced in this run, by tracing, or brought in this run by an import), `kept` (kept from a manual review, §9a), `failed` (left out, §4.4 *One lead*). A side PaCER did not find has no entry (`meta.sides_found` tells which were found). The import marker `meta.pacer == "import_json"` tells an imported file from a traced one. An import (Reco v2 JSON, §5) keeps the flags of the file's own `meta.reconstruct`; for a side the import does not bring it keeps only a `failed` status with its reason (a `traced` or `kept` status the file carried for such a side is dropped); it sets the status of every side its `native` block brings and the run does not keep to `traced`, removes that side's `failed` reason (and the `failed` map when it ends up empty) and adds an empty flag array for it when the file had none; the methods text (`00` §5.3) then names the imported sides (2026-11-15; before, the file's maps were kept unchanged, and an import without them got empty `status` and `flags` maps).
 - `failed` is present only when a side failed.
 - `flags` has an array for every traced or kept side (possibly empty). The defined flag is `vertical_marker` (§6.2). A kept side keeps its previous entry; a native-space manual correction rewrites the `vertical_marker` entry of each edited side from its re-warp. The template path writes empty arrays.
 - `inputs` is the input fingerprint of the run, the list defined in §9a *Per-side review*, taken when the file is written. When it cannot be taken it is `null` and the run logs `dbsloc: warning: reconstruct: the input fingerprint could not be recorded (<error>); its leads cannot be accepted until reconstruct runs again`. It records with which coregistration and normalization the traced sides' coordinates were made. Every `reconstruct` run writes it, an import included; a manual correction never changes it.
@@ -423,6 +423,6 @@ The exact texts are quoted in the sections; the `recon:` prefix rule is in §3.2
 
 ## 12. References
 
-- Horn A, Kühn AA (2015). Lead-DBS: a toolbox for deep brain stimulation electrode localizations and visualizations. *NeuroImage* 107, 127–135 (TRAC/CORE).
-- Husch A et al. (2018). PaCER — A fully automated method for electrode trajectory and contact reconstruction in deep brain stimulation. *NeuroImage: Clinical* 17, 80–89.
+- TRAC/CORE and manual correction (cited by the methods text, `00` §5.3): Horn A, Kühn AA (2015) Lead-DBS: A toolbox for deep brain stimulation electrode localizations and visualizations. *NeuroImage* 107:127–135. doi:10.1016/j.neuroimage.2014.12.002.
+- PaCER (cited by the methods text, `00` §5.3): Husch A, Petersen MV, Gemmar P, Goncalves J, Hertel F (2017) PaCER — A fully automated method for electrode trajectory and contact reconstruction in deep brain stimulation. *NeuroImage Clin* 17:80–89. doi:10.1016/j.nicl.2017.10.004.
 - Horn A et al. (2019). Lead-DBS v2: Towards a comprehensive pipeline for deep brain stimulation imaging. *NeuroImage* 184, 293–316.

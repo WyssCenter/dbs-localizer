@@ -103,6 +103,8 @@ enum Command {
         #[command(subcommand)]
         cmd: cmd::report::ReportCmd,
     },
+    /// print the methods text of a subject: one dated paragraph per completed processing step, ready for the methods section of a paper
+    Methods(Box<cmd::methods::MethodsArgs>),
     /// stimulation settings: list, show, set and import (Lead-DBS stimparameters)
     Stim {
         #[command(subcommand)]
@@ -133,6 +135,7 @@ fn dispatch(cli: Cli, ants: &AntsParsed) -> CmdResult {
         Some(Command::Tutor { cmd }) => cmd::tutor::run(cmd),
         Some(Command::Lock { cmd }) => cmd::lock::run(cmd),
         Some(Command::Reco { cmd }) => cmd::reco::run(cmd),
+        Some(Command::Methods(args)) => cmd::methods::run(&args),
         Some(Command::Stim { cmd }) => cmd::stim::run(cmd),
         Some(Command::Report { cmd }) => cmd::report::run(cmd),
         Some(Command::Group { cmd }) => cmd::group::run(cmd),

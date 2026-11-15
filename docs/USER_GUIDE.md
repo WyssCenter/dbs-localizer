@@ -124,6 +124,8 @@ Each card shows whether it can run: ✔ ready, ⚠ a warning, ✖ something is m
 
 Click *▶ Run pipeline* (`Ctrl+R`). The cards show *queued*, *running*, *done*, *skipped* (with the reason) or *failed*; the *Output* tab shows the details. *⏹ Stop* (`Ctrl+.`) stops the run. *Show results* opens the subject's results in the file manager.
 
+*Methods text* opens the text for the methods section of a paper: one paragraph for each step that ran for this subject, with references and, where the ANTs programs were used, their version. *Latest run of each step only* shows each step once, as it was last run; untick it to see every run, oldest first (the choice is remembered). *Copy* copies the text shown, *Open folder* shows the file (`log/sub-<id>_desc-methods.txt`) in the file manager, *Refresh* reads it again, and `Esc` closes the window; the text also updates when a run ends and after you save a corrected lead. The button is greyed out until a subject is selected and a step has run for it.
+
 A full run with the default settings takes about one minute per subject with a graphics card, and considerably longer on the processor alone.
 
 *Subject images* at the top of the panel lists the subject's scans; *View* opens any of them in a small viewer, which is useful to check that the right scan was imported.
@@ -355,6 +357,7 @@ dbsloc run --help                # all options of one command
 | `dbsloc subject show` | show the scans found for one subject |
 | `dbsloc run` | run the pipeline for one or more subjects |
 | `dbsloc reco show` / `correct` | show or correct the reconstructed leads |
+| `dbsloc methods` | print the subject's methods text for a paper; `--last` shows each step once, as it was last run |
 | `dbsloc stim` | stimulation settings |
 | `dbsloc report` | Medtronic Percept session reports |
 | `dbsloc group` | group analyses |
@@ -406,6 +409,7 @@ For each subject, results go to `derivatives/leaddbs/sub-<id>/` in the dataset (
 | `reconstruction/viz/` | the 3D scene (`scene_manifest.json`) |
 | `stimulations/` | stimulation settings and VTA results, one folder per label ([section 8](#8-stimulation-and-the-volume-of-activated-tissue)) |
 | `clinical/reports/` | imported session reports |
+| `log/` | the methods text `sub-<id>_desc-methods.txt`: one dated paragraph, with references, for each step that ran and each saved manual correction. New paragraphs are added at the end and nothing is overwritten, so you can copy the text into the methods section of a paper (`dbsloc methods my-study 01 --last` prints the latest paragraph of each step) |
 | `locks/` | the approval state of each step |
 | `prefs/` | settings shared with Lead-DBS, such as the electrode model |
 

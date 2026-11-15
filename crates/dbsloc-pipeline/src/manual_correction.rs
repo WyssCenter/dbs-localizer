@@ -794,6 +794,23 @@ fn apply_inner<'w>(
     ));
     crate::reco_mat::export_beside_json(&path, &out, log);
 
+    if !edited.is_empty() {
+        let corrected: Vec<crate::methods_text::ManualSide<'_>> = edited
+            .iter()
+            .map(|e| crate::methods_text::ManualSide {
+                key: e.key,
+                head: e.head_shift_mm > crate::methods_text::MOVED_MM,
+                tail: e.tail_shift_mm > crate::methods_text::MOVED_MM,
+                roll: e.roll_given.is_some(),
+            })
+            .collect();
+        if let Err(e) =
+            crate::methods_text::record_manual_correction(sub, space.as_str(), &corrected)
+        {
+            warnings.push(format!("methods text: {e}"));
+        }
+    }
+
     let (invalidated, approved) = settle_locks(
         sub,
         &fingerprint_paths,
@@ -2575,6 +2592,140 @@ mod tests {
             .unwrap_err()
             .to_string();
         assert!(err.contains("orientation: missing raw CT"), "{err}");
+        cleanup(&fx);
+    }
+
+    #[test]
+    fn a_saved_correction_appends_one_methods_entry() {
+        let fx = fixture("methods_one", EditSpace::Native);
+        let path = crate::derivatives::methods_log(&fx.sub);
+        assert!(!path.exists());
+        apply(
+            &fx,
+            &request(
+                EditSpace::Native,
+                vec![edit("1", &fx.geoms[0], [0.5, 0.0, 0.0], Some(20.0))],
+            ),
+        )
+        .unwrap();
+        let text = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(
+            text.matches("] manual-correction | Wyss DBS Localizer ")
+                .count(),
+            1
+        );
+        assert!(text.contains("the right lead"), "{text}");
+        assert!(!text.contains("left"), "{text}");
+        assert!(text.contains("roll"), "{text}");
+        assert!(text.ends_with("\n\n"), "{text}");
+        cleanup(&fx);
+    }
+
+    #[test]
+    fn a_roll_only_correction_does_not_claim_moved_markers_and_a_no_op_writes_none() {
+        let fx = fixture("methods_roll", EditSpace::Native);
+        let path = crate::derivatives::methods_log(&fx.sub);
+        apply(
+            &fx,
+            &request(
+                EditSpace::Native,
+                vec![edit("1", &fx.geoms[0], [0.0; 3], None)],
+            ),
+        )
+        .unwrap();
+        assert!(!path.exists());
+        apply(
+            &fx,
+            &request(
+                EditSpace::Native,
+                vec![edit("1", &fx.geoms[0], [0.0; 3], Some(15.0))],
+            ),
+        )
+        .unwrap();
+        let text = std::fs::read_to_string(&path).unwrap();
+        assert!(text.contains("the rotation (roll) angle was set"), "{text}");
+        assert!(!text.contains("markers were moved"), "{text}");
+        assert!(!text.contains("marker was moved"), "{text}");
+        cleanup(&fx);
+    }
+
+    #[test]
+    fn a_methods_text_that_cannot_be_written_is_one_plain_warning() {
+        let fx = fixture("methods_blocked", EditSpace::Native);
+        std::fs::create_dir_all(fx.sub.log_dir.parent().unwrap()).unwrap();
+        std::fs::write(&fx.sub.log_dir, b"a file where the folder belongs").unwrap();
+        let mut lines: Vec<String> = Vec::new();
+        let mut factory = |_: &mut dyn FnMut(String)| -> PipelineResult<Box<dyn PointWarp>> {
+            Ok(Box::new(Identity))
+        };
+        let report = apply_inner(
+            &fx.sub,
+            &fx.opts,
+            &request(
+                EditSpace::Native,
+                vec![edit("1", &fx.geoms[0], [0.5, 0.0, 0.0], None)],
+            ),
+            None,
+            &mut |line| lines.push(line),
+            &mut factory,
+        )
+        .unwrap();
+        let methods: Vec<&String> = report
+            .warnings
+            .iter()
+            .filter(|w| w.contains("methods text"))
+            .collect();
+        assert_eq!(methods.len(), 1, "{:?}", report.warnings);
+        assert!(methods[0].starts_with("methods text: "), "{}", methods[0]);
+        assert!(
+            lines.iter().all(|l| !l.contains("methods text")),
+            "{lines:?}"
+        );
+        cleanup(&fx);
+    }
+
+    #[test]
+    fn a_failed_correction_writes_no_methods_entry() {
+        let fx = fixture("methods_none", EditSpace::Native);
+        let req = request(
+            EditSpace::Mni,
+            vec![edit("1", &fx.geoms[0], [0.0; 3], None)],
+        );
+        assert!(apply(&fx, &req).is_err());
+        assert!(!crate::derivatives::methods_log(&fx.sub).exists());
+        cleanup(&fx);
+    }
+
+    #[test]
+    fn a_second_correction_appends_and_keeps_the_first_entry_byte_identical() {
+        let fx = fixture("methods_two", EditSpace::Native);
+        let path = crate::derivatives::methods_log(&fx.sub);
+        apply(
+            &fx,
+            &request(
+                EditSpace::Native,
+                vec![edit("1", &fx.geoms[0], [0.5, 0.0, 0.0], None)],
+            ),
+        )
+        .unwrap();
+        let first = std::fs::read(&path).unwrap();
+        apply(
+            &fx,
+            &request(
+                EditSpace::Native,
+                vec![edit("2", &fx.geoms[1], [0.0, 0.5, 0.0], None)],
+            ),
+        )
+        .unwrap();
+        let both = std::fs::read(&path).unwrap();
+        assert_eq!(&both[..first.len()], first.as_slice());
+        let text = String::from_utf8(both).unwrap();
+        assert_eq!(
+            text.matches("] manual-correction | Wyss DBS Localizer ")
+                .count(),
+            2
+        );
+        assert!(text[first.len()..].contains("the left lead"), "{text}");
         cleanup(&fx);
     }
 

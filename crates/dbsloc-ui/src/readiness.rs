@@ -146,6 +146,7 @@ pub struct PipelineReadiness {
     pub stimulation_labels: Vec<String>,
     pub stimulation_computed: Vec<String>,
     pub has_scene_manifest: bool,
+    pub has_methods_text: bool,
     pub coreg_review: RegistrationReview,
     pub norm_review: RegistrationReview,
     /// A directory scan hit its entry budget, so "not found" may be wrong.

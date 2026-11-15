@@ -328,7 +328,7 @@ The roll is changed only by the ±15° buttons and DiODe; there is **no roll key
 | 24 | Save on every change; no undo, no discard; window close keeps edits | — | Deliberate opposite (undo/redo, explicit save/discard). Do not replicate. |
 | 25 | Opening alone sets `manually_corrected` = 1 | — | Deliberate opposite (only edited sides; separate *accept*). |
 | 26 | Finish re-derives template block from native (azimuth rule for `x`/`y`) + L/R check | yes | `05` §9a step 4. Wyss has no L/R swap; sides are fixed by hemisphere. Fine. |
-| 27 | Methods paragraph appended to the subject log on finish | missing | Add a methods/log line with citation in the subject log when a correction is saved. |
+| 27 | Methods paragraph appended to the subject log on finish | yes (2026-11-15) | Saving a correction appends one `manual-correction` entry with the Horn & Kühn 2015 citation to `log/sub-<id>_desc-methods.txt`, naming per side only what changed (`00` §5.3). |
 | 28 | Continue to visualisation after finish | yes | Host reloads the 3D scene. |
 | 29 | Only the current lead is drawn | superset | Wyss draws the other side dimmed. |
 | 30 | Background tint per side | missing | Cosmetic; the side tab label suffices. |

@@ -44,6 +44,7 @@ pub mod legacy_env;
 pub mod locks;
 pub mod manual_correction;
 pub mod md5;
+pub mod methods_text;
 pub mod nifti_io;
 pub mod norm_grid;
 pub(crate) mod norm_native;

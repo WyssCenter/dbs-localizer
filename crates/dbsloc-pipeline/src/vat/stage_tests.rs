@@ -800,6 +800,90 @@ fn auto_without_a_device_uses_the_cpu_engine_and_says_so() {
 }
 
 #[test]
+fn the_summary_records_the_backend_of_every_side_and_the_methods_text_follows() {
+    let (fx, ran) = efield_fixture_run("backends", VatBackend::Cpu, &small_params());
+    assert_eq!(token(&ran), "ok:vat:1/1", "{:?}", ran.lines);
+    let names = Names::new("1", "simbio");
+    let sidecar = json_of(&label_dir_of(&fx, "native", "ef").join(names.vta_json()));
+    assert_eq!(sidecar["engine"]["backend"], "cpu");
+    assert_eq!(
+        sidecar["engine"]["backends"],
+        json!([{"side": "right", "backend": "cpu", "adapter_info": null, "basis_cache": "built", "cached_contacts": 0}])
+    );
+    assert!(sidecar["engine"]["adapter_info"].is_null());
+    let (text, _) = crate::methods_text::vat(std::slice::from_ref(&sidecar)).unwrap();
+    assert!(
+        text.contains("solved with the central processing unit"),
+        "{text}"
+    );
+    assert!(!text.contains("graphics processing unit"), "{text}");
+    let mut mixed = sidecar;
+    mixed["engine"]["backend"] = json!("cpu");
+    mixed["engine"]["backends"] = json!([
+        {"side": "right", "backend": "wgpu"},
+        {"side": "left", "backend": "cpu"}
+    ]);
+    mixed["engine"]["adapter_info"] =
+        json!({"name": "Test GPU", "backend": "Vulkan", "device_type": "DiscreteGpu"});
+    let info = json!({"name": "Test GPU", "backend": "Vulkan", "device_type": "DiscreteGpu"});
+    let mut stored = mixed.clone();
+    stored["engine"]["backends"] = json!([
+        {"side": "right", "backend": "wgpu", "adapter_info": null, "basis_cache": "hit"},
+        {"side": "left", "backend": "wgpu", "adapter_info": info, "basis_cache": "built"}
+    ]);
+    let (text, _) = crate::methods_text::vat(&[stored]).unwrap();
+    assert!(
+        text.contains("a stored basis from an earlier computation for the right lead and with the in-process engine"),
+        "{text}"
+    );
+    assert!(
+        text.contains("on the graphics processing unit Test GPU through Vulkan for the left lead"),
+        "{text}"
+    );
+    let (text, _) = crate::methods_text::vat(&[mixed]).unwrap();
+    assert!(
+        text.contains("on the graphics processing unit Test GPU through Vulkan for the right lead and with the central processing unit for the left lead"),
+        "{text}"
+    );
+    let mut s = stimulation("ef", ModelKind::Efield, Side::Right, Mode::Current, 2.5, 2);
+    s.sides.right.sources[0].amplitude = 2.5;
+    save(&fx, &s);
+    let mut opts = options(&fx);
+    opts.vat_backend = VatBackend::Cpu;
+    let again = run_with(&fx, &opts, &small_params());
+    assert_eq!(token(&again), "ok:vat:1/1", "{:?}", again.lines);
+    let cached = json_of(&label_dir_of(&fx, "native", "ef").join(names.vta_json()));
+    assert_eq!(cached["engine"]["backends"][0]["basis_cache"], "hit");
+    let (text, _) = crate::methods_text::vat(std::slice::from_ref(&cached)).unwrap();
+    assert!(
+        text.contains("solved with a stored basis from an earlier computation"),
+        "{text}"
+    );
+    assert!(!text.contains("central processing unit"), "{text}");
+    let mut two = stimulation("ef", ModelKind::Efield, Side::Right, Mode::Current, 2.5, 2);
+    let src = &mut two.sides.right.sources[0];
+    src.contacts[1].percent = 50.0;
+    src.contacts[2] = Contact {
+        index: 3,
+        polarity: Polarity::Cathode,
+        percent: 50.0,
+        impedance_kohm: 1.0,
+    };
+    save(&fx, &two);
+    let partly = run_with(&fx, &opts, &small_params());
+    assert_eq!(token(&partly), "ok:vat:1/1", "{:?}", partly.lines);
+    let mixed_cache = json_of(&label_dir_of(&fx, "native", "ef").join(names.vta_json()));
+    let side = &mixed_cache["engine"]["backends"][0];
+    assert_eq!(side["basis_cache"], "built");
+    assert_eq!(side["cached_contacts"], 1);
+    let (text, _) = crate::methods_text::vat(std::slice::from_ref(&mixed_cache)).unwrap();
+    assert!(
+        text.contains("solved partly from a stored basis, with the central processing unit"),
+        "{text}"
+    );
+}
+
+#[test]
 fn explicit_cpu_never_asks_for_the_device() {
     fn forbidden() -> Result<std::sync::Arc<fastwarp_gpu::WgpuBackend>, String> {
         panic!("the device must not be requested");
@@ -848,6 +932,34 @@ fn the_wgpu_engine_matches_the_cpu_field_and_records_its_adapter() {
         .as_str()
         .is_some_and(|a| !a.is_empty()));
     assert!(gpu_json["engine"]["relative_residual"].as_f64().unwrap() > 0.0);
+    let info = &gpu_json["engine"]["adapter_info"];
+    assert_eq!(info["name"], gpu_json["engine"]["adapter"]);
+    assert!(info["device_type"].as_str().is_some_and(|t| !t.is_empty()));
+    assert!(info["backend"].as_str().is_some_and(|t| !t.is_empty()));
+    let side = &gpu_json["engine"]["backends"][0];
+    assert_eq!(side["side"], "right");
+    assert_eq!(side["backend"], "wgpu");
+    assert_eq!(side["basis_cache"], "built");
+    assert_eq!(side["adapter_info"], gpu_json["engine"]["adapter_info"]);
+    let (text, _) = crate::methods_text::vat(std::slice::from_ref(&gpu_json)).unwrap();
+    assert!(text.contains("wgpu library"), "{text}");
+    let mut s = stimulation("ef", ModelKind::Efield, Side::Right, Mode::Current, 2.5, 2);
+    s.sides.right.sources[0].amplitude = 2.5;
+    save(&gpu_fx, &s);
+    let mut opts = options(&gpu_fx);
+    opts.vat_backend = VatBackend::Wgpu;
+    let again = run_with(&gpu_fx, &opts, &small_params());
+    assert_eq!(token(&again), "ok:vat:1/1", "{:?}", again.lines);
+    let cached = json_of(&label_dir_of(&gpu_fx, "native", "ef").join(names.vta_json()));
+    let side = &cached["engine"]["backends"][0];
+    assert_eq!(side["basis_cache"], "hit");
+    assert!(side["adapter_info"].is_null());
+    let (text, _) = crate::methods_text::vat(std::slice::from_ref(&cached)).unwrap();
+    assert!(
+        text.contains("stored basis from an earlier computation"),
+        "{text}"
+    );
+    assert!(!text.contains("graphics processing unit"), "{text}");
     assert_eq!(cpu_e.dim(), gpu_e.dim());
     let (mut diff, mut norm) = (0.0f64, 0.0f64);
     for (a, b) in cpu_e.iter().zip(gpu_e.iter()) {

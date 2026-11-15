@@ -14,6 +14,7 @@ pub mod group_view;
 pub mod import;
 pub mod leaddbs;
 pub mod lock;
+pub mod methods;
 pub mod reco;
 pub mod report;
 pub mod run;

@@ -319,8 +319,10 @@ pub struct SideOutcome {
     pub arrows: Vec<Arrow>,
     pub analytic: bool,
     pub basis_cache: &'static str,
+    pub cached_contacts: usize,
     pub backend: &'static str,
     pub adapter: Option<String>,
+    pub adapter_info: Option<Value>,
     pub notes: Vec<String>,
     pub iterations: usize,
     pub rel_residual: f64,
@@ -416,14 +418,17 @@ struct Solved {
     basis: Basis,
     backend: &'static str,
     adapter: Option<String>,
+    adapter_info: Option<Value>,
     notes: Vec<String>,
 }
 
 struct Obtained {
     basis: Basis,
     state: &'static str,
+    cached_contacts: usize,
     backend: &'static str,
     adapter: Option<String>,
+    adapter_info: Option<Value>,
     notes: Vec<String>,
 }
 
@@ -437,6 +442,7 @@ fn cpu_solved(
         basis: solve_basis_subset(input, contacts, ctl)?,
         backend: "cpu",
         adapter: None,
+        adapter_info: None,
         notes,
     })
 }
@@ -480,12 +486,18 @@ fn solve_subset(
             basis,
             backend: "wgpu",
             adapter: Some(ctx.info.name.clone()),
+            adapter_info: Some(json!({
+                "name": ctx.info.name,
+                "backend": ctx.info.backend,
+                "device_type": ctx.info.device_type,
+            })),
             notes: Vec::new(),
         }),
         Ok((basis, chosen)) => Ok(Solved {
             basis,
             backend: "cpu",
             adapter: None,
+            adapter_info: None,
             notes: vec![cpu_note(&chosen.reason)],
         }),
         Err(VatError::Backend(m)) if !explicit => {
@@ -532,8 +544,10 @@ fn obtain_basis(
                 return Ok(Obtained {
                     basis: b,
                     state: "hit",
+                    cached_contacts: used.len(),
                     backend: backend_name(built_by.as_deref()),
                     adapter,
+                    adapter_info: None,
                     notes: Vec::new(),
                 });
             }
@@ -555,8 +569,10 @@ fn obtain_basis(
             return Ok(Obtained {
                 basis: solved.basis,
                 state: "built",
+                cached_contacts: used.len().saturating_sub(missing.len()),
                 backend: solved.backend,
                 adapter: solved.adapter,
+                adapter_info: solved.adapter_info,
                 notes: solved.notes,
             });
         }
@@ -566,8 +582,10 @@ fn obtain_basis(
     Ok(Obtained {
         basis: solved.basis,
         state: "built",
+        cached_contacts: 0,
         backend: solved.backend,
         adapter: solved.adapter,
+        adapter_info: solved.adapter_info,
         notes: solved.notes,
     })
 }
@@ -605,8 +623,10 @@ pub fn compute_side(
             arrows: Vec::new(),
             analytic: true,
             basis_cache: "none",
+            cached_contacts: 0,
             backend: "analytic",
             adapter: None,
+            adapter_info: None,
             notes: Vec::new(),
             iterations: 0,
             rel_residual: 0.0,
@@ -686,8 +706,10 @@ pub fn compute_side(
     let Obtained {
         basis,
         state,
+        cached_contacts,
         backend,
         adapter,
+        adapter_info,
         notes: solver_notes,
     } = obtained;
     let iterations = basis
@@ -710,8 +732,10 @@ pub fn compute_side(
         arrows,
         analytic: false,
         basis_cache: state,
+        cached_contacts,
         backend,
         adapter,
+        adapter_info,
         notes: solver_notes,
         iterations,
         rel_residual,

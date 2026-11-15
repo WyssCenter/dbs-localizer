@@ -250,6 +250,10 @@ pub(crate) fn require_binary(name: &str, stage: &str) -> PipelineResult<PathBuf>
     })
 }
 
+fn ants_version_of(name: &str) -> Option<String> {
+    find_binary(name).and_then(|p| crate::bundled_bin::ants_version(&p))
+}
+
 pub(crate) fn file_name_of(p: &Path) -> String {
     p.file_name()
         .unwrap_or_default()
@@ -435,20 +439,73 @@ fn preprocess_native(
     Ok(())
 }
 
+fn ants_preprocess_record(
+    tools: &PreprocessTools<'_>,
+    fallback: Option<&str>,
+    argv: &[String],
+) -> Value {
+    let mut rec = Map::new();
+    rec.insert("reg_backend".into(), json!("ants"));
+    rec.insert(
+        "reg_requested".into(),
+        json!(tools.choice.requested.as_str()),
+    );
+    let note = match (&tools.choice.resolution, fallback) {
+        (_, Some(why)) => Some(why.to_owned()),
+        (
+            Resolution::Ants {
+                reason: Some(reason),
+            },
+            None,
+        ) => Some(reason.clone()),
+        _ => None,
+    };
+    if let Some(note) = note {
+        rec.insert("reg_note".into(), json!(note));
+    }
+    let options: Vec<&str> = argv
+        .iter()
+        .skip(1)
+        .filter(|a| a.starts_with('-'))
+        .map(String::as_str)
+        .collect();
+    rec.insert(
+        "n4".into(),
+        json!({"parameters": "program defaults", "options_passed": options}),
+    );
+    if let Some(v) = argv
+        .first()
+        .and_then(|bin| crate::bundled_bin::ants_version(Path::new(bin)))
+    {
+        rec.insert("ants_version".into(), json!(v));
+    }
+    Value::Object(rec)
+}
+
+struct AntsPreprocess<'p> {
+    n4_bin: &'p Path,
+    raw: &'p Path,
+    out: &'p Path,
+    record: &'p Path,
+    fallback: Option<&'p str>,
+}
+
 fn preprocess_ants<'a>(
-    n4_bin: &Path,
-    raw: &Path,
-    out: &Path,
+    tools: &PreprocessTools<'_>,
+    job: &AntsPreprocess<'_>,
     staged: &Staged,
     exec: &mut ToolExec<'a>,
 ) -> PipelineResult<()> {
-    let argv = build_n4_argv(n4_bin, raw, &staged.tmp(out));
+    let argv = build_n4_argv(job.n4_bin, job.raw, &staged.tmp(job.out));
     exec(&argv).map_err(|e| match e {
         PipelineError::ToolFailed { code, .. } => {
             PipelineError::Message(format!("N4 failed with {code}"))
         }
         other => other,
-    })
+    })?;
+    let text = serde_json::to_string_pretty(&ants_preprocess_record(tools, job.fallback, &argv))?;
+    std::fs::write(staged.tmp(job.record), text + "\n")?;
+    Ok(())
 }
 
 pub(crate) fn preprocess_with<'a>(
@@ -509,7 +566,14 @@ pub(crate) fn preprocess_with<'a>(
                     "preprocess: N4BiasFieldCorrection not found (bundled or PATH)".into(),
                 )
             })?;
-            preprocess_ants(n4, raw, &out, &staged, exec)
+            let job = AntsPreprocess {
+                n4_bin: n4,
+                raw,
+                out: &out,
+                record: &record,
+                fallback: None,
+            };
+            preprocess_ants(tools, &job, &staged, exec)
         }
         Some(Ok(())) => Ok(()),
         Some(Err(PipelineError::Cancelled)) => Err(PipelineError::Cancelled),
@@ -526,7 +590,15 @@ pub(crate) fn preprocess_with<'a>(
                 Some(b) => b,
                 None => require_binary("N4BiasFieldCorrection", "preprocess")?,
             };
-            preprocess_ants(&n4, raw, &out, &staged, exec)
+            let why = format!("the GPU N4 failed: {e}");
+            let job = AntsPreprocess {
+                n4_bin: &n4,
+                raw,
+                out: &out,
+                record: &record,
+                fallback: Some(&why),
+            };
+            preprocess_ants(tools, &job, &staged, exec)
         }
         Some(Err(e)) => Err(e),
     };
@@ -609,7 +681,7 @@ fn app_version() -> &'static str {
     crate::version::VERSION
 }
 
-fn method_log_base(method: &str, engine: &str) -> Map<String, Value> {
+pub(crate) fn method_log_base(method: &str, engine: &str) -> Map<String, Value> {
     let mut m = Map::new();
     m.insert("method".into(), json!(method));
     m.insert("engine".into(), json!(engine));
@@ -778,6 +850,26 @@ fn coregister_with(
             reg.resolution.as_str(),
         );
         log.insert("approval".into(), Value::Object(approval));
+        if let Some(engine) = reg.engine.as_deref() {
+            log.insert("reg_adapter".into(), engine.describe());
+        }
+        let ants_images: Vec<String> = images
+            .iter()
+            .filter(|(_, v)| v["backend"] == json!("ants"))
+            .map(|(k, _)| k.clone())
+            .collect();
+        if !ants_images.is_empty() {
+            if let Some(v) = ants_version_of("antsRegistration") {
+                for k in &ants_images {
+                    if let Some(o) = images.get_mut(k).and_then(Value::as_object_mut) {
+                        o.insert("ants_version".into(), json!(v));
+                    }
+                }
+                if ants_images.len() == images.len() {
+                    log.insert("ants_version".into(), json!(v));
+                }
+            }
+        }
         log.extend(images);
         let text = serde_json::to_string_pretty(&Value::Object(log))?;
         std::fs::write(staged.tmp(&method_log), text + "\n")?;
@@ -2251,6 +2343,11 @@ fn reg_record(reg: &RegChoice, extra: Option<Map<String, Value>>) -> Map<String,
     if let Some(engine) = reg.engine.as_deref() {
         m.insert("reg_adapter".into(), engine.describe());
     }
+    if matches!(reg.resolution, Resolution::Ants { .. }) {
+        if let Some(v) = ants_version_of("antsRegistration") {
+            m.insert("ants_version".into(), json!(v));
+        }
+    }
     if let Some(extra) = extra {
         m.extend(extra);
     }
@@ -2854,6 +2951,7 @@ pub fn run_brainshift(
         std::fs::create_dir_all(parent)?;
     }
     let staged = Staged::new(vec![out.clone()])?;
+    let version = crate::bundled_bin::ants_version(&exe);
     let mut cmd = Command::new(exe);
     cmd.args(["-d", "3", "-i"])
         .arg(absolute(&mov))
@@ -2881,6 +2979,9 @@ pub fn run_brainshift(
     mlog.insert("output".into(), path_json(&out));
     mlog.insert("warp".into(), path_json(&warp));
     mlog.insert("affine".into(), path_json(&aff));
+    if let Some(v) = version {
+        mlog.insert("ants_version".into(), json!(v));
+    }
     write_method_log(&derivatives::brainshift_method_log(sub), mlog)?;
     if opts.checkreg {
         let bs = BrainshiftPaths {
@@ -3079,7 +3180,7 @@ fn kept_keys(kept: Option<&KeptSides>) -> Vec<&'static str> {
     kept.map(|k| k.keys.clone()).unwrap_or_default()
 }
 
-fn kept_only(kept: Option<&KeptSides>) -> Value {
+pub(crate) fn kept_only(kept: Option<&KeptSides>) -> Value {
     let mut reco = kept.map(|k| k.old.clone()).unwrap_or(Value::Null);
     if let Some(obj) = reco.as_object_mut() {
         obj.remove("reference");
@@ -5874,6 +5975,56 @@ mod tests {
 
     fn read_n4_record(path: &Path) -> Value {
         serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap()
+    }
+
+    #[test]
+    fn preprocess_on_ants_writes_a_record_the_methods_text_reads() {
+        let (root, sub) = preprocess_case("ants_record");
+        let bundled = crate::bundled_bin::find_bundled_binary("N4BiasFieldCorrection");
+        let tools = PreprocessTools {
+            n4: Some(
+                bundled
+                    .clone()
+                    .unwrap_or_else(|| PathBuf::from("N4BiasFieldCorrection")),
+            ),
+            choice: crate::reg_backend::N4Choice::ants(RegBackend::Ants),
+            threads: None,
+            cancel: None,
+        };
+        let mut exec = |argv: &[String]| -> PipelineResult<()> {
+            let at = argv.iter().position(|a| a == "-o").unwrap();
+            std::fs::write(&argv[at + 1], b"n4").unwrap();
+            Ok(())
+        };
+        let out = preprocess_with(&sub, &tools, &mut exec, None).unwrap();
+        assert!(matches!(out, StageOutcome::Completed(_)));
+        let (_, rec_path) = n4_paths(&sub);
+        assert!(no_partials(&sub.preproc_dir));
+        let rec = read_n4_record(&rec_path);
+        assert_eq!(rec["reg_backend"], json!("ants"));
+        assert_eq!(rec["reg_requested"], json!("ants"));
+        assert_eq!(rec["n4"]["parameters"], json!("program defaults"));
+        assert_eq!(rec["n4"]["options_passed"], json!(["-d", "-i", "-o"]));
+        if let Some(bin) = bundled {
+            let known = crate::bundled_bin::ants_version(&bin);
+            assert!(known.is_some());
+            assert_eq!(rec["ants_version"], json!(known));
+        }
+        let (text, _) = crate::methods_text::preprocess(&rec, Some("T1w")).unwrap();
+        assert!(
+            text.contains("the default parameters of the program"),
+            "{text}"
+        );
+        assert!(text.contains("Advanced Normalization Tools"), "{text}");
+        assert!(preprocess_approved_outputs_match(
+            &sub,
+            &RunOptions {
+                reg_backend: RegBackend::Ants,
+                ..RunOptions::new(&root, "1")
+            }
+        )
+        .is_ok());
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     #[test]
