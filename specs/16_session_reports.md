@@ -177,7 +177,7 @@ From the lead-configuration boxes (16a §2.4): hemisphere, target, `Contacts: s�
 | 3389 / 3387 / 3391 | `s`, `s+1`, `s+2`, `s+3` | 1, 2, 3, 4 |
 | B33005 / B33015 | `s`, `s+1a`, `s+1b`, `s+1c`, `s+2a`, `s+2b`, `s+2c`, `s+3` | 1, 2, 3, 4, 5, 6, 7, 8 |
 
-The segment letters a / b / c map to the catalogue's segments A / B / C in that order (`specs/09` §7.2: A = +Y, counter-clockwise seen from proximal); the printed lead `orientation_deg` is recorded in the lead and not applied (the reconstruction's own orientation stage decides the roll).
+The segment letters a / b / c map to the catalogue's segments A / B / C in that order (`specs/09` §2.2 / §10.2: A = +Y, counter-clockwise seen from proximal); the printed lead `orientation_deg` is recorded in the lead and not applied (the reconstruction's own orientation stage decides the roll).
 
 ### 7.5 Groups and programs
 

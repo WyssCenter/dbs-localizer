@@ -107,8 +107,8 @@ impl AtlasMeshCacheDirs {
 }
 
 /// The per-user atlas mesh cache: `%LOCALAPPDATA%\dbsloc\cache\atlas_meshes` on Windows,
-/// `~/Library/Caches/dbsloc/atlas_meshes` on macOS, `$XDG_CACHE_HOME/dbsloc/atlas_meshes`
-/// (else `~/.cache/dbsloc/atlas_meshes`) elsewhere.
+/// `~/Library/Caches/dbsloc/cache/atlas_meshes` on macOS, `$XDG_CACHE_HOME/dbsloc/cache/atlas_meshes`
+/// (else `~/.cache/dbsloc/cache/atlas_meshes`) elsewhere.
 pub fn user_mesh_cache_dir() -> Option<PathBuf> {
     user_mesh_cache_dir_from(|name| std::env::var_os(name).map(PathBuf::from))
 }

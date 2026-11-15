@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Post-conditions on a reconstructed side (`specs/05` §2, §4.2, §11).
+//! Post-conditions on a reconstructed side (`specs/05` §4.5).
 //!
 //! Reconstruction previously emitted a success result for any geometry the trace happened to
 //! return, including centreline extremes tens of millimetres outside the brain. These checks

@@ -31,7 +31,7 @@
 | Vendor session reports (Medtronic Percept PDF import: generic record, anonymisation with a patient-constant date shift, stimulation labels, CLI / GUI; 2026-10-23) | `specs/16_session_reports.md`; measured Medtronic layout `specs/16a_medtronic_percept_layout.md` |
 | Data of an existing Lead-DBS installation (first-start question, scan of atlases and connectomes with sizes, use in place or copy; `dbsloc leaddbs scan` / `copy`; 2026-11-10) | `specs/17_leaddbs_data_import.md` |
 | Checkreg / `gencheckregpair` / scroll viewer | `specs/03_coregistration.md` §12; interactive NIfTI QC `specs/08_addendum_interactive_volume_viewer.md` |
-| D2/D3 + Lead-DBS GUI parity | `specs/08_visualization.md` §11 |
+| 3D viewer, Refine localization view and GUI contracts | `specs/08_visualization.md` §11 |
 | Phase C roadmap / open work | `docs/PHASE_C_ROADMAP.md` |
 | GPU engine cohort results | CT → anchor coreg cohort result `docs/gpu_coreg_report.md`; SyN cohort `docs/gpu_syn_cohort_report.md`; in-process N4 cohort result `docs/gpu_n4_report.md`; cross-API / vendor validation (DX12, NVIDIA, Metal) `docs/gpu_vendor_report.md` |
 | Registration execution backend `--reg-backend auto\|wgpu\|ants` (behaviour, records, locks, deviations from ANTs) | `specs/04_normalization.md` §5.4 |
@@ -295,7 +295,7 @@ Status per row; code paths, tests, cohort numbers and notes for each row: **`doc
 ## 15. References
 
 - Horn et al. (2019). Lead-DBS v2: Towards a comprehensive pipeline for deep brain stimulation imaging. *NeuroImage*, 184, 293–316.
-- Husch et al. (2017). PaCER — A fully automated method for electrode trajectory and contact reconstruction in deep brain stimulation. *NeuroImage: Clinical*, 17, 80–89.
+- Husch et al. (2018). PaCER — A fully automated method for electrode trajectory and contact reconstruction in deep brain stimulation. *NeuroImage: Clinical*, 17, 80–89.
 - Dembek et al. (2017). Probabilistic mapping of deep brain stimulation effects. *NeuroImage: Clinical*, 16, 1–9.
 - Schönecker et al. (2009). Fascicular connectivity of the subthalamic nucleus. *Journal of Neurology, Neurosurgery & Psychiatry*, 80, 1046–1049.
 - Avants et al. (2008). Symmetric diffeomorphic image registration with cross-correlation. *Medical Image Analysis*, 12(1), 26–41.

@@ -1,203 +1,254 @@
-# PaCER — algorithm specification (implementation contract)
+# Spec 10 — PaCER CT Electrode Reconstruction
 
-**Reference (behaviour, not code):** Husch et al. (2017), *PaCER — A fully automated method for electrode trajectory and contact reconstruction in deep brain stimulation.* *NeuroImage: Clinical* 17, 80–89.  
-**Original implementation:** separate codebase, **AGPL-3** (copyleft). This document describes *observable behaviour* and *mathematical structure* so that `crates/dbsloc-reconstruct` can implement a **functionally equivalent** pipeline without translating that source.
+**Status:** Implemented: lead detection in a post-operative CT, curved trajectory models, PaCER's own contact detection and lead typing, and contact placement from the distal metal edge; nothing further is planned.
+**Depends on:** `02` §7.1 (template brain mask), `05` §7 (pipeline interface: when PaCER runs, side keys, reconstruction file, stage errors), `09` (lead geometry: fiducials §2.2, level depths §10.1).
 
-**Relationship to `05_reconstruction.md`:** that file defines the **Wyss DBS Localizer pipeline interface** (when to call PaCER, spaces, errors). This file is the **full algorithm contract** for the in-tree Rust implementation.
-
----
-
-## 1. Scope
-
-- **In scope:** Post-op **CT** volume; automatic detection of **one or two** DBS leads as metal artifacts; estimate 3D **trajectory** as a smooth curve; detect **ring contact** positions along the shaft (and optional x-ray marker region for some leads); output contact locations in **scanner/world mm** (same frame as input NIfTI).
-- **Out of scope (optional / later):** Boston Vercise directional **rotation** module if present as separate plugin; GUI; Medtronic XML plan **required** for operation (only **association** when file provided).
+PaCER (Husch et al., §12) reconstructs deep brain stimulation (DBS) leads from a post-operative CT alone: it finds the metal artifact of each lead, fits a curved centreline in three passes and locates the contacts on a one-dimensional intensity profile along that centreline. This specification describes the method as this project implements it. Every numeric value is listed in the parameter table of §2 with its source: *paper §n* when the paper states it, *implementation* when it is a parameter of this implementation; the sections refer to the parameters by their names in italics. `crates/dbsloc-pacer` is an independent implementation written from this specification and the paper. It is the optional AGPL-3.0-only crate built behind the default-on cargo feature `pacer` of `dbsloc-pipeline` (`docs/LICENSING.md`, *PaCER and the AGPL*); without the feature, `recon_method = pacer` fails with an error (`05` §7).
 
 ---
 
-## 2. Inputs
+## 1. Scope and conventions
 
+- **In scope.** One CT volume in Hounsfield units (HU); every metal component that looks like a lead; for each, curved centreline models, the level centres and the `head` / `tail` / `x` / `y` fiducials in the CT's world frame. The pipeline accepts one or two leads (`05` §7).
+- **Out of scope.** Segment rotation of directional leads (paper §4.4; orientation is `06`), post-operative MRI (paper §4.3.1), comparison with a surgical plan (paper §3.4.2), and the viewers and stimulation model of the original toolbox.
+- **Frames.** World coordinates are the CT's scanner millimetres. Voxel centres lie at integer voxel indices, mapped to world by the CT affine (NIfTI convention). A provided brain mask lies on the CT's voxel grid.
+- **Arc length.** `s` is the signed arc length in mm along a trajectory model from its parameter 0 (§6.1); `s < 0` lies beyond parameter 0 on the deep side.
+- **Code.** File names without a directory are in `crates/dbsloc-pacer/src/`.
 
-| Input                      | Type                                                                                  | Notes                                                                                                           |
-| -------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| CT volume                  | 3D scalar, Hounsfield units (typical range about −1024…3071, or offset-positive copy) | Must carry **voxel size** (mm) and **affine** voxel→world (NIfTI qform/sform convention).                       |
-| `metal_threshold`          | HU, default **800**                                                                   | If `min(ct) >= 0`, add **1024** to threshold (offset-positive convention).                                      |
-| `brain_mask`               | optional binary mask same grid as CT                                                  | If absent, compute mask (§4).                                                                                   |
-| `no_mask`                  | bool, default false                                                                   | If true, treat full FOV as valid (phantoms).                                                                    |
-| `reverse_dir`              | bool                                                                                  | Flip skeleton order before first poly fit (phantom / odd orientations).                                         |
-| `final_poly_degree`        | int ≥ 1, default **3**                                                                | Degree for **final** trajectory polynomial after zero calibration.                                              |
-| `contact_detection_method` | enum: `peak`, `peak_wave_center`, `contact_area_center`                               | If `max(voxel_size) > 1` mm, implementations should force `contact_area_center` (independent peaks unreliable). |
-| `electrode_type`           | optional enum: `Medtronic3387`, `Medtronic3389`, `BostonVerciseDirectional`, or unset | If set, force `contact_area_center` for contact method.                                                         |
-| `medtronic_xml_plan`       | optional file path                                                                    | Trajectory entries used to **label** detected clouds, not required for detection.                               |
+## 2. Inputs and parameters
 
+The inputs are held by `PacerConfig` (`pipeline.rs`):
 
----
+| Input | Default |
+| ----- | ------- |
+| CT volume with its affine (`CtVolume`, `volume.rs`) | — |
+| Voxel size | 1 mm isotropic; the pipeline sets it from the column norms of the affine |
+| Brain mask on the CT grid | none: computed (§4) |
+| Treat the whole volume as brain (phantoms) | off |
+| Reverse the direction of the first-pass skeleton (§6.2) | off |
+| Locate the contact area instead of individual contacts (paper §4.1) | off |
+| Lead type for PaCER's own typing (§8.4) | none |
+| *Metal threshold*, *final degree*, *distal bloom* | as in the parameter table |
+
+**Offset-positive CT.** When the smallest CT value is ≥ 0, the volume is taken to store HU plus the *CT offset*: the *metal threshold* (§5) and the *tissue band* (§4) are raised by it. The *metal weight threshold* (§7) and the *head-tissue band* (§5a) apply to the stored values unchanged.
+
+**Pipeline.** `crates/dbsloc-pipeline/src/ct_recon.rs`, `fn pacer_reco`, runs PaCER on the coregistered CT with these defaults, the template brain mask when one lies on the CT grid (`02` §7.1), the voxel size of the affine and the subject's electrode model pinned (§8a step 3). It replaces the *distal bloom* with the request's `distal_bloom_mm` when that is set, which only the Python research binding does (`05` §7).
+
+**Parameters.**
+
+| Parameter | Value | Source | Section |
+| --------- | ----- | ------ | ------- |
+| CT offset | 1024 | implementation | §2 |
+| Tissue band | 15 to 60 HU, both excluded | implementation | §4 |
+| Majority filter | 3 × 3 × 3; set when more than 13 of the 27 voxels are set | implementation | §4 |
+| Opening ball | 2 mm | implementation | §4 |
+| Accepted coverage | 15 % to 30 % of the volume | implementation | §4 |
+| Hull points | all surface voxels when fewer than 10 000, else an evenly strided subset of 5000 to 10 000 | implementation | §4 |
+| Erosion ball | 3 mm | implementation | §4 |
+| Metal threshold | 800 HU | implementation | §5 |
+| Lead volume range | 60.8 to 304 mm³ | implementation | §5 |
+| Minimum length | 25 mm | implementation | §5 |
+| Elongation | 10 | implementation | §5 |
+| Flatness | 8 | implementation | §5 |
+| Threshold retry | × 1.2 per attempt while the threshold is below 3000 HU; at most 6 attempts | implementation | §5 |
+| Head-tissue band | −300 HU (included) to 1800 HU (excluded) | implementation | §5a |
+| Midline grid | every third voxel along each axis (indices 0, 3, 6, …) | implementation | §5a |
+| Plane bin width | 0.1 mm | implementation | §6.2 |
+| Plane weight filter | median plane weight / 1.5 | implementation | §6.2 |
+| Internal degree | 8 | paper §4.3.2 | §6.2, §7 |
+| Resampling step | 0.025 mm | paper §2.4 | §7 |
+| In-plane spacing | 0.1 mm | paper §2.4 | §7 |
+| Plane half-width | 1.5 mm (31 × 31 points) | implementation | §7 |
+| Extension | 2 mm beyond the deep end, at most half the parameter range | implementation | §7 |
+| Metal weight threshold | 1500 | implementation | §7 |
+| Smoothing window | 11 samples (about 0.25 mm), applied twice | implementation | §8.1 |
+| Tip window | `s ≤ 20 mm` | implementation | §8 |
+| Individual-contact limit | largest voxel dimension 1 mm | implementation | §8.2 |
+| Peak height | 1.1 × profile mean | implementation | §8.3 |
+| Peak prominence | 1 % of the profile mean | implementation | §8.3 |
+| Peak separation | 1.4 mm | implementation | §8.3 |
+| Peak spacing tolerance | 0.3 mm root mean square | implementation | §8.4 |
+| Width threshold | 10.5 mm, the Medtronic 3387 contact span (§9) | implementation | §8.5 |
+| Final degree | 3 | paper §4.3.2 | §8.6 |
+| Final-model samples | 61, evenly spaced in parameter | implementation | §8.6 |
+| Edge background | 20th percentile of the tip window | implementation | §8a |
+| Edge hold | 1 mm | implementation | §8a |
+| Distal bloom | 0.5 mm | implementation | §8a |
+| Apex tolerance | 0.5 mm before parameter 0 | implementation | §8a |
+| Distal-centre sampling | 9 points evenly spaced over the distal 20 mm | implementation | §3 |
 
 ## 3. Outputs
 
-Per detected electrode **i**:
+`pacer_leads` (`fiducials.rs`) returns one `PacerLead` per accepted metal component, in the order of §5. Each holds its **distal centre**, the mean of the *distal-centre sampling* points on the second-pass model (§7; over its whole length when shorter), or the centroid of its metal voxels when the lead could not be refined, which keys the lead to a hemisphere (`05` §7); and either the placed lead (`PacerSide`) or the error that prevented it (§10). `pacer_sides` returns the placed leads only and fails on the first lead error.
 
+`PacerSide` holds `head`, `tail`, `x` and `y` (§8a step 5), one point per level (distal first), the catalogue name of the geometry used, the shaft length (arc length of the final model, §8.6), the smoothed profile with its arc positions (§8.1) and the arc position of the tip apex (§8a).
 
-| Output                           | Meaning                                                                                                                                                                                                                                                  |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `r3_polynomial`                  | Coefficients for parametric curve **p**:[0,1]→ℝ³, **each axis** a real polynomial in **t** (columns: x, y, z coefficients, **highest degree first** matching common `polyval` ordering — document in code).                                              |
-| `electrode_info`                 | Identified or user-forced lead model; includes **ring_contact_centers_mm** (arc length from proximal reference along shaft), **zero_to_first_peak_mm**, **diffs_mm** (pairwise spacing model for classification), **diameter_mm** (~1.27 for Medtronic). |
-| `use_detected_contact_positions` | bool — whether measured peaks matched prototype well enough.                                                                                                                                                                                             |
-| `detected_contact_positions_mm`  | optional arc-length samples along shaft when individual contacts resolved.                                                                                                                                                                               |
-| `intensity_profile_1d`           | Smoothed median intensity along refined skeleton (for QC).                                                                                                                                                                                               |
-| `skeleton_scale_mm`              | Monotonic arc-length axis (mm from shaft origin) aligned with profile samples.                                                                                                                                                                           |
+The result of a lead before placement (`PacerElectrode`, `pipeline.rs`) holds the final model, the prototype typed or given (§9), whether detected peaks were used (§8.4), the smoothed profile with its arc positions and the second-pass model.
 
+The pipeline writes the placed fiducials and level centres, not the polynomial models: the native block of the reconstruction file holds the markers, `coords_mm` with one row per level and the straight 50-point trajectory built from `head` and `tail` (`05` §5, §7).
 
-**Multi-lead:** run the per-lead refinement (§6–8) **independently** for each accepted component.
+## 4. Brain mask
 
----
+The paper restricts every step to a brain mask computed from the CT itself and relaxed to its convex hull (paper §2.1). `mask.rs` computes it as follows. A ball of *r* mm is a ball in voxel index space whose radius is *r* divided by the largest voxel dimension.
 
-## 4. Brain mask (when not provided)
+1. **Tissue band.** Voxels inside the *tissue band*.
+2. **Denoise.** The *majority filter*, with the volume edge replicated.
+3. **Open** with the *opening ball* (radius at least 1 voxel). When the result covers a fraction of the volume outside the *accepted coverage*, the band mask is instead closed with the same ball and then eroded with it (radius at least 0.5 voxel).
+4. **Largest component** (26-connected).
+5. **Convex hull.** The convex hull in world mm of the component's surface voxels (*hull points*) replaces the component: the mask becomes every voxel whose centre lies inside the hull. A component with fewer than 8 surface voxels, or with a degenerate hull, is kept as it is.
+6. **Erode** with the *erosion ball* (radius at least 1 voxel), so that the skull edge stays outside.
 
-**Goal:** Rough intracranial soft-tissue mask, then **convex hull** of that set in voxel space; use hull voxels as brain region.
+A provided mask replaces steps 1–5 and receives the same erosion (`02` §7.1); one whose shape differs from the CT's fails the run (`BrainMaskGrid`, §10). When the whole volume is treated as brain, no mask is built.
 
-**Behavioural steps (implementation may differ; results should be equivalent in spirit):**
+## 5. Metal components
 
-1. Optional: light **median** filtering to denoise.
-2. Threshold **brain tissue** band: roughly **15–60 HU** in standard scale; apply same +1024 offset if `min(ct) >= 0`.
-3. Morphology **open** with spherical SE (radius scale with ~2 mm / max voxel size); if resulting mask fraction outside ~0.15–0.30, try **close** then **erode** path (robustness for noisy kernels).
-4. Take **largest connected component**, then optionally **slice-wise** largest component per slice (`largestConnCompSliceWise`-style) to reduce neck bridges.
-5. **Convex hull** of resulting voxels; fill as binary mask.
+The paper detects the metal components of the leads inside the brain mask (paper §2.1). `metal.rs` does so as follows.
 
-**Erosion before metal step:** erode brain mask with spherical SE (~3 mm radius scaled by voxel size) to reduce skull edge inside mask. Wyss DBS Localizer applies the same erosion to a provided `brain_mask` (`02` §7.1).
+1. **Threshold.** Brain-mask voxels with a value above the *metal threshold*.
+2. **Components.** 26-connected components of those voxels.
+3. **Size.** A component is a candidate when its volume (voxel count × voxel volume) lies in the *lead volume range*: 1.2 times a cylinder 1.27 mm wide and 40 mm long up to 3 times a cylinder 1.27 mm wide and 80 mm long.
+4. **Shape.** Principal component analysis of the candidate's voxel centres in world mm gives axis lengths `a1 ≥ a2 ≥ a3`, each twice the square root of an eigenvalue of the covariance matrix. The candidate is a lead when `a1` exceeds the *minimum length*, `a1 / ((a2 + a3) / 2)` exceeds the *elongation* and `a3 / a2` stays below the *flatness*.
+   Implementation status: the third condition always holds because the axes are sorted (`a3 ≤ a2`), so it rejects nothing.
+5. **Retry.** When no candidate passes, the threshold is raised and the search repeated within the limits of the *threshold retry*; then the run fails with `NoElectrode`.
+6. **Result.** Every accepted component, largest first, as the world positions of its voxel centres with their CT values.
 
----
+### 5a. Head midline (normative)
 
-## 5. Metal blob detection and electrode hypothesis
+The pipeline keys each accepted lead to a hemisphere by the offset of its distal centre (§3) from the head midline (`05` §7). The midline is the mean world *x* (mm) of the **head-tissue voxels** of the CT, where a head-tissue voxel has a value in the *head-tissue band* and lies inside the CT's field of view; only the voxels of the *midline grid* are visited. Without such a voxel there is no midline and the stage fails (`05` §7). Implementation: `CtVolume::head_midline_x` (`midline.rs`).
 
-1. Set non-brain voxels to NaN or ignore; threshold: `ct > metal_threshold` (after offset rule).
-2. **26-connected** components of metal inside brain.
-3. Sort components by voxel count. **Accept** components whose area (voxel count) lies between:
-  - **min:** ~cylinder volume 1.27 mm diameter, 40 mm length, with ~20% PV slack:  
-   `min_voxels ≈ (1.2 * (1.27/2)^2 * π * 40) / prod(voxel_size)`
-  - **max:** ~3× diameter, 80 mm length, 300% PV:  
-  `max_voxels ≈ (3 * (1.27/2)^2 * π * 80) / prod(voxel_size)`
-4. **Shape filter (PCA elongation):** For each candidate, PCA on voxel centers in **mm** (multiply indices by voxel spacing). Let √eigenvalues ×2 be axis lengths `λ1 ≥ λ2 ≥ λ3`. **Electrode-like** if:
-  - `λ1 > 25` mm (elongated along shaft),
-  - `λ1 / mean(λ2,λ3) > 10`,
-  - `λ3 / (λ2 + ε) < 8` (not too flat/ribbon).  
-   Constants **25**, **10**, **8** are part of the behavioural contract (tune only with regression tests).
-5. If **no** candidates: if `metal_threshold < 3000`, **retry** recursively with `metal_threshold × 1.2`. If still none, error: no electrode found.
-6. **Point cloud per lead:** world coordinates of all voxels in component; parallel **intensity** list (same order).
-7. **XML association (optional):** if XML present, for each cloud pick trajectory from plan that minimizes mean squared distance from samples along the planned segment (see Medtronic LPI conversion relative to CT).
+**Field of view.** Resampling the CT onto the anchor grid (`03`) fills every grid point outside the moving CT with **0**, which lies inside the tissue band; counted, a tightly cropped or tilted CT would pull the midline towards the filled side. A voxel is therefore **outside the field of view** when it belongs to a run of voxels equal to exactly 0 that reaches either end of its grid row along the first voxel axis (*i*); a row that is 0 throughout is outside entirely. The CT's field of view mapped into the anchor grid is convex, so each row meets it in one interval and the out-of-field voxels of the row are exactly such end runs; zero-valued voxels between non-zero voxels of a row stay head tissue.
 
-### 5a. Head midline for hemisphere keying (Wyss DBS Localizer, normative)
+## 6. Trajectory models and first pass
 
-The pipeline keys each accepted lead to a hemisphere by the offset of its distal centre from the head midline (`05` §7, *Sides*). The midline is the mean world *x* (mm) of the **head tissue voxels** of the coregistered CT, where a head tissue voxel has an intensity in [−300, 1800) HU and lies inside the CT's field of view; only every third voxel along each of the three grid axes (voxel indices 0, 3, 6, …) is visited. Without such a voxel there is no midline and the stage fails.
+### 6.1 Polynomial model (paper §2.2, §2.3)
 
-**Field of view.** Resampling the CT onto the anchor grid (`03` §5) fills every grid point outside the moving CT with **0**, which lies inside the tissue band; counted, a tightly cropped or tilted CT would pull the midline towards the filled side. A voxel is therefore **outside the field of view** when it belongs to a run of voxels equal to exactly 0 that reaches either end of its grid row along the first voxel axis (*i*); a row that is 0 throughout is outside entirely. The CT's field of view mapped into the anchor grid is convex, so each row meets it in one interval and the out-of-field voxels of the row are exactly such end runs; zero-valued voxels between non-zero voxels of a row stay head tissue. Implementation: `CtVolume::head_midline_x` (`crates/dbsloc-reconstruct/src/pacer/midline.rs`).
+A trajectory model is a curve `p(t)`, `t ∈ [0, 1]`, whose x, y and z coordinates are independent polynomials of one degree (paper §4.3.2) (`poly3.rs`).
 
----
+- **Fit.** The ordered skeleton points get parameters proportional to their cumulative chord length (first point 0, last point 1). Each coordinate is fitted by least squares through a QR decomposition of the matrix of powers of `t`, not through the normal equations, which would square the condition number of the degree-8 problem. The fit fails with fewer points than coefficients or a total chord length of zero.
+- **Arc length.** The arc length between two parameters is the integral of the speed `‖p′(t)‖` (paper §2.3), negative when the end parameter precedes the start.
+- **Inverse arc length.** The parameter at which the arc length from a start parameter reaches a given `s` (paper §2.3). It clamps: `s ≤ 0` gives the start, an `s` beyond the end gives the end.
 
-## 6. Pass 1 — axial skeleton and high-degree fit
+Both are evaluated numerically, accurate to well below 0.01 mm (implementation).
 
-**Assumption:** lead runs roughly **slice-normal** (for typical axial CT, skeleton stacks along **k / z** in **voxel** indices after reorientation; implementations should use **dominant** stack direction if not z — paper assumes axial flow).
+### 6.2 First-pass skeleton (paper §2.1, §2.2)
 
-1. **Unique plane coordinates:** collect unique **third** coordinate of cloud in mm (tolerance 0 if one point per plane else **0.1 mm** `uniquetol`-style).
-2. For each plane with **≥2** points: centroid = **intensity-weighted** mean of in-plane points (weights = voxel HU); track `sumInPlane` for weights.
-3. **Filter** skeleton: drop planes where `sumInPlane < median(sumInPlane)/1.5`.
-4. **Parametric fit:** build skeleton ordered along stacking direction, then orient it so that its first point (`t = 0`) is the **deeper** end, i.e. the end with the lower world `z` (superior coordinate), whatever axis the planes were stacked along (`pick_stack_axis` may pick x or y for an oblique lead); if `reverse_dir`, reverse that order.
-  **Internal fit degree = 8** unless skeleton has fewer than 9 points — then `degree = len-1` with warning.
-5. **Parameterization:** For skeleton points S₁…Sₙ, compute cumulative arc length in mm along chords; map to **t** ∈ [0,1] with t₁=0, tᵢ = ∑||ΔS|| / total.
-  Design matrix **T** = `[t^d, t^(d-1), …, 1]` (rows = points). **Least squares:** each coordinate column solves `T a =` coordinate column by **QR** of `T` (`a = R⁻¹ Qᵀ b`; normal equations are not used: they square the condition number of the degree-8 Vandermonde matrix). Coefficient matrix **D×3** (rows per degree block — match implementation to §3 output convention).
-6. **Total arc length (mm):** for polynomial **p**(`t`) = (x(t),y(t),z(t)),
-  `L = ∫_0^1 ||p′(t)|| dt` with `p′` component-wise polynomial derivatives — numerical integration (adaptive) with documented tolerance (e.g. 1e-4 relative).
+The paper builds the first skeleton from axial slices and notes that a CT tilted by more than about 45° would need another slice direction (paper §4.3.1). This implementation chooses the direction itself (`skeleton_pass1.rs`).
 
----
+1. **Plane direction.** The world axis (x, y or z) along which the component's coordinates, binned at the *plane bin width*, take the most distinct values.
+2. **Plane centroids.** Voxels are grouped into planes by that binned coordinate. Each plane with at least two voxels gives one skeleton point: the mean of its voxel positions weighted by their CT values (negative values weigh 0). Fewer than two planes fail the lead with `ObliqueCt`.
+3. **Filter.** Planes whose total weight is below the *plane weight filter* are dropped; fewer than two remaining fail the lead with `EmptySkeleton`.
+4. **Order.** The points are ordered along the plane axis and then oriented so that the first point (`t = 0`) is the deeper end, the one with the lower world *z*, whatever the plane axis; the reverse option reverses that order.
+5. **Fit.** The *internal degree*, or one less than the number of points when there are fewer. The result is the first-pass model.
 
-## 7. Pass 2 — optimal oblique resampling (OOR)
+## 7. Oblique resampling and second pass (paper §2.4)
 
-**Constants:**
+One resampling pass along a model (`oor.rs`) visits a sequence of steps:
 
-- `XY_RES = 0.1` mm, `Z_RES = 0.025` mm (step along **t**-axis in parameter space, scaled by arc length — see below).
-- Grid in **transverse** plane: `X,Y ∈ [-1.5, 1.5]` mm stepped by `XY_RES` (30×30 samples).
-- `SND_THRESH = 1500` HU: samples below this **zeroed** for centroid (after NaN→0).
-- `lookahead` along **t**: approximately **2 mm** of arc length expressed as `Δt = 2/L` where L is current poly arc length; sampling starts at **t = −lookahead** up to 1 (negative **t** allowed for OOR index grid; **arc-length axis** for negative segments uses signed arc length as in reference behaviour).
+1. **Steps.** Parameters from the *extension* beyond the deep end up to 1, in equal parameter increments of about one *resampling step* of arc. The polynomial is extrapolated beyond its skeleton there, so that the profile starts before the tip.
+2. **Plane.** At each step a square grid with the *in-plane spacing* and the *plane half-width*, perpendicular to the model's tangent and centred on the model point. Its axes are an orthonormal basis of that plane; their rotation about the tangent is arbitrary.
+3. **Sampling.** Trilinear interpolation of the CT at each grid point. A point outside the voxel grid has no value.
+4. **Skeleton point and profile value.** The skeleton point is the mean of the grid positions weighted by `max(0, value − metal weight threshold)`, points without value weighing 0 (intensity-weighted mean, paper §2.4). The profile value is the median of the values sampled at the step, points without value left out (paper §2.5). **Steps without metal (normative):** when every weight is 0 (before the tip, outside the field of view), the step keeps the model point as its skeleton point and 0 as its profile value. Every step therefore contributes exactly one skeleton point, one profile value and one arc position, which keeps the arc axis of the profile complete for §8.
+5. **Arc position.** The signed arc length `s` from parameter 0 to the step, negative before it.
 
-**Interpolation:** trilinear (or better) **linear** scatter interpolation from CT **world** points and intensities. Out-of-FOV → NaN; treat as in OOR.
+**Second pass.** A first resampling along the first-pass model gives a skeleton; refitted at the *internal degree* (one less than the number of points when shorter) it becomes the second-pass model (paper §2.4). When that fit fails, the first-pass model is kept. A second resampling along the second-pass model gives the intensity profile and its arc positions; its skeleton points are not used. A first resampling with fewer than four steps fails the lead with `Interpolation`.
 
-**Per step t_k:**
+## 8. Contact detection and zero point (paper §2.5)
 
-1. Position **c** = p(`t_k`); tangent **d** = p′(`t_k`) / ||p′||.
-2. Build orthonormal basis: **e1** = normalize(cross(d, [0,1,0])), **e2** = normalize(cross(d, e1)).
-3. Sample points = **c** + e1·X + e2·Y for all grid pairs.
-4. Weights = max(0, I−SND_THRESH) with NaN→0; skeleton point = **intensity-weighted centroid** of samples. **Steps without metal (normative, Wyss DBS Localizer):** when the sum of weights is 0 (no sample above `SND_THRESH`, e.g. before the tip or outside the field of view), the step is **not** dropped: the polynomial point **c** is recorded as the skeleton point and **0** as the step's median intensity (step 5 does not apply to it). Every `t_k` therefore contributes exactly one skeleton point, one median intensity and one `skel_scale_mm` sample, which keeps the profile's arc-length axis complete for §8 and the distal-edge search of §8 step 8a.
-5. For a step with a positive sum of weights, record the **median** of its finite samples (NaN samples left out) as the step's intensity along the shaft; **skel_scale_mm**(`k`) = signed arc length from t=0 to t=`t_k` (integral of ||p′||; for `t_k`<0, negative length as in reference).
+PaCER's own detection (§8.1–§8.6) yields the smoothed profile, the lead type and the final model. The smoothed profile is what §8a measures the distal edge on; the type selects the placement geometry when no electrode model is pinned (§8a step 3; the pipeline always pins one); the final model gives only the reported shaft length. The contacts are placed by §8a.
 
-**Refit:** Apply **fitParamPolyToSkeleton** to OOR skeleton with degree **8** for intermediate poly. Run OOR again on that poly to get final skeleton + `med_intensity` + `skel_scale_mm` for peak detection.
+### 8.1 Intensity profile
 
----
+The profile of §7 is smoothed with a centred moving average over the *smoothing window*, shortened at the ends of the profile and applied twice, which leaves peaks in place (zero-phase filtering, paper §2.5) (`peaks.rs`). §8.3–§8.5 and §8a work on the smoothed profile within the *tip window*.
 
-## 8. Intensity-based contact detection
+### 8.2 Individual contacts or contact area
 
-1. **Band-limit:** `filter_width = round(0.25 mm / Z_RES) + 1` samples; apply **zero-phase** smoothing (e.g. forward-back moving average) to `med_intensity`.
-2. **Search window:** only `skel_scale_mm ≤ 20` mm (tip region).
-3. **Peaks:** on smoothed profile, find local maxima in **s** (mm) with:
-  - min distance **1.4** mm,
-  - height ≥ **1.1 × nanmean(profile)**,
-  - prominence ≥ **0.01 × nanmean(profile)**.
-4. **Wave centres (optional method):** from first 4 peaks, build threshold; label samples above/below; centre of mass of each connected “high” run gives **wave centres**.
-5. **Contact area (fallback):** threshold at **mean** intensity in window; `bwlabel` on binary runs along **s**; second run’s centre = **contact_area_center**; width = extent in mm. If multiple runs, third run may be x-ray marker.
-6. **Electrode typing:** for each prototype **k**, `diffs_mm` = expected spacing vector between adjacent contacts. Compare **diff(peak_positions)** to each prototype:
-  - score `dist_k = || diff(peaks) − diffs_mm_k ||` (L2); pick argmin; RMS for quality.
-  - If all fail (Inf), unknown type.
-  - **Tie = ambiguous:** when two prototypes share the minimal `dist_k` exactly (identical `diffs_mm`, e.g. Medtronic 3389 and Boston Vercise Directional), the spacing cannot tell them apart: the type is **unknown** (score and RMS `Inf`), not the first prototype in table order.
-7. **RMS check:** if RMS > **0.3** mm, fall back to model-based (ignore detected peaks) or `contact_area_center` path (same as manual type / low-SNR path).
-8. **Zero calibration along shaft:**
-  - **With good peaks + type:** `t0 = inv_arc_length( first_peak_mm − zero_to_first_peak_mm )` where `inv_arc_length` inverts `s`↔`t` using the **second-pass** polynomial (before final degree reduction).  
-  - **Area-based / manual type:** `t0 = inv_arc_length( contact_area_center − mean(ring_contact_centers_mm) )` (behavioural; matches fallback when individual contacts not resolved).
-9. **Final polynomial:** resample `p(t)` on `t ∈ [t0, 1]` at spacing ~`XY_RES `along **arc in mm**; refit with` **final_poly_degree`**. If degree = 1, clip evaluation window to first 20 mm for stability then re-extend. Re-parameterize [0,1] after fit so that tip remains consistent.
+Individual contacts are searched unless the contact area is preferred (§2), the largest voxel dimension exceeds the *individual-contact limit*, or a lead type is given (`pipeline.rs`). The paper resolves individual contacts on thin-slice CTs and falls back to the contact area on thicker slices (paper §3.2, §3.3, §4.2), and lets the user choose the contact area (paper §4.1). `pacer_leads` (`fiducials.rs`) hands the pinned model over as lead type whenever the prototype table recognises its name (§9), so in the pipeline Medtronic 3389 and 3387 and every Boston Scientific lead take the contact-area path.
 
-8a. **Distal-edge calibration (Wyss DBS Localizer, normative for the in-tree implementation):** on real post-op CT the contacts bloom into one continuous plateau, so the contact-area run of step 5 is a later bump of that plateau rather than the contact band. Measured 2026-10-04 on the Lead-Tutor CTs, the area path put `head` 6.6–12 mm up the shaft. Wyss DBS Localizer therefore calibrates the apex on the **distal metal edge** whenever the smoothed profile shows one: within `skel_scale_mm ≤ 20` (the profile holds one sample per OOR step, the metal-free steps before the tip with intensity 0, §7 step 4), background = 20th percentile, plateau = median of the samples above the window mid-range, threshold = half-way; the edge is the first upward crossing that stays above threshold for ≥ 1 mm, linearly interpolated, and the profile must start below the threshold. `apex_s = edge + distal_bloom_mm − d_metal`, where `d_metal` is 0 when the tip is a contact and the tip length otherwise (`specs/09`), and `distal_bloom_mm` = **0.5** (median along-shaft head error against the 10 expert sides 0.08 mm at that value; 0 for a phantom painted without blooming). Levels are placed on the second-pass polynomial at `apex_s + apex_to_level_mm[k]`. With **no edge** (the skeleton starts inside the metal) the lead is refused with `NoDistalEdge` instead of falling back to step 8's area path. The apex may lie at most 0.5 mm before the skeleton start and every level centre must fall within the skeleton's arc length, otherwise the lead is refused with `ApexBeforeSkeleton` / `LevelsPastSkeleton` (the arc-length inverse clamps, so out-of-range levels would otherwise collapse onto an end point). Errors are per lead: `pacer_leads` returns each accepted component with its own result and distal centre.
+### 8.3 Peaks
 
-`inv_arc_length(Δs)`: find **t** such that `∫_0^t ||p′(u)|| du = Δs` (use 1D root find on [0,1] with `poly_arc_length`).
+A peak is a sample of the tip window larger than both neighbours, at least the *peak height*, with at least the *peak prominence*; the profile mean, taken over the whole profile, must be positive. Scanning from distal to proximal, a peak closer than the *peak separation* to an already kept peak is dropped (`peaks.rs`).
+Implementation status: the prominence is measured only against the lower of the two neighbouring samples (0.025 mm apart), not as the height above the surrounding minima, so it can reject real maxima on a smoothed profile.
 
----
+### 8.4 Lead type from the peak spacing (paper §2.5.2)
 
-## 9. Data-driven electrode geometry table
+With at least four peaks, the three spacings between the first four are compared with the three level pitches of each prototype (§9) by Euclidean distance, and the nearest prototype is the type (`catalog.rs`). **Tie:** when two prototypes share the smallest distance, as Medtronic 3389 and Boston Scientific Vercise Directed always do (same pitches), the type is unknown, not the first prototype in table order. The detected peaks are used for the zero point when their spacing error stays within the *peak spacing tolerance*. The paper also matches the peaks of the Boston Scientific orientation marker; this implementation does not, so peak typing returns Medtronic 3387 or no type.
 
-Implementation must ship **at least** the Medtronic **3389**, **3387**, and **Boston Vercise Directional** prototypes: **diameter**, **ring_contact_centers_mm** (monotonic from proximal zero), **zero_to_first_peak_mm**, **tip_to_first_peak_mm**, **diffs_mm**, **n_ring_contacts** — values taken from **manufacturer IFU** or the Husch 2017 supplement, **not** copied from any AGPL `.mat` file. Until validated, use explicit `UNSPECIFIED` in tests and mark `#[ignore]`; wire constants behind a single `electrode_catalog` module for audit.
+**Precedence** (`pipeline.rs`). A given lead type wins; otherwise the contact-area path uses the width rule of §8.5; otherwise the peak type; otherwise the width rule.
 
-**Fallback width rule (when type unknown, area only):** if `contact_area_width < 10.5` mm → assume 3389-class spacing; else 3387-class (documented in paper as heuristic).
+### 8.5 Contact area (paper §3.2)
 
----
+Tip-window samples at or above the mean of the tip window form runs; the **second** run is the contact area, its centre the midpoint and its width the distance between the arc positions of its first and last samples (`peaks.rs`). With fewer than two runs there is no contact area. **Width rule:** a width of at least the *width threshold* gives the Medtronic 3387; a smaller width or no contact area gives the Medtronic 3389.
+
+### 8.6 PaCER zero point and final model (paper §2.5.1, §4.3.2)
+
+The paper defines the zero point of the final model as the distal edge of the first contact, derived from the detected contacts, and refits the model after contact detection. This implementation starts the final model at the estimated tip apex `s0`:
+
+- with detected peaks, `s0` = first peak − the prototype's apex-to-first-level distance;
+- otherwise, `s0` = contact-area centre − the mean of the prototype's four apex-to-level distances, and `s0` = 0 without a contact area;
+- a negative `s0` becomes 0.
+
+The final model is fitted at the *final degree* to the *final-model samples* of the second-pass model, taken from the inverse arc length of `s0` to parameter 1 (`pipeline.rs`). A failed fit fails the lead with `EmptySkeleton`.
+
+### 8a. Distal-edge zero point and level placement (normative)
+
+On real post-operative CT the contacts bloom into one continuous plateau, so neither individual peaks nor the contact-area run of §8.5 locate them: on the Lead-Tutor CTs the contact-area path put `head` 6.6–12 mm too far up the shaft. The contacts are therefore placed from the **distal metal edge** of the smoothed profile (§8.1), which is the paper's zero point (the distal edge of the first contact, paper §2.5.1) measured directly (`fiducials.rs`).
+
+1. **Edge.** Within the tip window: background = the *edge background*; plateau = median of the samples above the window's mid-range (half-way between background and maximum); threshold = half-way between background and plateau. The edge is the first upward crossing of the threshold after which the profile stays at or above it for the *edge hold*, interpolated linearly between the samples on either side of the crossing. There is no edge when the window has no contrast, when its first sample is at or above the threshold (the skeleton starts inside the metal) or when no crossing holds; the lead is then refused with `NoDistalEdge`, never placed from §8.6.
+2. **Apex.** `apex_s = edge + distal bloom − d`, where `d` is 0 when the tip is a contact and the tip length otherwise (`09` §2, §10.1). The *distal bloom* is how far the half-maximum edge lies beyond the real end of the metal; at its value the median along-shaft error of `head` against the Lead-Tutor reference reconstructions is 0.08 mm. A phantom painted without blooming wants 0.
+3. **Geometry.** The electrode model pinned by the caller, else the catalogue entry named like the prototype PaCER typed (`09`); a name the catalogue lacks fails with `UnknownElectrode`. A pinned model is also handed to PaCER's own typing when the prototype table recognises it (§8.2, §9), so the two cannot disagree.
+4. **Levels.** Level *k* lies on the second-pass model at arc length `apex_s + z_1 + z(k)` from parameter 0, `z_1 + z(k)` being the level's distance from the apex (`09` §10.1; `ElectrodeGeometry::apex_to_level_mm`). The apex may lie at most the *apex tolerance* before parameter 0 and the first level not before it (`ApexBeforeSkeleton`); the last level must lie within the arc length of the second-pass model over [0, 1] (`LevelsPastSkeleton`). The inverse arc length clamps, so without these checks a level outside the model would collapse onto an end point. A model with fewer than two levels fails with `EmptySkeleton`.
+5. **Fiducials.** `head` is the first level and `tail` the model's tail fiducial level (`09` §2.2). `x` and `y` lie one lead radius from `head` in the plane perpendicular to `head → tail`: `x` along the component of world +z perpendicular to the lead (of world +x when the lead is within about 26° of the z axis; implementation), `y` along the cross product of the unit vector from `head` to `tail` with `x` (`crates/dbsloc-reconstruct/src/ring.rs`, `ring_in_plane`). This roll is arbitrary until orientation (`06`) sets it.
+
+Errors are per lead: a lead that cannot be placed does not discard the others (`pacer_leads`); the pipeline decides what follows (`05` §7).
+
+## 9. Prototype table (paper §2.5.2)
+
+| Prototype | Level pitches (mm) | Level centres from the tip apex (mm) | Diameter (mm) |
+| --------- | ------------------ | ------------------------------------ | ------------- |
+| Medtronic 3389 | 2.0, 2.0, 2.0 | 2.25, 4.25, 6.25, 8.25 | 1.27 |
+| Medtronic 3387 | 3.0, 3.0, 3.0 | 2.25, 5.25, 8.25, 11.25 | 1.27 |
+| Boston Scientific Vercise Directed | 2.0, 2.0, 2.0 | 0.75, 2.75, 4.75, 6.75 | 1.3 |
+
+Code: `catalog.rs`. Pitches are centre to centre. The values follow the manufacturers' dimensions and must agree with the shared catalogue (`09` §7.1, §7.3), which the test `prototypes_agree_with_the_shared_catalogue` enforces. The table serves only PaCER's own typing and §8.5–§8.6; contacts are placed from the shared catalogue (§8a, `09` §9).
+
+- **Name matching** ignores case: a name containing `3389`, `3387`, or `verc` or `boston` selects that prototype, so every Boston Scientific model maps to the Vercise Directed prototype; any other name fails with `UnknownElectrode`.
+- **Contact span**: last minus first level centre plus the 1.5 mm contact length, 7.5 mm for the 3389 and 10.5 mm for the 3387. The *width threshold* (§8.5) is computed from the 3387 row.
 
 ## 10. Errors
 
+`PacerError` (`errors.rs`). *Run* errors end `pacer_leads`; *lead* errors are reported per lead (§3).
 
-| Code               | When                                                                  |
-| ------------------ | --------------------------------------------------------------------- |
-| `NoElectrode`      | No component passes elongation + volume after retries.                |
-| `ObliqueCT`        | Cannot establish stacked planes for skeleton (non-axial acquisition). |
-| `EmptySkeleton`    | Degenerate skeleton after filtering.                                  |
-| `UnknownElectrode` | User string not in catalog.                                           |
-| `Interpolation`    | OOR all-NaN for extended range.                                       |
-| `NoDistalEdge`     | §8 step 8a found no distal metal edge (skeleton starts inside metal). |
-| `ApexBeforeSkeleton` | §8 step 8a apex or first level before the skeleton start.           |
-| `LevelsPastSkeleton` | §8 step 8a most-proximal level beyond the traced skeleton.          |
+| Error | Message | When | Scope |
+| ----- | ------- | ---- | ----- |
+| `NoElectrode` | `no electrode artifact found after threshold retries` | §5 step 5 | run |
+| `BrainMaskGrid` | `the brain mask has shape (<k>, <j>, <i>) but the CT has shape (<k>, <j>, <i>) (k, j, i)` | §4 | run |
+| `UnknownElectrode` | `unknown electrode type string: <name>` | pinned model not in the catalogue (run); typed prototype not in the catalogue (lead, §8a step 3); configured lead type the prototype table does not know, name lower-cased (lead) | run, lead |
+| `ObliqueCt` | `CT not usable as stacked planes for skeleton (oblique or degenerate)` | §6.2 step 2 | lead |
+| `EmptySkeleton` | `skeleton empty after filtering` | §6.2 steps 3 and 5; §8.6; §8a step 4 | lead |
+| `Interpolation` | `interpolation / OOR produced no valid samples` | §7 | lead |
+| `NoDistalEdge` | `no distal metal edge in the first 20 mm of the intensity profile; the tip lies before the traced skeleton, so the contacts cannot be placed` | §8a step 1 | lead |
+| `ApexBeforeSkeleton` | `calibrated tip apex lies <mm> mm along the skeleton, before its start; the levels cannot be placed on it` | §8a step 4; `<mm>` is the apex position, or the first level's when that check fails | lead |
+| `LevelsPastSkeleton` | `the most-proximal level needs <mm> mm of skeleton but only <mm> mm was traced` | §8a step 4 | lead |
 
+`Hull` (`convex hull build failed: <why>`) and `DegeneratePca` (`min eigenvalue in PCA: degenerate point set`) are declared but no code path produces them. The pipeline reports a run error as `PaCER: <message>` and collects lead errors into `PaCER could not place <n> of <m> lead(s): …` (`05` §7).
 
----
+## 11. Tests
 
-## 11. Acceptance tests (non-exhaustive)
+`cargo test -p dbsloc-pacer` runs the unit tests of `crates/dbsloc-pacer/src/` and `crates/dbsloc-pacer/tests/pacer_phantom.rs`:
 
-1. **Synthetic line cloud:** voxels on straight line; recovered polynomial end-to-end deviation < small tolerance at contact region.
-2. **Polynomial:** arc length of **unit speed** line segment 10 mm → `L ≈ 10` mm; `inv_arc_length(5) ≈ 0.5` in normalized parameter for straight case.
-3. **PCA filter:** synthetic elongated ellipsoid (λ1/λ2 large) accepted; oblate rejected.
-4. **Regression:** optional golden NIfTI (no AGPL assets) for pixel-approximate match when pipeline complete.
+- `poly3.rs`: straight-line fit, arc length and inverse arc length; a degree-8 fit stays within 0.05 mm of a smooth 50 mm curve; coincident points do not fit.
+- `volume.rs`: a singular affine gives no samples; the inverse affine recovers indices of an oblique affine to 10⁻⁹.
+- `mask.rs`: the parallel morphology equals a serial reference; the row-wise hull fill equals a per-voxel hull test on three affines, one oblique.
+- `metal.rs`: cloud points are voxel centres; the shape test accepts a thin rod and rejects an isotropic blob; a rod is found as a lead.
+- `midline.rs` (§5a): a cropped field of view does not move the midline; zero runs at row ends are outside; interior zeros count; without tissue there is no midline.
+- `skeleton_pass1.rs`: parameter 0 lies at the deep end for oblique leads whatever the plane axis; the reverse option flips it.
+- `oor.rs`: steps without metal keep the model point and profile value 0; the profile starts at `s` = −2 mm.
+- `catalog.rs`: pitches, first-level distances, contact spans 7.5 / 10.5 mm, the 3387 recognised from ideal peaks, the 3389 / Vercise Directed tie unknown, name matching, agreement with the shared catalogue.
+- `fiducials.rs`: levels at catalogue depths including the tip-contact offset; `x` / `y` at the lead radius; NIfTI index order preserved; the distal edge found within 0.1 mm on a bloomed profile and absent when the profile starts in metal; `ApexBeforeSkeleton` and `LevelsPastSkeleton`; `head` placed from the edge; `tail` on the tail fiducial level of an 8-level lead; an unknown pinned model refused.
+- `crates/dbsloc-pacer/tests/pacer_phantom.rs`: a synthetic CT (0.5 mm voxels) with one 55 mm lead: Medtronic 3387 levels within 0.8 mm (worst measured 0.62 mm) and a head–tail span within 0.3 mm of the fiducial span, the span also for a 3389; an empty volume fails; a provided mask replaces the computed one, a mask without the lead gives `NoElectrode`, a mask on another grid `BrainMaskGrid`.
 
----
+Pipeline tests (side keys, placement, refusal without the feature) are listed in `05` §11.
 
-## 12. Implementation notes (Rust, `dbsloc-reconstruct`)
+## 12. References
 
-- **Phase 1 (allowed now):** §6 math utilities — parametric R³ poly, `fit_param_poly_to_skeleton`, `poly_arc_length3`, `inv_poly_arc_length3`, `polyval3`; unit tests from §11.1–11.2.
-- **Phase 2:** §4–5 (mask, connected components, PCA) on ndarray volumes.
-- **Phase 3:** §7 OOR with trilinear grid sampling.
-- **Phase 4:** §8 peak finding + catalog + final refit.
-- NIfTI I/O stays outside or uses existing `fastwarp-core` / workspace conventions.
-
-**Independent-implementation rule:** implementers of Phases 2+ must not read PaCER or Lead-DBS source — **only** this file + Husch 2017 + open datasheets.
+- Husch A, Petersen MV, Gemmar P, Goncalves J, Hertel F. PaCER — A fully automated method for electrode trajectory and contact reconstruction in deep brain stimulation. *NeuroImage: Clinical* 17 (2018), 80–89, published online 2017. doi:10.1016/j.nicl.2017.10.004. "Paper §n" in this specification refers to the sections of this article.

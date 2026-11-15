@@ -586,7 +586,7 @@ fn default_atlas_group(groups: &[AtlasSurfaceGroup], default_id: Option<&str>) -
 }
 
 /// Points `active_atlas_group` at the set named by `atlas_id` (unknown or unset → the default
-/// set, `specs/08` §11). Returns `true` when the active group changed.
+/// set, `specs/08` §5.4). Returns `true` when the active group changed.
 fn resolve_active_atlas(
     sh: &mut SceneShared,
     groups: &[AtlasSurfaceGroup],

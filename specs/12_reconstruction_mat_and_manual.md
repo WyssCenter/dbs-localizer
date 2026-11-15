@@ -52,6 +52,8 @@ Not stored in `reco`: electrode geometry (only the model name; geometry comes fr
 | `elmodel` | `char` row, e.g. `'Boston Scientific Vercise Directed'` | Must be a model name that the Lead-DBS catalogue resolves (`specs/09` names). On load, the substring `St. Jude` is replaced with `Abbott`. |
 | `manually_corrected` | `double` scalar 0 or 1. The writer passes numeric literals; `logical` is tolerated by every reader. | 1 = expert-approved (see §5.3). |
 
+Implementation status: not implemented; no alias maps `St. Jude` to `Abbott` in the model lookup (`specs/09` §4.1, `dbsloc/electrodes/registry.py`, `electrode_catalog.rs`), so a name with `St. Jude` is an unknown model.
+
 The writer fills `props(k)` only for the sides it handles. When only side 2 exists, MATLAB auto-creates `props(1)` with both fields as `0×0 double` (empty). The same model string is written for every handled side.
 
 ### 3.2 Space blocks `native`, `mni`, `scrf`
@@ -59,7 +61,7 @@ The writer fills `props(k)` only for the sides it handles. When only side 2 exis
 | Field | Class / shape | Content |
 |---|---|---|
 | `coords_mm` | `1×S cell`; element k = `N_k×3 double`; empty `[]` for an absent side | Contact centres, one row per contact in catalogue order (row 1 = most distal). PaCER-native output has one row per **level** (4 rows for an 8-contact directional lead) until something re-resolves it. |
-| `trajectory` | `1×S cell`; element k = `M×3 double` | Straight polyline along the lead. **M = 50** when produced by the marker → contacts routine (§4) and always in `mni`. A raw PaCER native result has M = 20 (a different construction). Readers must not assume 50 in `native`. |
+| `trajectory` | `1×S cell`; element k = `M×3 double` | Straight polyline along the lead. **M = 50** when produced by the marker → contacts routine (§4) and always in `mni`. A raw PaCER native result of the reference has M = 20 (a different construction); dbsloc writes `TRAJECTORY_POINTS` (50, `electrode_catalog.rs`) in `native` as well, but readers must not assume 50 in `native`. |
 | `markers` | `1×S struct` with fields `head`, `tail`, `x`, `y`, each `1×3 double` (**row** vectors; readers concatenate them horizontally) | `head` = centre of the most distal model fiducial (contact 0 / level 1), `tail` = the model's proximal fiducial; `x`, `y` = points at distance `r` from `head`, perpendicular to the lead. Absent side: all four fields `[]`. |
 | `trajvector` | `1×S cell` of `1×3 double` (unit, head → tail). **Only in `mni`.** | |
 
@@ -67,7 +69,7 @@ The writer fills `props(k)` only for the sides it handles. When only side 2 exis
 
 ## 4. How the derived quantities are built (reference behaviour)
 
-**Markers → contacts ("resolve").** The model file gives four model fiducials `head_position`, `tail_position`, `x_position`, `y_position` and the model contact centres. The **exact affine** (not rigid) mapping the four homogeneous model fiducials onto the four homogeneous markers is solved as a 4×4 linear system and applied to every model contact centre. This is the same map as `specs/05` §6 *Template-space contacts from the warped markers*: rotation, translation and a stretch along the lead. It also includes shear if `x`/`y` are not orthogonal. Note that `specs/05` §5 still says "rigid"; the reference implementation is affine.
+**Markers → contacts ("resolve").** The model file gives four model fiducials `head_position`, `tail_position`, `x_position`, `y_position` and the model contact centres. The **exact affine** (not rigid) mapping the four homogeneous model fiducials onto the four homogeneous markers is solved as a 4×4 linear system and applied to every model contact centre. This is the same map as `specs/05` §6.3: rotation, translation and a stretch along the lead. It also includes shear if `x`/`y` are not orthogonal. Note that `specs/05` §5 says "rigid" on purpose; the reference implementation is affine.
 
 **Trajectory.** With `û = unit(tail − head)`, the start point is `a1 = head − 5·û`. The end point is `a2 = tail + k·contact_span·û`, with `contact_span` the catalogue array span of `specs/09` §2.2, where `k = 1.5` if the model has **more than 8 levels** (entries of the level index list `etageidx`, not contacts) and `k = 2` otherwise. The trajectory is 50 equally spaced points from `a1` to `a2`. `specs/05` §5 uses the same rule (levels, not contacts, since 2026-11-14).
 
@@ -105,7 +107,7 @@ The writer fills `props(k)` only for the sides it handles. When only side 2 exis
 
 When the pipeline re-runs reconstruction (unless "overwrite approved" is set), the sides whose `manually_corrected` is truthy are **skipped**. They are skipped both for automatic reconstruction and for the refine (manual) step. The selection concatenates `props(:).manually_corrected` and takes the indices of non-zero entries. **An empty entry shifts the indices** (left-only file with `props(1)` empty and `props(2)` = 1 → side 1 is skipped instead of side 2). Writers must therefore give **every** `props(k)`, k = 1..S, a numeric value.
 
-The flag also changes the manual view (Part 2 §8.1): 0 resets the roll to anterior and snaps the length on first open. It also changes the L/R check (§4).
+The flag also changes the manual view (Part 2 §11.1): 0 resets the roll to anterior and snaps the length on first open. It also changes the L/R check (§4).
 
 ## 6. Provenance and versioning in Lead-DBS
 
@@ -128,7 +130,7 @@ The flag also changes the manual view (Part 2 §8.1): 0 resets the roll to anter
 | side keys `"1"`, `"2"` | index 1, 2 | Same meaning since 2026-10-04. A JSON without `meta.side_keys` is first resolved with `side_hemispheres` (`specs/05` §8). The exporter writes index 1 = right. |
 | `props["k"].elmodel` | `props(k).elmodel` (char) | For an absent side **also write the model string** (recommended; avoids the `props(1)` empty pitfalls of §5.2 and §5.3). |
 | `props["k"].manually_corrected` | `props(k).manually_corrected` (double) | **Implemented (`manually_corrected_flag`):** write 1 if `manually_corrected` is true, **or** `meta.manual_correction[k].review` is `corrected`/`accepted`, **or** the side is directed and `meta.orientation[k].status` ∈ {`resolved`, `ambiguous`, `manual`}. This is what Lead-DBS does itself after its own orientation step, and it stops the Lead-DBS manual view from resetting the roll. Otherwise write 0. Absent side: 0. |
-| `native["k"].coords_mm` | `native.coords_mm{k}` | Per-contact rows. If a PaCER side still has per-level rows, re-resolve from the native markers (`specs/05` §6 map `T`) before export (gap). |
+| `native["k"].coords_mm` | `native.coords_mm{k}` | Per-contact rows. If a PaCER side still has per-level rows, re-resolve from the native markers (`specs/05` §6.3 map `T`) before export (gap). |
 | `native["k"].trajectory` | `native.trajectory{k}` | 50×3 as stored. If missing or not 50 rows, synthesise it with §4 *Trajectory*. |
 | `native["k"].markers.{head,tail,x,y}` | `native.markers(k).{head,tail,x,y}` | 1×3 rows. Check `|x−head| = |y−head| = r` within 1e-6 (Lead-DBS would rescale them anyway). |
 | `native["k"].trajvector` | — | Not a Lead-DBS native field; omit. |
@@ -137,7 +139,7 @@ The flag also changes the manual view (Part 2 §8.1): 0 resets the roll to anter
 | `reference` | `mni` (see rule) | Lead-DBS's `mni` must be in **its** template space (default `MNI152NLin2009bAsym`). If `meta.template_space` differs: export `reference` as `mni`, or refuse when there is no `reference` block. |
 | `scrf` | `scrf` | We write none (brain-shift is a stub): omit the field. **Never** write `scrf` = `native`, because Lead-DBS would prefer it. |
 | `acpc` | `acpc` | Omit (optional; readers return NaN). |
-| `meta.orientation[k].roll_deg` | encoded in `y` only | Lead-DBS's displayed rotation = signed horizontal angle from anterior to `y − head`, positive toward −x (Part 2 §8.5). |
+| `meta.orientation[k].roll_deg` | encoded in `y` only | Lead-DBS's displayed rotation = signed horizontal angle from anterior to `y − head`, positive toward −x (Part 2 §11.5). |
 | `meta.reconstruct`, `meta.manual_correction` (except as above) | — | Not representable. |
 
 **Unilateral export:** `S` = highest present side index. A right-only file uses `1×1` cells/structs. A left-only file uses `1×2`, with element 1 `[]`, `markers(1)` fields `[]`, and `props(1)` = model string + 0.

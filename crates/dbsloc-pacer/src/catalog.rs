@@ -21,7 +21,7 @@ pub struct ElectrodeSpec {
 ///
 /// Centre-to-centre **pitch** is `contact_length + contact_spacing` = 2.0 mm, and the first
 /// contact centre lies `tip_length + contact_length/2` = 2.25 mm of arc from the tip. Contact
-/// span is `4·1.5 + 3·0.5` = 7.5 mm, the value the §156 width heuristic separates on.
+/// span is `4·1.5 + 3·0.5` = 7.5 mm, the value the §8.5 width rule separates on.
 pub fn medtronic_3389() -> ElectrodeSpec {
     ElectrodeSpec {
         name: "Medtronic 3389",
@@ -112,7 +112,7 @@ pub fn best_match(peak_s: &[f32]) -> (Option<ElectrodeSpec>, f64, f64) {
 }
 
 /// Contact span (first contact start → last contact end), the width the area-based fallback
-/// measures. `10_pacer` §156 splits 3389-class from 3387-class at 10.5 mm.
+/// measures. `10_pacer` §8.5 splits 3389-class from 3387-class at 10.5 mm.
 pub fn contact_span_mm(e: &ElectrodeSpec) -> f32 {
     const CONTACT_LEN_MM: f32 = 1.5;
     e.ring_contact_centers_mm[3] - e.ring_contact_centers_mm[0] + CONTACT_LEN_MM
@@ -178,7 +178,7 @@ mod tests {
         }
     }
 
-    /// `10_pacer` §156 splits the two classes at 10.5 mm of contact span.
+    /// `10_pacer` §8.5 splits the two classes at 10.5 mm of contact span.
     #[test]
     fn contact_span_matches_the_width_heuristic() {
         assert!((contact_span_mm(&medtronic_3389()) - 7.5).abs() < 1e-5);
