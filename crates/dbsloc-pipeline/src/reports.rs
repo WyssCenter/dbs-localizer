@@ -12,7 +12,7 @@ use dbsloc_reports::anonymize::{anonymize, free_text_fields, shift_for};
 use dbsloc_reports::dates::shift_days;
 use dbsloc_reports::model::{
     canonical_json, Group, Hemisphere, ImpedanceKind, Polarity as RecPolarity, Program,
-    ProgramContact, Severity, Snapshot, StimMode,
+    ProgramContact, Severity, Snapshot, StimMode, Vendor,
 };
 use dbsloc_reports::pdf::PdfDocument;
 use dbsloc_reports::vendors::ParseOptions;
@@ -24,9 +24,10 @@ use crate::bids::Subject;
 use crate::outputs::write_replacing;
 use crate::sha256::{sha256_hex, Sha256};
 use crate::vat::settings::{
-    check, label_is_valid, load, normalise, save, stimparameters_mat_path, stimulation_json_path,
-    write_stimparameters_mat, CaseSpec, Contact, Mode, ModelKind, Polarity, Side, Source,
-    StimError, Stimulation, SOURCES_PER_SIDE,
+    check, label_is_valid, label_mat_paths, load, normalise, save, save_unstamped,
+    stimparameters_mat_path, stimulation_json_path, strip_stimparameters_write_time,
+    write_stimparameters_mat, write_stimparameters_mat_unstamped, CaseSpec, Contact, Mode,
+    ModelKind, Polarity, Side, Source, StimError, Stimulation, SOURCES_PER_SIDE,
 };
 use crate::version::{GIT_HASH, VERSION};
 
@@ -227,8 +228,19 @@ pub fn anonymization_key_path(explicit: Option<&Path>) -> Result<PathBuf, Report
         })
 }
 
+pub fn key_created_warning(path: &Path) -> String {
+    format!(
+        "dbsloc: warning: report: W_REPORT_key_created: a new anonymisation key was created at {}; reports of subjects anonymised with another key will no longer line up",
+        path.display()
+    )
+}
+
 /// Reads the key file, creating 32 random bytes on first use.
 pub fn load_or_create_key(path: &Path) -> Result<Vec<u8>, ReportImportError> {
+    load_or_create_key_noting(path).map(|(key, _)| key)
+}
+
+pub fn load_or_create_key_noting(path: &Path) -> Result<(Vec<u8>, bool), ReportImportError> {
     let read = |p: &Path| -> Result<Vec<u8>, ReportImportError> {
         let bytes = std::fs::read(p)
             .map_err(|e| ReportImportError::Key(format!("{}: {e}", p.display())))?;
@@ -238,7 +250,7 @@ pub fn load_or_create_key(path: &Path) -> Result<Vec<u8>, ReportImportError> {
         Ok(bytes)
     };
     if path.is_file() {
-        return read(path);
+        return read(path).map(|k| (k, false));
     }
     if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
         std::fs::create_dir_all(parent)
@@ -261,9 +273,9 @@ pub fn load_or_create_key(path: &Path) -> Result<Vec<u8>, ReportImportError> {
                 std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))
                     .map_err(|e| ReportImportError::Key(format!("{}: {e}", path.display())))?;
             }
-            Ok(key.to_vec())
+            Ok((key.to_vec(), true))
         }
-        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => read(path),
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => read(path).map(|k| (k, false)),
         Err(e) => Err(ReportImportError::Key(format!("{}: {e}", path.display()))),
     }
 }
@@ -307,19 +319,35 @@ pub fn free_text_warning(record: &SessionReport) -> Option<String> {
     ))
 }
 
+pub struct AnonymizedFile {
+    pub key_created: Option<PathBuf>,
+    pub result: Result<SessionReport, ReportImportError>,
+}
+
 /// Parses `pdf`, anonymises it for `patient_key` (`sub-<id>`) and writes the record to `out`.
 pub fn anonymize_file(
     pdf: &Path,
     patient_key: &str,
     key_file: Option<&Path>,
     out: &Path,
-) -> Result<SessionReport, ReportImportError> {
-    let record = parse_and_stamp(pdf, false)?;
-    let key = load_or_create_key(&anonymization_key_path(key_file)?)?;
-    let shifted = anonymize(&record, shift_for(&key, patient_key));
-    let text = canonical_json(&shifted).map_err(|e| ReportImportError::Io(e.to_string()))?;
-    write_replacing(out, text.as_bytes()).map_err(|e| io_err(out, e))?;
-    Ok(shifted)
+) -> AnonymizedFile {
+    let mut key_created = None;
+    let result = (|| {
+        let record = parse_and_stamp(pdf, false)?;
+        let key_path = anonymization_key_path(key_file)?;
+        let (key, created) = load_or_create_key_noting(&key_path)?;
+        if created {
+            key_created = Some(key_path);
+        }
+        let shifted = anonymize(&record, shift_for(&key, patient_key));
+        let text = canonical_json(&shifted).map_err(|e| ReportImportError::Io(e.to_string()))?;
+        write_replacing(out, text.as_bytes()).map_err(|e| io_err(out, e))?;
+        Ok(shifted)
+    })();
+    AnonymizedFile {
+        key_created,
+        result,
+    }
 }
 
 /// The reports imported into a subject (`clinical/reports/index.json`); empty when there are none.
@@ -345,36 +373,84 @@ pub fn import_report(
     import_parsed(subject, record, &bytes, Some(&doc), opts)
 }
 
+struct TrueDates {
+    session: Option<String>,
+    birth: Option<String>,
+}
+
+fn is_vendor_folder(name: &str) -> bool {
+    Vendor::ALL.iter().any(|v| v.as_str() == name)
+}
+
+fn report_folder_parts<'a>(rel: &'a str, sha256: &str) -> Option<(&'a str, &'a str)> {
+    let (vendor, leaf) = rel.split_once('/')?;
+    let (session, hash) = leaf.split_once('_')?;
+    (is_vendor_folder(vendor) && hash.len() == 8 && sha256.get(..8) == Some(hash))
+        .then_some((vendor, session))
+}
+
+fn is_report_folder_name(rel: &str, sha256: &str) -> bool {
+    report_folder_parts(rel, sha256).is_some_and(|(_, session)| {
+        session.len() == 12 && session.chars().all(|c| c.is_ascii_digit())
+    })
+}
+
+fn is_undated_folder_name(rel: &str, sha256: &str) -> bool {
+    report_folder_parts(rel, sha256).is_some_and(|(_, session)| session == "unknown")
+}
+
+fn old_record(sub: &Subject, entry: &IndexEntry) -> Option<SessionReport> {
+    let path = reports_root(sub)
+        .join(&entry.folder)
+        .join(format!("sub-{}_desc-sessionreport.json", sub.subj_id));
+    std::fs::read_to_string(path)
+        .ok()
+        .and_then(|t| serde_json::from_str(&t).ok())
+}
+
+fn kept_true_dates(old: &SessionReport, true_dates: &TrueDates) -> bool {
+    let session_equal = old.session.date.is_some() && old.session.date == true_dates.session;
+    let birth_equal = match (&old.patient.date_of_birth, &true_dates.birth) {
+        (Some(a), Some(b)) => a == b,
+        _ => true,
+    };
+    session_equal && birth_equal
+}
+
+fn supersedable(sub: &Subject, entry: &IndexEntry, sha256: &str, true_dates: &TrueDates) -> bool {
+    is_report_folder_name(&entry.folder, sha256)
+        && old_record(sub, entry).is_some_and(|old| kept_true_dates(&old, true_dates))
+}
+
 fn check_shift_mismatch(
     sub: &Subject,
-    record: &SessionReport,
+    sha256: &str,
+    true_dates: &TrueDates,
     shift: Shift,
     folder: &str,
     warnings: &mut Vec<String>,
 ) {
-    let Some(dob) = record.patient.date_of_birth.as_deref() else {
+    let Some(dob) = true_dates.birth.as_deref() else {
         return;
     };
     let Some(expected) = shift_days(dob, shift.days) else {
         return;
     };
-    for entry in list_reports(sub)
-        .into_iter()
-        .filter(|e| e.anonymized && e.folder != folder)
-    {
-        let path = reports_root(sub)
-            .join(&entry.folder)
-            .join(format!("sub-{}_desc-sessionreport.json", sub.subj_id));
-        let existing = std::fs::read_to_string(&path)
-            .ok()
-            .and_then(|t| serde_json::from_str::<SessionReport>(&t).ok())
-            .and_then(|r| r.patient.date_of_birth);
+    for entry in list_reports(sub).into_iter().filter(|e| {
+        e.anonymized
+            && e.folder != folder
+            && !(e.sha256 == sha256 && supersedable(sub, e, sha256, true_dates))
+    }) {
+        if !is_vendor_folder(entry.folder.split('/').next().unwrap_or_default()) {
+            continue;
+        }
+        let existing = old_record(sub, &entry).and_then(|r| r.patient.date_of_birth);
         if let Some(existing) = existing {
             if existing != expected {
-                warnings.push(format!(
-                    "dbsloc: warning: report: W_REPORT_shift_mismatch: the anonymisation key differs from the one used for {}: its shifted date of birth is {existing}, this key gives {expected}",
-                    entry.folder
-                ));
+                warnings.push(
+                    "dbsloc: warning: report: W_REPORT_shift_mismatch: the stored date of birth of an earlier anonymised report of this subject does not match the one this key gives: either the anonymisation key differs from the one used before, or that report was written by version 0.1.0 or a build before the zero-shift fix and kept its true dates. Import this subject's reports again with the key you want to keep (the original PDFs are needed)"
+                        .to_owned(),
+                );
             }
             return;
         }
@@ -413,16 +489,33 @@ fn import_parsed(
 ) -> Result<ImportReport, ReportImportError> {
     stamp_parser(&mut record);
     let mut warnings: Vec<String> = Vec::new();
+    let mut original_dates: Option<TrueDates> = None;
     let patient_key = format!("sub-{}", subject.subj_id);
     if record.source.sha256.is_empty() {
         record.source.sha256 = sha256_hex(pdf_bytes);
     }
     if opts.anonymize {
-        let key = load_or_create_key(&anonymization_key_path(opts.key_file.as_deref())?)?;
+        let key_path = anonymization_key_path(opts.key_file.as_deref())?;
+        let (key, created) = load_or_create_key_noting(&key_path)?;
+        if created {
+            warnings.push(key_created_warning(&key_path));
+        }
         let shift = shift_for(&key, &patient_key);
         let shifted = anonymize(&record, shift);
         let folder = record_folder(&shifted);
-        check_shift_mismatch(subject, &record, shift, &folder, &mut warnings);
+        let true_dates = TrueDates {
+            session: record.session.date.clone(),
+            birth: record.patient.date_of_birth.clone(),
+        };
+        check_shift_mismatch(
+            subject,
+            &record.source.sha256,
+            &true_dates,
+            shift,
+            &folder,
+            &mut warnings,
+        );
+        original_dates = Some(true_dates);
         record = shifted;
         if let Some(w) = free_text_warning(&record) {
             warnings.push(w);
@@ -500,9 +593,103 @@ fn import_parsed(
         derive_labels(subject, &record, &record_rel, opts, &mut out, &mut warnings);
     }
 
-    update_index(subject, &record, &folder, &out)?;
+    let removed = match &original_dates {
+        Some(true_dates) => {
+            remove_superseded(subject, &record, &folder, true_dates, &out, &mut warnings)
+        }
+        None => Vec::new(),
+    };
+    update_index(subject, &record, &folder, &out, &removed)?;
     out.warnings = warnings;
     Ok(out)
+}
+
+fn inside_reports(root: &Path, rel: &str, new_folder: &str) -> Option<PathBuf> {
+    let root = root.canonicalize().ok()?;
+    let old = root.join(rel).canonicalize().ok()?;
+    let new = root.join(new_folder).canonicalize().ok()?;
+    let inside = old.starts_with(&root) && old != root;
+    let overlaps = old == new || new.starts_with(&old);
+    (inside && !overlaps).then_some(old)
+}
+
+fn remove_superseded(
+    sub: &Subject,
+    record: &SessionReport,
+    folder: &str,
+    true_dates: &TrueDates,
+    out: &ImportReport,
+    warnings: &mut Vec<String>,
+) -> Vec<String> {
+    let root = reports_root(sub);
+    let sha = &record.source.sha256;
+    let short = sha.get(..8).unwrap_or(sha);
+    let mut removed = Vec::new();
+    let old: Vec<IndexEntry> = list_reports(sub)
+        .into_iter()
+        .filter(|e| e.anonymized && &e.sha256 == sha && e.folder != folder)
+        .collect();
+    for entry in old {
+        if is_undated_folder_name(&entry.folder, sha) {
+            warnings.push(format!(
+                "dbsloc: warning: report: W_REPORT_superseded: an earlier anonymised copy of this report (source checksum {short}) has no session date and could not be checked; remove it yourself if it kept its true dates (clinical/reports/index.json lists it)"
+            ));
+            continue;
+        }
+        if !is_report_folder_name(&entry.folder, sha) {
+            warnings.push(format!(
+                "dbsloc: warning: report: W_REPORT_superseded: an earlier anonymised copy of this report (source checksum {short}) was not removed because its entry in clinical/reports/index.json does not name a report folder of this subject; check that file and remove the copy yourself if it kept its true dates"
+            ));
+            continue;
+        }
+        let remaining = || {
+            let stale = entry
+                .labels
+                .iter()
+                .filter(|l| !out.labels_written.contains(l) && !out.labels_unchanged.contains(l))
+                .filter(|l| stimulation_json_path(&sub.subj_dir, &sub.subj_id, l).is_file())
+                .count();
+            if stale == 0 {
+                String::new()
+            } else {
+                format!(
+                    "; {stale} stimulation label folder(s) created from it remain and carry the earlier date in their names and inside their files: list them with `dbsloc stim list <dataset_root> {}`, delete them, and create again under a new name the settings you still need (`dbsloc stim set` or the stimulation panel)",
+                    sub.subj_id
+                )
+            }
+        };
+        if !root.join(&entry.folder).exists() {
+            if entry.session.is_some() && entry.session == true_dates.session {
+                warnings.push(format!(
+                    "dbsloc: warning: report: W_REPORT_superseded: an earlier anonymised copy of this report (source checksum {short}) had kept its true dates and its record folder was already deleted; its index entry was removed{}",
+                    remaining()
+                ));
+                removed.push(entry.folder);
+            }
+            continue;
+        }
+        if !supersedable(sub, &entry, sha, true_dates) {
+            continue;
+        }
+        let Some(old_dir) = inside_reports(&root, &entry.folder, folder) else {
+            warnings.push(format!(
+                "dbsloc: warning: report: W_REPORT_superseded: an earlier anonymised copy of this report (source checksum {short}) kept its true dates but was not removed because it does not lie safely inside clinical/reports; check clinical/reports/index.json and remove it yourself"
+            ));
+            continue;
+        };
+        if std::fs::remove_dir_all(&old_dir).is_err() {
+            warnings.push(format!(
+                "dbsloc: warning: report: W_REPORT_superseded: an earlier anonymised copy of this report (source checksum {short}) kept its true dates but could not be removed; check clinical/reports/index.json and remove it yourself"
+            ));
+            continue;
+        }
+        warnings.push(format!(
+            "dbsloc: warning: report: W_REPORT_superseded: an earlier anonymised copy of this report (source checksum {short}) had kept its true dates and was removed{}",
+            remaining()
+        ));
+        removed.push(entry.folder);
+    }
+    removed
 }
 
 fn safe_file_name(name: &str) -> String {
@@ -553,6 +740,7 @@ fn update_index(
     record: &SessionReport,
     folder: &str,
     out: &ImportReport,
+    removed: &[String],
 ) -> Result<(), ReportImportError> {
     let path = index_path(sub);
     let mut index = read_index(&path);
@@ -579,7 +767,9 @@ fn update_index(
         sha256: record.source.sha256.clone(),
         labels,
     };
-    index.reports.retain(|e| e.folder != folder);
+    index
+        .reports
+        .retain(|e| e.folder != folder && !removed.contains(&e.folder));
     index.reports.push(entry);
     index.reports.sort_by(|a, b| a.folder.cmp(&b.folder));
     let mut text =
@@ -816,9 +1006,19 @@ fn content_sha(stim: &Stimulation) -> String {
     sha256_hex(value.to_string().as_bytes())
 }
 
+fn has_write_time(stim: &Stimulation) -> bool {
+    !stim.provenance.written_at.is_empty()
+        || stim
+            .provenance
+            .software
+            .get("written_at")
+            .is_some_and(|v| !v.is_null())
+}
+
 enum Outcome {
     Written(String),
     Unchanged(String),
+    UnchangedStampKept(String),
 }
 
 struct LabelJob<'a> {
@@ -914,17 +1114,38 @@ fn derive_label(
         }
         if let Ok(existing) = load(&sub.subj_dir, &sub.subj_id, &candidate) {
             if content_sha(&existing) == wanted {
+                if record.anonymized {
+                    let failed = label_mat_paths(&sub.subj_dir, &sub.subj_id, &candidate)
+                        .iter()
+                        .filter(|mat| strip_stimparameters_write_time(mat).is_err())
+                        .count();
+                    if has_write_time(&existing) {
+                        save_unstamped(&sub.subj_dir, &existing).map_err(|e| e.to_string())?;
+                    }
+                    if failed > 0 {
+                        return Ok(Outcome::UnchangedStampKept(candidate));
+                    }
+                }
                 return Ok(Outcome::Unchanged(candidate));
             }
         }
         suffix += 1;
     };
     stim.label.clone_from(&label);
-    save(&sub.subj_dir, &stim).map_err(|e| e.to_string())?;
+    if record.anonymized {
+        save_unstamped(&sub.subj_dir, &stim)
+    } else {
+        save(&sub.subj_dir, &stim)
+    }
+    .map_err(|e| e.to_string())?;
     let saved = load(&sub.subj_dir, &sub.subj_id, &label).map_err(|e| e.to_string())?;
     let mat = stimparameters_mat_path(&sub.subj_dir, &sub.subj_id, "native", &label);
-    let mat_warnings =
-        write_stimparameters_mat(&mat, &saved, [0.0, 0.0]).map_err(|e| e.to_string())?;
+    let mat_warnings = if record.anonymized {
+        write_stimparameters_mat_unstamped(&mat, &saved, [0.0, 0.0])
+    } else {
+        write_stimparameters_mat(&mat, &saved, [0.0, 0.0])
+    }
+    .map_err(|e| e.to_string())?;
     warnings.extend(mat_warnings);
     Ok(Outcome::Written(label))
 }
@@ -998,6 +1219,7 @@ fn derive_labels(
         }
     }
     let include_zero = opts.groups.is_some();
+    let mut stamp_kept = 0usize;
     for job in jobs {
         if date.len() < 8 {
             out.labels_failed
@@ -1015,8 +1237,17 @@ fn derive_labels(
         ) {
             Ok(Outcome::Written(l)) => out.labels_written.push(l),
             Ok(Outcome::Unchanged(l)) => out.labels_unchanged.push(l),
+            Ok(Outcome::UnchangedStampKept(l)) => {
+                stamp_kept += 1;
+                out.labels_unchanged.push(l);
+            }
             Err(reason) => out.labels_failed.push((job.base, reason)),
         }
+    }
+    if stamp_kept > 0 {
+        warnings.push(format!(
+            "dbsloc: warning: report: W_REPORT_stamp_kept: {stamp_kept} stimulation label(s) have a stimparameters file whose provenance still records when an earlier import ran and could not be cleaned safely; running the vat step again with `dbsloc run <dataset_root> <subj_id> --stages vat --overwrite-approved` (GUI: Rerun all selected steps) rewrites those files without it; for a subject without VTA results, `dbsloc stim show <dataset_root> <subj_id> <label> --json > label.json` followed by `dbsloc stim set <dataset_root> <subj_id> <label> --from label.json` does the same for the native file (it writes zero volumes there); this warning repeats on every anonymised import while a file stays uncleaned"
+        ));
     }
 }
 

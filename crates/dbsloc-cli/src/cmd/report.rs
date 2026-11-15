@@ -9,8 +9,9 @@ use dbsloc_pipeline::options::RunOptions;
 use dbsloc_pipeline::paths;
 use dbsloc_pipeline::reports::model::{Group, Hemisphere, Polarity, Program, StimMode};
 use dbsloc_pipeline::reports::{
-    anonymize_file, anonymize_preview, free_text_warning, import_report, inspect, list_reports,
-    ImportOptions, IndexEntry, ReportImportError, SessionReport, SnapshotChoice,
+    anonymize_file, anonymize_preview, free_text_warning, import_report, inspect,
+    key_created_warning, list_reports, ImportOptions, IndexEntry, ReportImportError, SessionReport,
+    SnapshotChoice,
 };
 use serde_json::{json, Value};
 
@@ -25,7 +26,7 @@ pub enum ReportCmd {
     Import(ImportArgs),
     /// list the session reports imported into a subject
     List(ListArgs),
-    /// parse a PDF and write the anonymised record to a file outside any dataset
+    /// parse a PDF and write the anonymised record to a file outside any dataset (make again any file produced by version 0.1.0 or a build before the zero-shift fix: its dates may be unshifted)
     Anonymize(AnonymizeArgs),
 }
 
@@ -439,8 +440,11 @@ fn anonymize_cmd(a: &AnonymizeArgs) -> CmdResult {
     };
     let out = paths::absolute(&a.out);
     let key_file = a.key_file.as_deref().map(paths::absolute);
-    let record = anonymize_file(&a.pdf, &patient_key, key_file.as_deref(), &out)
-        .map_err(|e| report_fail(&e))?;
+    let done = anonymize_file(&a.pdf, &patient_key, key_file.as_deref(), &out);
+    if let Some(p) = &done.key_created {
+        err_line(&key_created_warning(p));
+    }
+    let record = done.result.map_err(|e| report_fail(&e))?;
     if let Some(w) = free_text_warning(&record) {
         err_line(&w);
     }
