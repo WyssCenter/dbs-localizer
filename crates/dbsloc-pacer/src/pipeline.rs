@@ -35,7 +35,7 @@ pub struct PacerConfig {
     pub metal_threshold: f32,
     /// How far (mm) the half-maximum distal edge of the intensity profile lies beyond the
     /// real distal end of the metal, for the distal-edge zero calibration in
-    /// `pacer_fiducials` (`specs/10` §8 step 8a). Measured against the Lead-Tutor experts;
+    /// `pacer_fiducials` (`specs/10` §8a). Measured against the Lead-Tutor experts;
     /// a phantom painted without blooming wants `0.0`.
     pub distal_bloom_mm: f64,
     /// Brain mask on the CT grid in the volume's `(k, j, i)` layout (`specs/10` §1); eroded as
@@ -137,7 +137,7 @@ fn cloud_centroid(points: &[[f64; 3]]) -> [f64; 3] {
     c
 }
 
-/// Area-based fallback when individual contacts are not resolved (`10_pacer` §156): a measured
+/// Area-based fallback when individual contacts are not resolved (`10_pacer` §8.5): a measured
 /// contact-area width below the 3387 contact span (10.5 mm; the 3389 spans 7.5 mm) implies the
 /// tighter 3389-class spacing. The threshold is derived from the catalogue rather than written
 /// as a literal, so it stays correct if the geometry is amended.

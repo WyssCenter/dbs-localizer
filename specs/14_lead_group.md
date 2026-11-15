@@ -96,7 +96,7 @@ Field inventory from `ea_initializeM.m` (creation defaults), `ea_refresh_lg.m` (
 |-------|---------------|---------|
 | `name` | `char` | Patient folder name `sub-<id>`. |
 | `elmodel` | `char` | Electrode model (`specs/09` name). From the patient's reconstruction (`props.elmodel`) unless the group forces a model (`ui.elmodelselect` > 1); `'Medtronic 3389'` when an old reconstruction stores none. |
-| `coords_mm` | `cell` 1×2 of K×3 `double` | Template-space contact centres, **recomputed from the markers** with the model geometry (the same marker → contacts affine as `specs/05` §6 / `specs/12` §4). Empty `[]` for an absent side. |
+| `coords_mm` | `cell` 1×2 of K×3 `double` | Template-space contact centres, **recomputed from the markers** with the model geometry (the same marker → contacts affine as `specs/05` §6.3 / `specs/12` §4). Empty `[]` for an absent side. |
 | `trajectory` | `cell` 1×2 of M×3 | Template-space trajectory (50 rows, `specs/12` §3.2). |
 | `markers` | `struct` 1×2 with `head`, `tail`, `x`, `y` (1×3 each, `[]` for an absent side) | Template-space markers. |
 | `coords_acpc` | `cell` 1×2 or NaN | AC/PC coordinates if the reconstruction has them. |
@@ -343,7 +343,7 @@ The batch order is the group's patient order. Selection = all included patients,
 
 ### 5.1 Manifest extension
 
-The scene manifest (`specs/08` §11, `scene_manifest.rs`) gains `manifest_version: 2` with a `group` block; version-1 files keep working. One manifest per group view: `<group folder>/viz/scene_manifest.json`.
+The scene manifest (`specs/08` §7, version 2 in §7.3; `scene_manifest.rs`) gains `manifest_version: 2` with a `group` block; version-1 files keep working. One manifest per group view: `<group folder>/viz/scene_manifest.json`.
 
 | Key | Content |
 |-----|---------|
@@ -357,7 +357,7 @@ The scene manifest (`specs/08` §11, `scene_manifest.rs`) gains `manifest_versio
 
 ### 5.2 Rendering rules (reference behaviour)
 
-- Leads are drawn in template space from each subject's markers and model (`specs/08` §11 electrode bodies); contacts from `coords_mm` (recomputed from markers).
+- Leads are drawn in template space from each subject's markers and model (`specs/08` §11.1.2 electrode bodies); contacts from `coords_mm` (recomputed from markers).
 - **Colour by group:** insulation and contacts take the group colour. **Highlight active contacts:** active contacts red `[0.9 0.1 0.1]`, opaque, with a pale edge `[0.9 0.9 0.7]` and normal size; inactive contacts smaller (half marker size). *Show active* / *show passive* hide the other set.
 - **Colour by clinical variable** (`colorpointcloudcheck`): each contact is a point coloured by its value mapped linearly from [min, max] of the shown values onto the colour map; default map blue `[0 0 1]` → white → red `[1 0 0]` (Lead-DBS default; it additionally applies a contrast stretch whose exact form is **unverified**, we map linearly). NaN values are not drawn. A per-patient variable colours all active contacts of the patient (the reference expands it to every contact with a valid coordinate of that side); per-hemisphere uses the side's column; per-contact / per-contact-pair values map to contacts / contact midpoints (§10.1).
 - **VTAs:** each side's template-space VTA surface (marching cubes at 0.5 on the binary VTA, or the mesh written by `specs/07`), translucent through the OIT pass (`specs/08` §6: yellow, α 0.35 default) or tinted with the group colour when colouring by group.
@@ -386,7 +386,7 @@ With `mirror` on, every patient is duplicated: the copy's side 1 takes the origi
 
 - Electrode bodies are instanced per catalogue model (one mesh per model, one transform + colour per lead); contacts as instanced quads or spheres.
 - Target: 1000 leads (500 bilateral patients) with 1000 VTA meshes of ≤ 5 000 triangles each, mirroring off, renders at ≥ 30 frames per second on the project's reference integrated adapter (`docs/gpu_vendor_report.md`) and loads in ≤ 10 s from cached meshes. These numbers are targets, not measured (**unverified**).
-- VTA meshes are cached per file (keyed by content hash) like atlas meshes (`specs/08` §11 mesh cache).
+- VTA meshes are cached per file (keyed by content hash) like atlas meshes (`specs/08` §5.3 mesh cache).
 
 ### 5.6 Optional layers (later in the release)
 
@@ -815,7 +815,7 @@ The *Group analysis* panel of the desktop GUI runs the three explorers of §7–
 - Åström M, Diczfalusy E, Martens H, Wårdell K. Relationship between neural activation and electric field distribution during deep brain stimulation. *IEEE Trans Biomed Eng* 2015;62:664–672 (**unverified**; source of the 61 / 351 V/m sigmoid thresholds as used by the reference).
 - Lead-DBS 3.2.1 (GPL-3), git `5b1008d` — reference behaviour only; read-only.
 
-Cross-references: `specs/00` §5.2, §6 (batch, locks), `specs/01` §7a (derivative names), `specs/04` §5, §5.4a (SyN engine, template bridge), `specs/05` §6, §8 (Reco v2), `specs/07` (stimulation settings, VTA / E-field outputs, statistics writer; aligned 2026-10-23), `specs/08` §11 (scene manifest, meshes, navigation), `specs/09` (electrode catalogue), `specs/11` (atlas sets), `specs/12` (MAT conventions), `specs/13` Part 2 (batch), `specs/15` (connectomes, seed maps, fibre storage; aligned 2026-10-23), `docs/SERVER_CLIENT_PLAN.md`; owner decisions §15.
+Cross-references: `specs/00` §5.2, §6 (batch, locks), `specs/01` §7a (derivative names), `specs/04` §5, §5.4a (SyN engine, template bridge), `specs/05` §6, §8 (Reco v2), `specs/07` (stimulation settings, VTA / E-field outputs, statistics writer; aligned 2026-10-23), `specs/08` §5.3, §7, §11.1.5 (meshes and mesh cache, scene manifest, navigation), `specs/09` (electrode catalogue), `specs/11` (atlas sets), `specs/12` (MAT conventions), `specs/13` Part 2 (batch), `specs/15` (connectomes, seed maps, fibre storage; aligned 2026-10-23), `docs/SERVER_CLIENT_PLAN.md`; owner decisions §15.
 
 **Decisions taken in this spec (for the orchestrator):** D1 twin written as MAT v7, JSON primary; D2 group folder independent of `output_dir`; D3 groups renumbered 1…G at write; D4 `stats` derived, never authoritative; D5 own SyN flip transform, Lead-DBS one importable; D6 binary VTA allowed at sweet-spot level *VTAs*; D7 flipped copies get their source hemisphere's score; D8 exact binomial p; D9 FDR kept in the reference form; D10 server twin with dataset-relative patient paths; D11 explorer objects (`.sweetspot`, `.fibfilt`, `.netmap`) neither read nor written; D12 stimulation NIfTIs uncompressed `.nii` (aligned 2026-10-23: `07` §5.1 applies it to every label).
 

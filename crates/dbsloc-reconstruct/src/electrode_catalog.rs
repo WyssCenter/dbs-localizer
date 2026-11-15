@@ -169,8 +169,9 @@ impl ElectrodeGeometry {
 
     /// Arc from the tip apex to the most-distal **level** centre.
     ///
-    /// `specs/09` §3.1 puts `z = 0` at the apex. When the tip is insulating the first contact
-    /// starts after it, so the centre is `tip_length + contact_length/2`; when the tip **is**
+    /// `specs/09` §3.1 / §10.1: the apex is at `z = −z_1`, with this arc as `z_1`. When the tip
+    /// is insulating the first contact starts after it, so the centre is
+    /// `tip_length + contact_length/2`; when the tip **is**
     /// the contact (`tipiscontact`) the metal reaches the apex and the centre is `tip_length/2`.
     /// PaCER calibrates `t0` against this distance, so getting it wrong shifts every contact
     /// along the shaft by the difference — 1.5 mm for a 1.5 mm tip.

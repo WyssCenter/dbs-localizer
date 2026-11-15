@@ -319,7 +319,7 @@ fn mean_level_spacing(electrode: &ElectrodeGeometry, contacts: &[V3]) -> Option<
 }
 
 /// Mean distance between neighbouring level centres of the contacts the markers imply
-/// (`specs/05` §6 marker affine, stretched along the lead), `specs/12` §10 *Electrode Spacing*.
+/// (`specs/05` §6.3 marker affine, stretched along the lead), `specs/12` §10 *Electrode Spacing*.
 pub(crate) fn live_spacing_mm(
     electrode: &ElectrodeGeometry,
     head: V3,

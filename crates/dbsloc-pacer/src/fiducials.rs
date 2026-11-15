@@ -37,7 +37,7 @@ pub struct PacerSide {
     pub profile: Vec<f32>,
     pub profile_s_mm: Vec<f32>,
     /// Arc position (mm, on `profile_s_mm`) of the tip apex, calibrated on the distal metal
-    /// edge (`specs/10` §8 step 8a).
+    /// edge (`specs/10` §8a).
     pub apex_s_mm: f64,
 }
 
@@ -140,7 +140,7 @@ fn hundredths(mm: f64) -> i64 {
     (mm * 100.0).round() as i64
 }
 
-/// Check the calibrated apex against the skeleton it is placed on (`specs/10` §8 step 8a).
+/// Check the calibrated apex against the skeleton it is placed on (`specs/10` §8a).
 ///
 /// The apex may lie at most [`APEX_BEFORE_SKELETON_TOL_MM`] before the skeleton start, and
 /// every level centre must fall on the skeleton: [`inv_poly_arc_length3`] clamps arc lengths
@@ -190,7 +190,7 @@ fn distal_centre(poly: &PolyR3) -> [f64; 3] {
 /// typing otherwise.
 ///
 /// The tip apex is calibrated on the measured **distal metal edge** of the intensity profile
-/// (`specs/10` §8 step 8a) whenever the profile shows one: the edge plus `distal_bloom_mm`
+/// (`specs/10` §8a) whenever the profile shows one: the edge plus `distal_bloom_mm`
 /// is the distal end of the metal, and the catalogue says how far that is from the apex.
 /// Without an edge the lead is refused (`NoDistalEdge`) rather than placed from PaCER's own
 /// `t0` (peaks or contact area): on real post-op CT the contacts bloom into one plateau, so

@@ -1,6 +1,6 @@
 # Addendum — Interactive volume viewer (NIfTI, desktop)
 
-**Status:** Phase B addendum to [`08_visualization.md`](08_visualization.md)  
+**Status:** Addendum to [`08_visualization.md`](08_visualization.md)  
 **Scope v1:** **Desktop only** (`dbsloc-viz` / `dbs-localizer checkreg`); **NIfTI** inputs (`.nii`, `.nii.gz`). **Out of scope v1:** DICOM P10 ingest, PACS/DICOMweb, browser-based viewer.  
 **Integration:** Reuses checkreg **manifest JSON** (see [`03_coregistration.md`](03_coregistration.md) §12 and the pipeline gate `crates/dbsloc-pipeline/src/checkreg.rs`, §12.4a). **Normative for:** interactive QC of **coregistration** and **normalization** (and future brainshift-class pairs) when volumes share the same index grid as today’s `gencheckregpair` path.
 
@@ -130,7 +130,7 @@ A plain look at one NIfTI image, with no registration pairing: the embeddable pa
 
 - DICOM file / network ingest; **C-FIND/C-MOVE**; DICOMweb.
 - Web viewer (MIT OHIF profile)—**future addendum**.
-- True **GPU raycast** MIP/MinIP/isosurface—**phase 2** in [`08_visualization.md`](08_visualization.md) 3D section.
+- True **GPU raycast** MIP/MinIP/isosurface — not implemented; the 3D viewer meshes isosurfaces on the CPU ([`08_visualization.md`](08_visualization.md) §4, §11.1.8).
 - Cross-volume **resampling** when grids differ (viewer assumes aligned grids; resampling is pipeline’s job).
 
 ---
@@ -152,4 +152,4 @@ A plain look at one NIfTI image, with no registration pairing: the embeddable pa
 
 ---
 
-*This addendum is normative for interactive viewer behavior; [`08_visualization.md`](08_visualization.md) remains normative for batch D2/D3 pipeline outputs.*
+*This addendum is normative for interactive viewer behavior; [`08_visualization.md`](08_visualization.md) remains normative for the scene outputs and the 3D viewer.*

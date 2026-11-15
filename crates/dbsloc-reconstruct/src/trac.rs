@@ -18,10 +18,9 @@
 //! reported the centreline *extremes* as `head`/`tail`. On real data that produced a 180 mm
 //! head→tail for a 9 mm lead.
 //!
-//! `specs/05` §4.2 keys the search template off `templates/electrode_contacts/{ct,mr}`; that is
-//! Lead-DBS data and is not used here. The comb is derived from the catalogue instead
-//! (`ElectrodeGeometry`), which also makes it correct for leads the fixed 4-contact template
-//! does not describe.
+//! No template images are used for the contact search of `specs/05` §4.2. The comb is derived
+//! from the catalogue (`ElectrodeGeometry`), which also makes it correct for leads a fixed
+//! 4-contact template would not describe.
 
 use ndarray::Array3;
 
@@ -263,7 +262,7 @@ pub fn trace_side(
 }
 
 /// CORE alone along a line supplied by the caller, `deep` below the expected tip and `shallow`
-/// above the most-proximal level (`specs/05` §5).
+/// above the most-proximal level (`specs/05` §4.2).
 ///
 /// For an axis that did not come from the TRAC walk: a metal-axis refinement of it, or a line
 /// fitted to the metal itself when the walk could not seed. Placement, the metal-extent check
@@ -1135,8 +1134,8 @@ fn metal_edges(prof: &[f64], thr: f64, bridge: usize, min_len: usize) -> Option<
 
 /// Locate the lead along the fitted line and place `head`/`tail` from the catalogue.
 ///
-/// `specs/05` §4.2 cross-correlates against `templates/electrode_contacts/{ct,mr}` — Lead-DBS
-/// data, not used here. The first attempt built the equivalent template from the catalogue as a
+/// `specs/05` §4.2 (CORE) does not cross-correlate against template images. The first attempt
+/// built the equivalent template from the catalogue as a
 /// comb of contact boxcars, which is right in principle and wrong in practice: measured on
 /// `sub-76325`, a real normalised post-op CT samples the lead as **one continuous 11 mm plateau**
 /// of 1200–2000 HU, not four resolvable contacts, because blooming around metal is wider than

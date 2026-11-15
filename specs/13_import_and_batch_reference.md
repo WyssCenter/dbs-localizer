@@ -319,7 +319,7 @@ All pre-op images in the index are used: each non-anchor pre-op image is coregis
 
 #### 6.3 Reconstruction method defaults
 
-`prefs.reco.method.MRI` = TRAC/CORE (Horn 2015); `prefs.reco.method.CT` = PaCER (Husch 2017). In multi-patient runs these prefs override the GUI choice (§8.2).
+`prefs.reco.method.MRI` = TRAC/CORE (Horn 2015); `prefs.reco.method.CT` = PaCER (Husch 2018). In multi-patient runs these prefs override the GUI choice (§8.2).
 
 ### 7. Acceptance checks — Part 1
 
@@ -412,7 +412,7 @@ One options record is built from the GUI once and shared by all selected subject
 
 | Lead-DBS behaviour | In `specs/01` §8.4 | Note for the implementer (state before 2026-10-22; the status column and the paragraph after the table give the current state) |
 |---|---|---|
-| Dataset root chosen in a dialog; `rawdata/`, `sourcedata/`, `derivatives/leaddbs/` created | yes | §8.4 Destination step |
+| Dataset root chosen in a dialog; `rawdata/`, `sourcedata/`, `derivatives/leaddbs/` created | yes | `01` §8.4.7 Destination step |
 | `dataset_description.json` when missing | partial | dbsloc writes `BIDSVersion 1.9.0`, no `LeadDBSVersion`, no `.bidsignore` |
 | Subject id derived from folder name, cleaned silently | partial | dbsloc asks for the id with validation (better); offer folder name as default |
 | Multi-subject import in one go (several folders → several subjects) | missing | wizard is one subject per run |
@@ -420,7 +420,7 @@ One options record is built from the GUI once and shared by all selected subject
 | Converted series staged in `rawdata/sub-<id>/unsorted/` and resumable later | missing | dbsloc keeps state only in the wizard |
 | dcm2niix: gzip + BIDS sidecar | yes | |
 | dcm2niix: ignore localizer / derived / 2-D (`-i y`) | missing | add `-i y` |
-| File-name pattern with protocol, sequence, date-time, series number, description | partial | dbsloc uses `%s_%p_%d`; date-time not shown |
+| File-name pattern with protocol, sequence, date-time, series number, description | partial | dbsloc uses `%f_%p_%z_%t_%s_%d` (`DCM2NIIX_ARGS`), the same tokens |
 | Classification table with Include / session / type / modality / acq / run / task | partial | dbsloc: session, suffix, acq, remove; no run/task, no func/dwi |
 | Lookup-table suggestion (regex on name, last match wins, user-editable, persisted) | partial | dbsloc: fixed rules on description + `Modality` tag (CT from DICOM `Modality`, more robust); not user-editable |
 | Unmatched rows default to not included | missing | dbsloc defaults unmatched to pre-op T1w included — consider "unassigned" |
@@ -440,7 +440,7 @@ One options record is built from the GUI once and shared by all selected subject
 | Import exclusive of processing in the same run | n/a | dbsloc import is a separate wizard |
 | Legacy folder migration | missing | `specs/01` §8.3 non-goal; legacy name table in §2.8 above if ever needed |
 | Headless import command | missing | candidate: `dbsloc import --root --subject --item session:suffix[:acq]=path` over `dbsloc_pipeline::import` |
-| Per-subject post-op modality choice when CT and MR both exist | missing | reference: MR/CT/None choice stored per subject; dbsloc always picks MRI when both exist (`specs/01` §10 step 5) |
+| Per-subject post-op modality choice when CT and MR both exist | partial | reference: MR/CT/None choice stored per subject; dbsloc: `Auto` picks CT unless a stored choice says MRI, and `ct` / `mri` force one (`specs/01` §10 step 5, `bids.rs` `choose_postop_modality`); no `None` |
 | Exclude an image without deleting it | missing in both | |
 | Anchor = first by prenii order, acq order iso > ax > cor > sag | partial | dbsloc picks first suffix but per-suffix file by path sort, not acq order |
 | Batch: per-patient sequential, continue on error with warning | missing (CLI / GUI single subject) | add a batch runner: per-subject loop, error captured per subject, summary table + exit code |

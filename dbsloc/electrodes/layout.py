@@ -33,8 +33,8 @@ class ElectrodeLayout:
     """
     Resolved geometry of one lead in its local **RAS-like** model frame.
 
-    Origin is the centre of the most-distal *level* (not the tip apex, which ``specs/09`` §3.1
-    uses), so ``level_z_mm[0] == 0`` and the origin coincides with the ``head`` fiducial that
+    Origin is the centre of the most-distal *level* (``specs/09`` §3.1; the tip apex lies at
+    ``-z_1``), so ``level_z_mm[0] == 0`` and the origin coincides with the ``head`` fiducial that
     reconstruction solves for. ``+z`` runs proximally along the shaft.
     """
 
