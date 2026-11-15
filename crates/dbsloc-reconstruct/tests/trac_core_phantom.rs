@@ -112,7 +112,7 @@ fn build_phantom_on(
         .enumerate()
         .map(|(k, &z)| {
             let half = if k == 0 && e.tip_is_contact {
-                0.5 * e.tip_length_mm.max(e.contact_length_mm)
+                0.5 * e.tip_length_mm
             } else {
                 0.5 * e.contact_length_mm
             };

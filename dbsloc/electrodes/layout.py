@@ -78,13 +78,19 @@ def _level_pitches(spec: ElectrodeSpec, n_levels: int) -> tuple[float, ...]:
     ``eldist`` is a single nominal pitch taken from the *second* spacing value (``specs/09``
     §2.1), so it is wrong for the first gap of the non-uniform SEEG/depth leads. Those rows
     carry one gap per level, so the per-gap pitch is used directly where it is available.
+    After a tip contact the first pitch uses the tip length for the most distal level
+    (``specs/09`` §10.1), so it differs from ``contact_length + gap`` by ``(TL - CL) / 2``.
     """
     cl = float(spec.contact_length)
     cs = spec.contact_spacing
     n_gaps = max(0, n_levels - 1)
     if isinstance(cs, list) and len(cs) == n_gaps:
-        return tuple(float(g) + cl for g in cs)
-    return tuple(float(spec.eldist) for _ in range(n_gaps))
+        pitches = [float(g) + cl for g in cs]
+    else:
+        pitches = [float(spec.eldist) for _ in range(n_gaps)]
+    if spec.tipiscontact and pitches:
+        pitches[0] += 0.5 * (float(spec.tip_length) - cl)
+    return tuple(pitches)
 
 
 def _level_offsets(

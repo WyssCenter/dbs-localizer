@@ -2621,12 +2621,12 @@ impl RefinePanel {
             return;
         };
         let half = 0.5 * e.contact_length_mm.max(0.0);
-        let tip = if e.tip_is_contact {
-            0.0
+        let tip_half = 0.5 * e.tip_length_mm.max(0.0);
+        let z_bottom = if e.tip_is_contact {
+            z0 - tip_half
         } else {
-            e.tip_length_mm.max(0.0)
+            z0 - half - 2.0 * tip_half
         };
-        let z_bottom = z0 - half - tip;
         let z_top = z1 + half + MODEL_DIAGRAM_SHAFT_MM;
         let line = ui.text_style_height(&egui::TextStyle::Small);
         let usable = (rect.height() - 2.0 * line).max(1.0);
@@ -2650,8 +2650,13 @@ impl RefinePanel {
             } else {
                 z - half
             };
+            let top_half = if level == 0 && e.tip_is_contact {
+                tip_half
+            } else {
+                half
+            };
             let r = egui::Rect::from_min_max(
-                egui::pos2(shaft.min.x, y_of(z + half)),
+                egui::pos2(shaft.min.x, y_of(z + top_half)),
                 egui::pos2(shaft.max.x, y_of(lo)),
             );
             let corner = if level == 0 && e.tip_is_contact {

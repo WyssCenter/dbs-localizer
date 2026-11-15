@@ -294,9 +294,14 @@ impl LeadBody {
             if is_tip {
                 tip_taken = true;
             }
+            let z_hi = if is_tip {
+                s * (p[2] + 0.5 * model.tip_length_mm)
+            } else {
+                z + half
+            };
             contacts.push(ContactShape {
                 z_lo,
-                z_hi: z + half,
+                z_hi,
                 azimuth: if is_tip { None } else { azimuth },
             });
         }
@@ -569,4 +574,28 @@ pub fn build_materials(
             }
         });
     Materials { class, sigma }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dbsloc_reconstruct::electrode_by_name;
+
+    #[test]
+    fn tip_contact_spans_the_tip_length() {
+        for name in [
+            "Abbott ActiveTip (6146-6149)",
+            "SmartFlow Cannula NGS-NC-06",
+        ] {
+            let g = electrode_by_name(name).expect("catalogued");
+            let body = LeadBody::new(g, 1.0).expect("body");
+            let tip = &body.contacts[0];
+            assert!((tip.z_lo + 1.5).abs() < 1e-9, "{name}");
+            assert!((tip.z_hi - 1.5).abs() < 1e-9, "{name}");
+            let body = LeadBody::new(g, 1.3).expect("body");
+            let tip = &body.contacts[0];
+            assert!((tip.z_lo + 1.95).abs() < 1e-9, "{name}");
+            assert!((tip.z_hi - 1.95).abs() < 1e-9, "{name}");
+        }
+    }
 }
