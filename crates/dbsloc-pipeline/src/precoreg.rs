@@ -444,6 +444,14 @@ pub(crate) fn precoreg_with_cancel(
             json!(crate::paths::absolute(moving).to_string_lossy()),
         );
         rec.extend(reg_fields(&reg, timings));
+        if matches!(reg.resolution, Resolution::Ants { .. }) {
+            if let Some(v) = find_ants()
+                .ok()
+                .and_then(|p| crate::bundled_bin::ants_version(&p))
+            {
+                rec.insert("ants_version".into(), json!(v));
+            }
+        }
         let text = serde_json::to_string_pretty(&Value::Object(rec))?;
         std::fs::write(staged.tmp(&record), text + "\n")?;
         Ok(())

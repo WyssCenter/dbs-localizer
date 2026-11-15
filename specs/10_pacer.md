@@ -251,4 +251,4 @@ Pipeline tests (side keys, placement, refusal without the feature) are listed in
 
 ## 12. References
 
-- Husch A, Petersen MV, Gemmar P, Goncalves J, Hertel F. PaCER — A fully automated method for electrode trajectory and contact reconstruction in deep brain stimulation. *NeuroImage: Clinical* 17 (2018), 80–89, published online 2017. doi:10.1016/j.nicl.2017.10.004. "Paper §n" in this specification refers to the sections of this article.
+- Husch A, Petersen MV, Gemmar P, Goncalves J, Hertel F (2017) PaCER — A fully automated method for electrode trajectory and contact reconstruction in deep brain stimulation. *NeuroImage Clin* 17:80–89. doi:10.1016/j.nicl.2017.10.004. "Paper §n" in this specification refers to the sections of this article.

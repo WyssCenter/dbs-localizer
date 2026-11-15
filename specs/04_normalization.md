@@ -333,7 +333,8 @@ Not implemented: there is no `apply` method (`--norm-method` accepts `ants_syn` 
 
 ## 17. References
 
-- Avants 2008; Andersson 2010 (FNIRT); Ashburner 2005/2007/2011; Iglesias 2023; Hoffmann SynthMorph.  
+- SyN (cited by the methods text, `00` §5.3): Avants BB, Epstein CL, Grossman M, Gee JC (2008) Symmetric diffeomorphic image registration with cross-correlation. *Med Image Anal* 12(1):26–41. doi:10.1016/j.media.2007.06.004.  
+- Andersson 2010 (FNIRT); Ashburner 2005/2007/2011; Iglesias 2023; Hoffmann SynthMorph.  
 - Schönecker 2009; Schoenecker 2008 masks (ANR **subcortical** refine).
 
 ---

@@ -918,6 +918,24 @@ impl Run<'_> {
                 .iter()
                 .filter_map(|r| r.outcome.as_ref()?.adapter.clone())
                 .next();
+            let adapter_info = runs
+                .iter()
+                .filter_map(|r| r.outcome.as_ref()?.adapter_info.clone())
+                .next();
+            let side_backends: Vec<Value> = Side::ALL
+                .iter()
+                .filter_map(|side| {
+                    runs[side.index()].outcome.as_ref().map(|o| {
+                        json!({
+                            "side": side.name(),
+                            "backend": o.backend,
+                            "adapter_info": o.adapter_info,
+                            "basis_cache": o.basis_cache,
+                            "cached_contacts": o.cached_contacts,
+                        })
+                    })
+                })
+                .collect();
             let mut solver_dims = serde_json::Map::new();
             let mut iterations = 0usize;
             let mut residual = 0.0f64;
@@ -954,6 +972,8 @@ impl Run<'_> {
                 "engine": {
                     "backend": backend,
                     "adapter": adapter,
+                    "adapter_info": adapter_info,
+                    "backends": side_backends,
                     "solver_grids": Value::Object(solver_dims),
                     "iterations": iterations,
                     "relative_residual": residual,
@@ -1087,6 +1107,17 @@ pub fn run_vat(
     run_vat_with(sub, opts, &VatParams::default(), cancel, tx)
 }
 
+pub fn run_vat_collecting(
+    sub: &Subject,
+    opts: &RunOptions,
+    params: &VatParams,
+    cancel: Option<&AtomicBool>,
+    tx: Option<&mpsc::Sender<RunEvent>>,
+    computed_labels: &mut Vec<String>,
+) -> PipelineResult<StageOutcome> {
+    run_vat_inner(sub, opts, params, cancel, tx, computed_labels)
+}
+
 /// Runs the stage with explicit parameters.
 pub fn run_vat_with(
     sub: &Subject,
@@ -1094,6 +1125,17 @@ pub fn run_vat_with(
     params: &VatParams,
     cancel: Option<&AtomicBool>,
     tx: Option<&mpsc::Sender<RunEvent>>,
+) -> PipelineResult<StageOutcome> {
+    run_vat_inner(sub, opts, params, cancel, tx, &mut Vec::new())
+}
+
+fn run_vat_inner(
+    sub: &Subject,
+    opts: &RunOptions,
+    params: &VatParams,
+    cancel: Option<&AtomicBool>,
+    tx: Option<&mpsc::Sender<RunEvent>>,
+    computed_labels: &mut Vec<String>,
 ) -> PipelineResult<StageOutcome> {
     let labels = discover_labels(sub, opts)?;
     if labels.is_empty() {
@@ -1113,6 +1155,7 @@ pub fn run_vat_with(
         match run.process_label(label) {
             Ok(Done::Computed { native_only: n }) => {
                 computed += 1;
+                computed_labels.push(label.clone());
                 native_only |= n;
             }
             Ok(Done::Kept) => {}

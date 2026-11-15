@@ -45,9 +45,9 @@ Processing details: §10.1.
 
 ## 4. References
 
-- Hellerbach A et al. (2018). DiODe: Directional Orientation Detection of Segmented DBS Leads: A Sequential Algorithm Based on CT Imaging. *Stereotact Funct Neurosurg* 96(5):335–341. doi:10.1159/000494738.
-- Dembek TA et al. (2021). DiODe v2: Unambiguous and Fully-Automated Detection of Directional DBS Lead Orientation. *Brain Sci* 11(11):1450. doi:10.3390/brainsci11111450 (marker artefact analysed in the native CT slices; 180° ambiguity resolved by the marker's centre of mass, 2000 HU).
-- Kurtev-Rittstieg R et al. (2020). Orientation of Directional DBS Leads on CT: Resolving the Ambiguity. bioRxiv 10.1101/2020.09.16.298653 (intensity profile around the lead–slice intersection in every slice through the marker, 1° steps; centre of mass at 2000 HU on 0.1 mm perpendicular reformats).
+- Hellerbach A, et al. (2018) DiODe: Directional Orientation Detection of Segmented DBS Leads: A Sequential Algorithm Based on CT Imaging. *Stereotact Funct Neurosurg* 96(5):335–341. doi:10.1159/000494738.
+- Dembek TA, et al. (2021) DiODe v2: Unambiguous and Fully-Automated Detection of Directional DBS Lead Orientation. *Brain Sci* 11(11):1450. doi:10.3390/brainsci11111450. (Marker artefact analysed in the native CT slices; 180° ambiguity resolved by the marker's centre of mass, 2000 HU.)
+- Kurtev-Rittstieg R, et al. (2020) Orientation of Directional DBS Leads on CT: Resolving the Ambiguity. *bioRxiv*. doi:10.1101/2020.09.16.298653. (Intensity profile around the lead–slice intersection in every slice through the marker, 1° steps; centre of mass at 2000 HU on 0.1 mm perpendicular reformats.)
 
 ---
 

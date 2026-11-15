@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Methods text: every step that runs adds a dated paragraph with references to `log/sub-<id>_desc-methods.txt` in the subject's results folder, ready to copy into the methods section of a paper. Earlier paragraphs are kept; saving a manual correction of a lead adds one too. `dbsloc methods <dataset> <subject>` prints the text, and `--last` shows each step once, as it was last run. In the application, *Methods text* in the Pipeline panel shows the same text with *Copy*. Where the ANTs programs ran, the text names their version.
 - The 3D view labels contacts with the names Lead-DBS uses (for example K0 to K3 on a right Medtronic 3389, K9 to K16 on a right Boston Scientific Vercise Directed, K1, K2A to K2C, K3A to K3C and K4 on Abbott Directed), with the side as (R) or (L). Leads whose model is not in the catalogue keep the numbered labels. Stimulation settings and saved files still number contacts 1 to N per side.
 - Data of an existing Lead-DBS installation can be used: at the first start the application asks for the Lead-DBS folder, lists the atlases and connectomes it finds with their sizes, and either uses them where they are or copies them. Also available later from the *Connectomes* window, and as `dbsloc leaddbs scan` / `dbsloc leaddbs copy`.
 - Release packages contain `THIRD_PARTY_LICENSES.md` with the licences of the Rust libraries built into the programs, and the third-party licence list of ITK beside the ANTs programs.

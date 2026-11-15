@@ -319,7 +319,7 @@ All pre-op images in the index are used: each non-anchor pre-op image is coregis
 
 #### 6.3 Reconstruction method defaults
 
-`prefs.reco.method.MRI` = TRAC/CORE (Horn 2015); `prefs.reco.method.CT` = PaCER (Husch 2018). In multi-patient runs these prefs override the GUI choice (§8.2).
+`prefs.reco.method.MRI` = TRAC/CORE (Horn 2015); `prefs.reco.method.CT` = PaCER (Husch 2017). In multi-patient runs these prefs override the GUI choice (§8.2).
 
 ### 7. Acceptance checks — Part 1
 

@@ -78,6 +78,12 @@ Import session report window (`specs/16` §8.2; only while the window is open):
 | Cancel / stop after the current file / close | `Esc` |
 | Import (when enabled and no text field has focus) | `Enter` |
 
+Methods text window (`specs/00` §5.3; only while the window is open):
+
+| Action | Keys |
+| ------ | ---- |
+| Close | `Esc` |
+
 Register shortcuts with `ui.input_mut(|i| i.consume_shortcut(...))`.
 
 ## Loading progress

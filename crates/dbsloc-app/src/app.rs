@@ -603,6 +603,7 @@ pub struct DbslocAppState {
     pub output_detail: OutputDetail,
     pub follow_output: bool,
     pub wrap_output: bool,
+    pub methods_latest_only: bool,
     /// Serialized `egui_dock` layout, so a rearranged workspace survives restart.
     pub dock: Option<DockState<TabKind>>,
     /// The first-start question about importing Lead-DBS data was asked (`specs/17` §4.3).
@@ -645,6 +646,7 @@ impl Default for DbslocAppState {
             output_detail: OutputDetail::default(),
             follow_output: true,
             wrap_output: false,
+            methods_latest_only: true,
             dock: None,
             leaddbs_import_offered: false,
             leaddbs_import_request: false,
@@ -838,6 +840,8 @@ pub struct DbslocApp {
     open_viewer_after_reconstruct: bool,
     errors: Vec<ErrorEntry>,
     show_shortcuts: bool,
+    methods_window: crate::methods_window::MethodsWindow,
+    screenshot_methods: bool,
     window_was_focused: bool,
     gpu_status_logged: bool,
     confirm_overwrite: Option<PendingOverwrite>,
@@ -1357,6 +1361,7 @@ enum ScreenshotAction {
     Group,
     Report,
     Help,
+    Methods,
     ReviewPopout,
     RefinePopout,
     StimulationPopout,
@@ -1395,6 +1400,7 @@ impl ScreenshotAction {
             "stimulation-popout" => Self::StimulationPopout,
             "group-popout" => Self::GroupPopout,
             "help" => Self::Help,
+            "methods" => Self::Methods,
             "report" => Self::Report,
             _ => Self::Landing,
         }
@@ -1950,6 +1956,8 @@ impl DbslocApp {
             open_viewer_after_reconstruct: false,
             errors: Vec::new(),
             show_shortcuts: screenshot_action == ScreenshotAction::Help,
+            methods_window: crate::methods_window::MethodsWindow::default(),
+            screenshot_methods: screenshot_action == ScreenshotAction::Methods,
             window_was_focused: true,
             gpu_status_logged: false,
             confirm_overwrite: None,
@@ -2074,6 +2082,18 @@ impl DbslocApp {
     fn subject_derivatives_dir(&self) -> Option<PathBuf> {
         let subject = self.state.selected_subject.as_ref()?;
         self.state.subject_derivatives_dir(subject)
+    }
+
+    fn subject_methods_path(&self) -> Option<PathBuf> {
+        let subject = self.state.selected_subject.as_ref()?;
+        let dir = self.state.subject_derivatives_dir(subject)?;
+        Some(dbsloc_pipeline::methods_text::methods_file(&dir, subject))
+    }
+
+    fn open_methods_window(&mut self) {
+        let path = self.subject_methods_path();
+        self.methods_window.latest_only = self.state.methods_latest_only;
+        self.methods_window.open_for(path.as_deref());
     }
 
     /// Persist at most once a second, and only when something actually changed.
@@ -2907,6 +2927,11 @@ impl DbslocApp {
             let env = self.group_env();
             self.group_tab.start_view(&env, ctx);
             self.group_scene_since = Some(self.frames);
+        }
+        if self.screenshot_methods && self.frames == 2 {
+            self.show_landing = false;
+            self.guided = false;
+            self.open_methods_window();
         }
         if self.screenshot_report && self.frames == 2 {
             let paths: Vec<PathBuf> = std::env::var_os("DBSLOC_APP_REPORT_PDF")
@@ -3870,6 +3895,7 @@ impl DbslocApp {
                 }
                 self.refine_tab.finish_save(true, Some(notice));
                 self.readiness.invalidate();
+                self.methods_window.reload_if_open();
                 let folder = self
                     .state
                     .derivatives_root_for(&owner.bids_dir)
@@ -4895,6 +4921,7 @@ impl DbslocApp {
                     "No subject is selected.",
                 ),
             },
+            StagePanelAction::OpenMethodsText => self.open_methods_window(),
             StagePanelAction::OpenStageFolder(stage) => {
                 let folder = crate::panels::stage_output_folder(stage)
                     .and_then(|f| self.subject_derivatives_dir().map(|d| d.join(f)));
@@ -4933,7 +4960,8 @@ impl DbslocApp {
         let dialog_open = self.confirm_quit
             || self.confirm_overwrite.is_some()
             || !self.errors.is_empty()
-            || self.show_shortcuts;
+            || self.show_shortcuts
+            || self.methods_window.open;
         if dialog_open && ctx.input_mut(|i| i.consume_key(Modifiers::NONE, Key::Escape)) {
             if self.confirm_quit {
                 self.confirm_quit = false;
@@ -4941,8 +4969,10 @@ impl DbslocApp {
                 self.show_shortcuts = false;
             } else if self.confirm_overwrite.is_some() {
                 self.confirm_overwrite = None;
-            } else {
+            } else if !self.errors.is_empty() {
                 self.errors.clear();
+            } else {
+                self.methods_window.open = false;
             }
             return;
         }
@@ -5290,6 +5320,12 @@ impl DbslocApp {
     }
 
     fn dialogs(&mut self, ctx: &egui::Context) {
+        if self.methods_window.open {
+            let path = self.subject_methods_path();
+            let subject = self.state.selected_subject.clone().unwrap_or_default();
+            self.methods_window.show(ctx, &subject, path.as_deref());
+            self.state.methods_latest_only = self.methods_window.latest_only;
+        }
         if !self.errors.is_empty() {
             let mut dismiss_all = false;
             let mut dismiss_one: Option<usize> = None;
@@ -5832,6 +5868,7 @@ impl eframe::App for DbslocApp {
                 }
                 RunEvent::PipelineCompleted { .. } => {
                     self.readiness.invalidate();
+                    self.methods_window.reload_if_open();
                     self.group_tab.rescan();
                     self.stimulation_tab.run_ended();
                     self.review_panel.end_run();
@@ -5847,6 +5884,7 @@ impl eframe::App for DbslocApp {
             self.finish_batch_subject(true);
             self.progress.abandon();
             self.readiness.invalidate();
+            self.methods_window.reload_if_open();
             self.stimulation_tab.run_ended();
             self.review_panel.end_run();
             self.review_rx = None;
@@ -6399,6 +6437,24 @@ mod tests {
         assert_eq!(ScreenshotAction::parse(" run "), ScreenshotAction::Run);
         assert_eq!(ScreenshotAction::parse("focus"), ScreenshotAction::Focus);
         assert_eq!(ScreenshotAction::parse("dock"), ScreenshotAction::Dock);
+        assert_eq!(
+            ScreenshotAction::parse(" methods "),
+            ScreenshotAction::Methods
+        );
+    }
+
+    #[test]
+    fn the_methods_view_choice_is_saved_with_the_settings() {
+        assert!(DbslocAppState::default().methods_latest_only);
+        let old: DbslocAppState = serde_json::from_str("{}").unwrap_or_else(|e| panic!("{e}"));
+        assert!(old.methods_latest_only);
+        let state = DbslocAppState {
+            methods_latest_only: false,
+            ..DbslocAppState::default()
+        };
+        let text = serde_json::to_string(&state).unwrap_or_else(|e| panic!("{e}"));
+        let back: DbslocAppState = serde_json::from_str(&text).unwrap_or_else(|e| panic!("{e}"));
+        assert!(!back.methods_latest_only);
     }
 
     fn started(label: &str) -> RunEvent {

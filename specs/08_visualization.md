@@ -52,7 +52,7 @@ The `visualize` stage never launches a viewer. The GUI and the server run every 
 
 ## 3. Planned outputs (owner decision 2026-11-13)
 
-Nothing writes these files today. Each entry states what is decided; lines marked *Proposal* are open until the owner confirms them.
+Nothing writes these files today, except the methods text (§3.2, implemented 2026-11-15). Each entry states what is decided; lines marked *Proposal* are open until the owner confirms them.
 
 ### 3.1 2D slice images — **Planned** (soon)
 
@@ -61,12 +61,13 @@ Nothing writes these files today. Each entry states what is decided; lines marke
 - **Trigger.** *Proposal:* written by the `visualize` stage after the manifest; a new run replaces the folder's content.
 - *Proposal:* slices through each contact level, cropped so that every contact of the side is visible; contact outlines from the scene block's `coords_mm`, the lead axis, and the default atlas set's initially visible structures as coloured contours; annotated with subject, side, plane, the plane's world coordinate, orientation letters and a millimetre scale bar.
 
-### 3.2 Methods text — **Planned** (soon)
+### 3.2 Methods text — **Implemented** 2026-11-15 (`00` §5.3)
 
 - **Content.** Plain UTF-8 text for the Methods section of a paper, built only from recorded provenance, with the references of the methods named.
 - **Location.** `<output dir>/sub-<id>/log/sub-<id>_desc-methods.txt`, the file name Lead-DBS uses (`12` §6, `13` §12).
-- **Trigger.** Every stage run appends one entry; the file is never rewritten, so a Lead-DBS log imported with the subject keeps its history.
-- *Proposal:* an entry holds a timestamp, the stage name, method sentences from the stage's method log and the reconstruction `meta` (software version `05` §8.7, engine and settings, template and space, electrode model, orientation and manual corrections, VTA model) and the references; the `visualize` entry names the atlas set shown with its citation.
+- **Trigger.** Every completed stage except `bids` and `visualize` appends one entry (skipped, plan-only and failed stages none; a `vat` run that failed or was cancelled still describes the labels it computed), and so does a saved manual correction. `visualize` writes no entry (owner decision 2026-11-15). This supersedes the earlier wording "every stage run appends one entry"; the contract, including the entry layout, the reading command `dbsloc methods` and the *Methods text* window of the application, is `00` §5.3.
+- **Writing.** The file is replaced through a partial file and a rename with the existing bytes kept and the new entry added at the end (`00` §5.2, §5.3), so existing content is never changed and a Lead-DBS log imported with the subject keeps its history; a hard-linked copy elsewhere is not modified.
+- An entry holds a timestamp, the stage name, the software version, method sentences from the stage's record (preprocessing and precoreg records, method logs, the reconstruction `meta`, the VTA summary: engine and adapter, ANTs version, template space, electrode model, reconstruction method, orientation and manual corrections, VTA model) and the references. The *Proposal* that `visualize` adds an entry naming the atlas set shown is dropped.
 
 ### 3.3 Scene export `scene.glb` — **Planned** (later)
 
@@ -206,7 +207,7 @@ RGBA values in 0–1.
 | `<data folder>/backdrops/space/<space>/<id>/` | `dbsloc backdrop fetch`, GUI | implemented, §11.1.7 |
 | scene image (`.png`, `.jpg`) at a path the user chooses | viewer *Save scene*, `DBSLOC_SCENE3D_AUTOSAVE_PNG` | implemented, §11.1.3 |
 | 2D slice PNGs in the subject's output folder | — | **Planned**, §3.1 |
-| `<output dir>/sub-<id>/log/sub-<id>_desc-methods.txt` | every stage run (appended) | **Planned**, §3.2 |
+| `<output dir>/sub-<id>/log/sub-<id>_desc-methods.txt` | every completed stage except `bids` and `visualize`, and every saved manual correction (entry appended; file replaced through a partial file and rename, existing bytes kept) | implemented, §3.2, `00` §5.3 |
 | `scene.glb` | — | **Planned**, §3.3 |
 
 ### 7.2 Manifest version 1

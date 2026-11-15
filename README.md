@@ -191,7 +191,7 @@ The reference dataset is the Lead-DBS tutorial cohort ("Lead-Tutor", [OSF jxecg]
 If you use Wyss DBS Localizer in your research, please cite the software (name, version from `dbsloc --version`, and this repository) and the methods it builds on:
 
 - Horn A. et al. (2019). Lead-DBS v2: Towards a comprehensive pipeline for deep brain stimulation imaging. *NeuroImage* 184, 293–316.
-- Husch A. et al. (2018). PaCER — A fully automated method for electrode trajectory and contact reconstruction in deep brain stimulation. *NeuroImage: Clinical* 17, 80–89 (when you use PaCER).
+- Husch A. et al. (2017). PaCER — A fully automated method for electrode trajectory and contact reconstruction in deep brain stimulation. *NeuroImage: Clinical* 17, 80–89 (when you use PaCER).
 - Avants B. B. et al. (2008). Symmetric diffeomorphic image registration with cross-correlation. *Medical Image Analysis* 12(1), 26–41.
 
 The atlases, templates and connectomes have their own citations: the application shows them where you choose an atlas, backdrop or connectome, and [`NOTICE`](NOTICE) lists those of the bundled data.

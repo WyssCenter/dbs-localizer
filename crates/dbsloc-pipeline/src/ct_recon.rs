@@ -1131,6 +1131,47 @@ fn has_side_block(reco: &Value, block: &str) -> bool {
     })
 }
 
+fn mark_imported_sides(meta: &mut Map<String, Value>, imported: &[&str]) {
+    let entry = meta
+        .entry("reconstruct")
+        .or_insert_with(|| reconstruct_meta(&[], &[], &[]));
+    if !entry.is_object() {
+        *entry = reconstruct_meta(&[], &[], &[]);
+    }
+    let Some(rec) = entry.as_object_mut() else {
+        return;
+    };
+    for field in ["status", "flags"] {
+        if !rec.get(field).is_some_and(Value::is_object) {
+            rec.insert(field.into(), Value::Object(Map::new()));
+        }
+    }
+    if let Some(st) = rec.get_mut("status").and_then(Value::as_object_mut) {
+        st.retain(|k, v| imported.contains(&k.as_str()) || v.as_str() == Some(SIDE_FAILED));
+    }
+    for key in imported {
+        if let Some(st) = rec.get_mut("status").and_then(Value::as_object_mut) {
+            st.insert((*key).to_owned(), json!(SIDE_TRACED));
+        }
+        if let Some(fl) = rec.get_mut("flags").and_then(Value::as_object_mut) {
+            let has_list = fl.get(*key).is_some_and(Value::is_array);
+            if !has_list {
+                fl.insert((*key).to_owned(), json!([]));
+            }
+        }
+        if let Some(failed) = rec.get_mut("failed").and_then(Value::as_object_mut) {
+            failed.remove(*key);
+        }
+    }
+    if rec
+        .get("failed")
+        .and_then(Value::as_object)
+        .is_some_and(Map::is_empty)
+    {
+        rec.remove("failed");
+    }
+}
+
 fn pacer_import(
     req: &CtReconRequest,
     log: &mut dyn FnMut(String),
@@ -1189,6 +1230,12 @@ fn pacer_import(
             "no native block with a lead side; a post-op CT import needs native coordinates".into(),
         ));
     }
+    let imported: Vec<&str> = SIDE_KEYS
+        .iter()
+        .copied()
+        .filter(|k| !req.skips(k))
+        .filter(|k| v["native"].get(*k).is_some_and(Value::is_object))
+        .collect();
     let Some(obj) = v.as_object_mut() else {
         return Err(CtReconError::Invalid(
             "RecoFileV2: expected a JSON object".into(),
@@ -1209,6 +1256,7 @@ fn pacer_import(
     }
     if let Some(m) = meta.as_object_mut() {
         m.insert("pacer".into(), json!("import_json"));
+        mark_imported_sides(m, &imported);
         if !problems.is_empty() {
             m.insert("pacer_import_warnings".into(), json!(problems));
         }
@@ -1771,6 +1819,123 @@ mod tests {
         let e = reconstruct_ct(&req, None, &mut |_| {}).unwrap_err();
         assert!(matches!(e, CtReconError::Electrode(_)) && !e.is_os_error());
         assert_eq!(e.to_string(), "E_RECON_elmodel: uiprefs missing");
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    fn an_import_marks_the_sides_it_brought_and_the_methods_text_names_them() {
+        let d = tmp("import_methods");
+        let p = d.join("sub-1_desc-pacer_import.json");
+        let mk = json!({"head": [0, 0, 0], "tail": [0, 0, 5], "x": [1, 0, 0], "y": [0, 1, 0]});
+        std::fs::write(
+            &p,
+            serde_json::to_string(&json!({"version": 2, "subj_id": "1", "method": "pacer",
+            "mni": {"1": {"markers": mk}, "2": {"markers": mk}},
+            "native": {"1": {"markers": mk}, "2": {"markers": mk}},
+            "props": {"2": {"elmodel": "Boston Scientific Vercise Directed"}},
+            "meta": {"reconstruct": {
+                "status": {"1": "failed", "2": "failed"},
+                "failed": {"1": "no lead found", "2": "an older reason"},
+                "flags": {"2": ["vertical_marker"]},
+            }}}))
+            .unwrap(),
+        )
+        .unwrap();
+        let mut req = CtReconRequest::new("1", CtMethod::Auto);
+        req.pacer_import = Some(p.clone());
+        req.skip_sides = vec![SIDE_RIGHT.to_owned()];
+        let mut v = reconstruct_ct(&req, None, &mut |_| {}).unwrap();
+        let rec = &v["meta"]["reconstruct"];
+        assert_eq!(rec["status"][SIDE_RIGHT], "failed");
+        assert_eq!(rec["status"][SIDE_LEFT], SIDE_TRACED);
+        assert_eq!(rec["failed"][SIDE_RIGHT], "no lead found");
+        assert!(rec["failed"].get(SIDE_LEFT).is_none(), "{rec}");
+        assert_eq!(rec["flags"][SIDE_LEFT], json!(["vertical_marker"]));
+        let mut both = CtReconRequest::new("1", CtMethod::Auto);
+        both.pacer_import = Some(p.clone());
+        let unflagged = reconstruct_ct(&both, None, &mut |_| {}).unwrap();
+        assert!(
+            unflagged["meta"]["reconstruct"].get("failed").is_none(),
+            "{}",
+            unflagged["meta"]["reconstruct"]
+        );
+        assert_eq!(
+            unflagged["meta"]["reconstruct"]["flags"][SIDE_RIGHT],
+            json!([])
+        );
+        assert_eq!(
+            unflagged["meta"]["reconstruct"]["status"][SIDE_RIGHT],
+            SIDE_TRACED
+        );
+        let old = json!({"version": 2,
+            "native": {"1": {"markers": mk}}, "mni": {"1": {"markers": mk}},
+            "meta": {"reconstruct": reconstruct_meta(&[(SIDE_RIGHT, SIDE_TRACED)], &[], &[])}});
+        let kept = crate::manual_correction::KeptSides {
+            old,
+            keys: vec![SIDE_RIGHT],
+        };
+        crate::manual_correction::merge_kept_sides(&mut v, &kept);
+        let (text, _) = crate::methods_text::reconstruct(&v, None).unwrap();
+        assert!(
+            text.contains("of the left lead were imported from a PaCER result"),
+            "{text}"
+        );
+        assert!(
+            text.contains("not reconstructed by this software"),
+            "{text}"
+        );
+        assert!(
+            text.contains("position of the right lead was kept"),
+            "{text}"
+        );
+        assert!(
+            text.contains(
+                "The imported file states the electrode model Boston Scientific Vercise Directed."
+            ),
+            "{text}"
+        );
+        assert!(!text.contains("assumed"), "{text}");
+
+        std::fs::write(
+            &p,
+            serde_json::to_string(&json!({"version": 2, "subj_id": "1", "method": "pacer",
+                "mni": {"1": {"markers": mk}}, "native": {"1": {"markers": mk}},
+                "meta": {"reconstruct": {"status": {"1": "traced", "2": "kept"}}}}))
+            .unwrap(),
+        )
+        .unwrap();
+        let right_only = reconstruct_ct(&both, None, &mut |_| {}).unwrap();
+        assert_eq!(
+            right_only["meta"]["reconstruct"]["status"],
+            json!({"1": SIDE_TRACED})
+        );
+        let (text, _) = crate::methods_text::reconstruct(&right_only, None).unwrap();
+        assert!(
+            text.contains("of the right lead were imported from a PaCER result"),
+            "{text}"
+        );
+        assert!(!text.contains("left"), "{text}");
+        assert!(!text.contains("kept"), "{text}");
+
+        std::fs::write(
+            &p,
+            serde_json::to_string(&json!({"version": 2, "subj_id": "1",
+                "method": "trac_core_rust_native",
+                "mni": {"1": {"markers": mk}}, "native": {"1": {"markers": mk}}}))
+            .unwrap(),
+        )
+        .unwrap();
+        let other = reconstruct_ct(&both, None, &mut |_| {}).unwrap();
+        let (text, refs) =
+            crate::methods_text::reconstruct(&other, Some("Medtronic 3389")).unwrap();
+        assert!(
+            text.contains("of the right lead were imported from a reconstruction that had been computed beforehand; they were not reconstructed by this software."),
+            "{text}"
+        );
+        assert!(!text.contains("PaCER"), "{text}");
+        assert!(!text.contains("TRAC/CORE"), "{text}");
+        assert!(!text.contains("electrode model"), "{text}");
+        assert!(refs.is_empty(), "{refs:?}");
         let _ = std::fs::remove_dir_all(&d);
     }
 

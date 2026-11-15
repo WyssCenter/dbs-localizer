@@ -295,8 +295,8 @@ Status per row; code paths, tests, cohort numbers and notes for each row: **`doc
 ## 15. References
 
 - Horn et al. (2019). Lead-DBS v2: Towards a comprehensive pipeline for deep brain stimulation imaging. *NeuroImage*, 184, 293–316.
-- Husch et al. (2018). PaCER — A fully automated method for electrode trajectory and contact reconstruction in deep brain stimulation. *NeuroImage: Clinical*, 17, 80–89.
-- Dembek et al. (2017). Probabilistic mapping of deep brain stimulation effects. *NeuroImage: Clinical*, 16, 1–9.
+- Husch et al. (2017). PaCER — A fully automated method for electrode trajectory and contact reconstruction in deep brain stimulation. *NeuroImage: Clinical*, 17, 80–89.
+- Dembek et al. (2017). Probabilistic mapping of deep brain stimulation effects in essential tremor. *NeuroImage: Clinical*, 13, 164–173.
 - Schönecker et al. (2009). Fascicular connectivity of the subthalamic nucleus. *Journal of Neurology, Neurosurgery & Psychiatry*, 80, 1046–1049.
 - Avants et al. (2008). Symmetric diffeomorphic image registration with cross-correlation. *Medical Image Analysis*, 12(1), 26–41.
 - User guide: [https://netstim.gitbook.io/leaddbs](https://netstim.gitbook.io/leaddbs)

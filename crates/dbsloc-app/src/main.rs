@@ -33,6 +33,7 @@ mod guided;
 mod import_wizard;
 mod landing;
 mod leaddbs_import;
+mod methods_window;
 mod panels;
 mod refine;
 mod report_import;

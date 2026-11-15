@@ -32,7 +32,7 @@ use crate::stages::Stage;
 use crate::vat::settings::{
     label_dir, load as load_stimulation, save as save_stimulation, ModelKind, Side, Stimulation,
 };
-use crate::vat::stage::run_vat_with;
+use crate::vat::stage::run_vat_collecting;
 use crate::vat::stage::VatParams;
 use crate::vat::stats::StatsAtlas;
 use crate::version::{software_stamp, utc_now_rfc3339};
@@ -653,7 +653,17 @@ fn run_vat_label(
     let joined = std::thread::scope(|scope| {
         let sub_ref = &sub;
         let handle = scope.spawn(move || {
-            let result = run_vat_with(sub_ref, opts, params, cancel, Some(&tx));
+            let mut computed: Vec<String> = Vec::new();
+            let result =
+                run_vat_collecting(sub_ref, opts, params, cancel, Some(&tx), &mut computed);
+            crate::stages::note_methods_result(
+                sub_ref,
+                opts,
+                Stage::Vat,
+                &computed,
+                &result,
+                Some(&tx),
+            );
             drop(tx);
             result
         });

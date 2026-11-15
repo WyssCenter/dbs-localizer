@@ -460,6 +460,11 @@ pub fn prefs_rawimages(subj_dir: &Path, subj_id: &str) -> PathBuf {
         .join(format!("sub-{subj_id}_desc-rawimages.json"))
 }
 
+pub fn methods_log(sub: &Subject) -> PathBuf {
+    sub.log_dir
+        .join(format!("sub-{}_desc-methods.txt", sub.subj_id))
+}
+
 pub fn coreg_method_log(sub: &Subject) -> PathBuf {
     coreg_log_dir(sub).join(format!("sub-{}_desc-coregmethod.json", sub.subj_id))
 }

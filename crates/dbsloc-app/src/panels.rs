@@ -589,6 +589,7 @@ pub enum StagePanelAction {
     BrowseTemplate,
     BrowseTemplateT2,
     RevealOutputDirectory,
+    OpenMethodsText,
     OpenStageFolder(Stage),
     ReviewNow,
     ReviewStage(Stage),
@@ -752,6 +753,9 @@ pub(crate) fn scan_readiness(
         has_scene_manifest: resolved
             .as_ref()
             .is_some_and(|s| dbsloc_pipeline::derivatives::scene_manifest(s).is_file()),
+        has_methods_text: resolved
+            .as_ref()
+            .is_some_and(|s| dbsloc_pipeline::derivatives::methods_log(s).is_file()),
         coreg_review: reviews.0,
         norm_review: reviews.1,
         images: resolved.as_ref().map(subject_images).unwrap_or_default(),
@@ -1776,6 +1780,19 @@ impl StagePanel {
                 .clicked()
             {
                 *action = StagePanelAction::RevealOutputDirectory;
+            }
+
+            let subject_selected = readiness.has_subject && readiness.has_bids_dir;
+            let methods_hover = methods_text_hover(subject_selected, readiness.has_methods_text);
+            let methods_response = ui
+                .add_enabled(
+                    subject_selected && readiness.has_methods_text,
+                    egui::Button::new(METHODS_TEXT_LABEL).min_size(egui::vec2(unit * 6.4, btn_h)),
+                )
+                .on_hover_text(methods_hover)
+                .on_disabled_hover_text(methods_hover);
+            if methods_response.clicked() {
+                *action = StagePanelAction::OpenMethodsText;
             }
 
             if stop_clicked {
@@ -2826,6 +2843,16 @@ pub(crate) fn stage_output_folder(stage: Stage) -> Option<&'static str> {
 }
 
 pub(crate) const OPEN_FOLDER_LABEL: &str = "Open folder";
+
+pub(crate) const METHODS_TEXT_LABEL: &str = "Methods text";
+
+pub(crate) fn methods_text_hover(subject_selected: bool, has_text: bool) -> &'static str {
+    match (subject_selected, has_text) {
+        (false, _) => "Select a subject first",
+        (true, false) => "No step has run for this subject yet",
+        (true, true) => "Show the text for the methods section of a paper: one paragraph for each step that ran for this subject, with references",
+    }
+}
 
 pub(crate) fn open_folder_button(ui: &mut egui::Ui, hover: &str) -> bool {
     ui.small_button(OPEN_FOLDER_LABEL)
@@ -5775,6 +5802,18 @@ mod tests {
     }
 
     #[test]
+    fn readiness_knows_whether_the_methods_text_exists() {
+        let root = review_scratch("methods_ready");
+        let bids = root.to_string_lossy().into_owned();
+        assert!(!scan_readiness(&bids, None, "sub-1", None).has_methods_text);
+        let sub = dbsloc_pipeline::bids::resolve_subject_with(&root, "1", false)
+            .unwrap_or_else(|e| panic!("{e}"));
+        write_log(&dbsloc_pipeline::derivatives::methods_log(&sub), "text");
+        assert!(scan_readiness(&bids, None, "sub-1", None).has_methods_text);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
     fn readiness_reads_the_review_state_from_the_method_logs() {
         let root = review_scratch("reviews");
         let sub = dbsloc_pipeline::bids::resolve_subject_with(&root, "1", false)
@@ -5914,6 +5953,14 @@ mod tests {
 
     #[test]
     fn only_steps_with_a_folder_get_the_button_and_the_folders_are_distinct_from_inputs() {
+        assert_eq!(METHODS_TEXT_LABEL, "Methods text");
+        assert_eq!(methods_text_hover(false, false), "Select a subject first");
+        assert_eq!(methods_text_hover(false, true), "Select a subject first");
+        assert_eq!(
+            methods_text_hover(true, false),
+            "No step has run for this subject yet"
+        );
+        assert!(methods_text_hover(true, true).contains("methods section of a paper"));
         assert_eq!(stage_output_folder(Stage::Normalize), Some("normalization"));
         assert_eq!(
             stage_output_folder(Stage::Orientation),
