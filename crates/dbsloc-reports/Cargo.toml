@@ -16,3 +16,7 @@ thiserror = "2"
 
 [dev-dependencies]
 flate2 = "1"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

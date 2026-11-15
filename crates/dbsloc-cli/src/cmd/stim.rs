@@ -253,14 +253,49 @@ fn commit(
     Ok(0)
 }
 
-fn set(a: &SetArgs) -> CmdResult {
-    let sub = subject_of(&a.subject)?;
-    let text = std::fs::read_to_string(&a.from).map_err(|e| {
+fn decode_json_text(bytes: &[u8]) -> Result<String, String> {
+    let utf16 = |rest: &[u8], big_endian: bool| -> Result<String, String> {
+        if !rest.len().is_multiple_of(2) {
+            return Err("UTF-16 text with an odd number of bytes".to_owned());
+        }
+        let units: Vec<u16> = rest
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .map(|p| {
+                if big_endian {
+                    u16::from_be_bytes([p[0], p[1]])
+                } else {
+                    u16::from_le_bytes([p[0], p[1]])
+                }
+            })
+            .collect();
+        String::from_utf16(&units).map_err(|e| format!("invalid UTF-16 text: {e}"))
+    };
+    match bytes {
+        [0xEF, 0xBB, 0xBF, rest @ ..] => {
+            String::from_utf8(rest.to_vec()).map_err(|e| format!("invalid UTF-8 text: {e}"))
+        }
+        [0xFF, 0xFE, rest @ ..] => utf16(rest, false),
+        [0xFE, 0xFF, rest @ ..] => utf16(rest, true),
+        _ => String::from_utf8(bytes.to_vec()).map_err(|e| format!("invalid UTF-8 text: {e}")),
+    }
+}
+
+fn read_json_text(path: &Path) -> Result<String, Fail> {
+    let fail = |why: String| {
         Fail::new(
             1,
-            format!("dbsloc: error: cannot read {}: {e}", a.from.display()),
+            format!("dbsloc: error: cannot read {}: {why}", path.display()),
         )
-    })?;
+    };
+    let bytes = std::fs::read(path).map_err(|e| fail(e.to_string()))?;
+    decode_json_text(&bytes).map_err(fail)
+}
+
+fn set(a: &SetArgs) -> CmdResult {
+    let sub = subject_of(&a.subject)?;
+    let text = read_json_text(&a.from)?;
     let stim: Stimulation = serde_json::from_str(&text).map_err(|e| {
         Fail::new(
             1,
@@ -342,5 +377,46 @@ mod tests {
         let l = summary_lines(&s);
         assert!(l.iter().any(|x| x == "right: no stimulation"));
         assert!(l.iter().any(|x| x.starts_with("model: simbio")));
+    }
+}
+
+#[cfg(test)]
+mod decode_tests {
+    use super::decode_json_text;
+
+    const JSON: &str = "{\"label\": \"a\u{e9}\"}";
+
+    fn utf16(big_endian: bool) -> Vec<u8> {
+        let mut out = if big_endian {
+            vec![0xFE, 0xFF]
+        } else {
+            vec![0xFF, 0xFE]
+        };
+        for u in JSON.encode_utf16() {
+            out.extend(if big_endian {
+                u.to_be_bytes()
+            } else {
+                u.to_le_bytes()
+            });
+        }
+        out
+    }
+
+    #[test]
+    fn every_accepted_encoding_gives_the_same_text() {
+        let mut marked = vec![0xEF, 0xBB, 0xBF];
+        marked.extend(JSON.as_bytes());
+        assert_eq!(decode_json_text(&marked).unwrap_or_default(), JSON);
+        assert_eq!(decode_json_text(&utf16(false)).unwrap_or_default(), JSON);
+        assert_eq!(decode_json_text(&utf16(true)).unwrap_or_default(), JSON);
+        assert_eq!(decode_json_text(JSON.as_bytes()).unwrap_or_default(), JSON);
+    }
+
+    #[test]
+    fn invalid_data_is_an_error() {
+        assert!(decode_json_text(&[0xFF, 0xFE, 0x00]).is_err());
+        assert!(decode_json_text(&[0xFF, 0xFE, 0x00, 0xD8]).is_err());
+        assert!(decode_json_text(&[0xFE, 0xFF, 0xDC, 0x00]).is_err());
+        assert!(decode_json_text(&[0xC3, 0x28]).is_err());
     }
 }

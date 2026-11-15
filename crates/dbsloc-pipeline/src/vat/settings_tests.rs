@@ -437,6 +437,65 @@ fn counts_come_from_a_reco_file() {
 }
 
 #[test]
+fn unstamped_save_and_mat_carry_no_write_time() {
+    let dir = tempfile::tempdir().unwrap();
+    let s = base();
+    save_unstamped(dir.path(), &s).unwrap();
+    let back = load(dir.path(), "01", "lab1").unwrap();
+    assert!(back.provenance.written_at.is_empty());
+    assert!(back.provenance.software.get("written_at").is_none());
+    assert_eq!(back.provenance.software["product"], PRODUCT);
+    assert_eq!(back.sides, s.sides);
+    let path = dir.path().join("sub-01_desc-stimparameters.mat");
+    write_stimparameters_mat_unstamped(&path, &back, [0.0, 0.0]).unwrap();
+    let vars = read_mat5(&std::fs::read(&path).unwrap()).unwrap();
+    let (_, prov) = vars.iter().find(|(n, _)| n == PROVENANCE_VARIABLE).unwrap();
+    assert!(prov.field("written_at", 0).is_none());
+    assert!(prov.field("version", 0).is_some());
+    write_stimparameters_mat(&path, &back, [0.0, 0.0]).unwrap();
+    let vars = read_mat5(&std::fs::read(&path).unwrap()).unwrap();
+    let (_, prov) = vars.iter().find(|(n, _)| n == PROVENANCE_VARIABLE).unwrap();
+    assert!(prov.field("written_at", 0).is_some());
+    save(dir.path(), &back).unwrap();
+    let again = load(dir.path(), "01", "lab1").unwrap();
+    assert!(!again.provenance.written_at.is_empty());
+    assert!(again.provenance.software.get("written_at").is_some());
+}
+
+#[test]
+fn stripping_the_write_time_changes_nothing_else() {
+    let dir = tempfile::tempdir().unwrap();
+    let s = base();
+    let path = dir.path().join("sub-01_desc-stimparameters.mat");
+    write_stimparameters_mat(&path, &s, [12.5, 3.0]).unwrap();
+    let before = read_mat5(&std::fs::read(&path).unwrap()).unwrap();
+    assert!(strip_stimparameters_write_time(&path).unwrap());
+    let after = read_mat5(&std::fs::read(&path).unwrap()).unwrap();
+    let keep = |v: &[(String, Mat5Value)]| -> Vec<(String, Mat5Value)> {
+        v.iter()
+            .filter(|(n, _)| n != PROVENANCE_VARIABLE)
+            .cloned()
+            .collect()
+    };
+    assert_eq!(
+        mat5_bytes(&keep(&before), false).unwrap(),
+        mat5_bytes(&keep(&after), false).unwrap()
+    );
+    let prov = &after
+        .iter()
+        .find(|(n, _)| n == PROVENANCE_VARIABLE)
+        .unwrap()
+        .1;
+    assert!(prov.field("written_at", 0).is_none());
+    assert!(prov.field("source_json_sha256", 0).is_some());
+    assert!(!strip_stimparameters_write_time(&path).unwrap());
+    write_stimparameters_mat_unstamped(&path, &s, [0.0, 0.0]).unwrap();
+    assert!(!strip_stimparameters_write_time(&path).unwrap());
+    std::fs::write(&path, b"not a mat file").unwrap();
+    assert!(strip_stimparameters_write_time(&path).is_err());
+}
+
+#[test]
 fn save_load_and_list_labels() {
     let dir = tempfile::tempdir().unwrap();
     let s = base();

@@ -47,9 +47,15 @@ pub fn shift_for(key: &[u8], patient_key: &str) -> Shift {
     let mac = hmac_sha256(key, message.as_bytes());
     let mut head = [0u8; 8];
     head.copy_from_slice(&mac[..8]);
-    let value = u64::from_be_bytes(head) % 61;
+    let days = (u64::from_be_bytes(head) % 61) as i32 - 30;
+    if days != 0 {
+        return Shift { days };
+    }
+    let mut tail = [0u8; 8];
+    tail.copy_from_slice(&mac[8..16]);
+    let r = (u64::from_be_bytes(tail) % 60) as i32;
     Shift {
-        days: value as i32 - 30,
+        days: if r < 30 { r - 30 } else { r - 29 },
     }
 }
 
@@ -126,6 +132,7 @@ pub fn anonymize(report: &SessionReport, shift: Shift) -> SessionReport {
     r.device.serial = None;
     r.device.extra.clear();
     r.sections.clear();
+    r.source.parsed_at = None;
 
     shift_opt(&mut r.patient.date_of_birth, days);
     shift_opt(&mut r.device.implanted, days);
@@ -371,6 +378,45 @@ mod tests {
         assert_ne!(shift_for(&key, "sub-001"), shift_for(&[8u8; 32], "sub-001"));
     }
 
+    fn old_days(key: &[u8], patient_key: &str) -> i32 {
+        let mac = hmac_sha256(key, format!("dbsloc-date-shift:{patient_key}").as_bytes());
+        let mut head = [0u8; 8];
+        head.copy_from_slice(&mac[..8]);
+        (u64::from_be_bytes(head) % 61) as i32 - 30
+    }
+
+    #[test]
+    fn a_zero_candidate_gets_a_non_zero_stable_shift() {
+        let key = [7u8; 32];
+        let patient = (0..100_000)
+            .map(|i| format!("sub-{i}"))
+            .find(|p| old_days(&key, p) == 0)
+            .unwrap();
+        let s = shift_for(&key, &patient);
+        assert_ne!(s.days, 0);
+        assert!((-30..=30).contains(&s.days));
+        assert_eq!(s, shift_for(&key, &patient));
+    }
+
+    #[test]
+    fn no_shift_is_zero_and_non_zero_values_are_kept() {
+        let key = [9u8; 32];
+        let mut replaced = 0;
+        for i in 0..5000 {
+            let p = format!("sub-{i}");
+            let s = shift_for(&key, &p);
+            assert_ne!(s.days, 0, "{p}");
+            assert!((-30..=30).contains(&s.days), "{p}");
+            let old = old_days(&key, &p);
+            if old == 0 {
+                replaced += 1;
+            } else {
+                assert_eq!(s.days, old, "{p}");
+            }
+        }
+        assert!(replaced > 0);
+    }
+
     #[test]
     fn every_date_moves_by_the_same_offset() {
         let r = sample();
@@ -404,11 +450,14 @@ mod tests {
 
     #[test]
     fn identity_is_gone_and_age_kept() {
-        let r = sample();
+        let mut r = sample();
+        r.source.parsed_at = Some("2026-11-15T10:11:12Z".to_owned());
         let ids = identifying_strings(&r);
         assert_eq!(ids.len(), 4);
         let a = anonymize(&r, Shift { days: -17 });
+        assert_eq!(a.source.parsed_at, None);
         let text = crate::model::canonical_json(&a).expect("json");
+        assert!(!text.contains("2026-11-15"));
         for s in ids.iter().chain(["Roe".to_owned()].iter()) {
             assert!(!text.contains(s.as_str()), "{s}");
         }

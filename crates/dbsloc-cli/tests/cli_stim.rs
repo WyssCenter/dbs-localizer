@@ -224,3 +224,64 @@ fn import_of_a_missing_file_exits_1_and_a_missing_subject_exits_2() {
     let out = run_args(&["stim", "list", &root, "99", "--no-index"]);
     assert_eq!(out.code, 2, "{}", out.stderr);
 }
+
+#[test]
+fn set_accepts_a_utf16_file_written_by_a_windows_redirect() {
+    let dir = tempfile::tempdir().unwrap_or_else(|e| panic!("{e}"));
+    with_reco(dir.path());
+    let input = dir.path().join("in.json");
+    write_json(&input, &stimulation("redirected"));
+    let root = s(dir.path());
+    let out = run_args(&[
+        "stim",
+        "set",
+        &root,
+        "1",
+        "redirected",
+        "--from",
+        &s(&input),
+        "--no-index",
+    ]);
+    assert_eq!(out.code, 0, "{}", out.stderr);
+    let shown = run_args(&[
+        "stim",
+        "show",
+        &root,
+        "1",
+        "redirected",
+        "--json",
+        "--no-index",
+    ]);
+    assert_eq!(shown.code, 0, "{}", shown.stderr);
+    let mut bytes = vec![0xFF, 0xFE];
+    for u in shown.stdout.encode_utf16() {
+        bytes.extend(u.to_le_bytes());
+    }
+    let redirected = dir.path().join("label.json");
+    write(&redirected, &bytes);
+    let out = run_args(&[
+        "stim",
+        "set",
+        &root,
+        "1",
+        "redirected",
+        "--from",
+        &s(&redirected),
+        "--no-index",
+    ]);
+    assert_eq!(out.code, 0, "{}", out.stderr);
+    let again = run_args(&[
+        "stim",
+        "show",
+        &root,
+        "1",
+        "redirected",
+        "--json",
+        "--no-index",
+    ]);
+    assert_eq!(again.code, 0, "{}", again.stderr);
+    let (a, b) = (shown.json(), again.json());
+    assert_eq!(a["sides"], b["sides"]);
+    assert_eq!(a["model"], b["model"]);
+    assert_eq!(a["label"], b["label"]);
+}

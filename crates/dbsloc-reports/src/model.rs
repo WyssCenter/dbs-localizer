@@ -35,22 +35,30 @@ fn optional_number<'de, D: Deserializer<'de>>(d: D) -> Result<Option<f64>, D::Er
     Option::<f64>::deserialize(d)
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Vendor {
-    Medtronic,
-    BostonScientific,
-    Abbott,
+macro_rules! vendors {
+    ($($variant:ident => $name:literal),+ $(,)?) => {
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+        #[serde(rename_all = "snake_case")]
+        pub enum Vendor {
+            $($variant),+
+        }
+
+        impl Vendor {
+            pub const ALL: [Vendor; [$(Vendor::$variant),+].len()] = [$(Vendor::$variant),+];
+
+            pub fn as_str(self) -> &'static str {
+                match self {
+                    $(Vendor::$variant => $name),+
+                }
+            }
+        }
+    };
 }
 
-impl Vendor {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Vendor::Medtronic => "medtronic",
-            Vendor::BostonScientific => "boston_scientific",
-            Vendor::Abbott => "abbott",
-        }
-    }
+vendors! {
+    Medtronic => "medtronic",
+    BostonScientific => "boston_scientific",
+    Abbott => "abbott",
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -530,6 +538,23 @@ mod tests {
             "\"not_reported\""
         );
         assert_eq!(Vendor::BostonScientific.as_str(), "boston_scientific");
+    }
+
+    #[test]
+    fn all_lists_every_vendor_in_order() {
+        fn position(v: Vendor) -> usize {
+            match v {
+                Vendor::Medtronic => 0,
+                Vendor::BostonScientific => 1,
+                Vendor::Abbott => 2,
+            }
+        }
+        assert_eq!(Vendor::ALL.len(), 3);
+        for (i, v) in Vendor::ALL.iter().enumerate() {
+            assert_eq!(position(*v), i);
+            let name = serde_json::to_string(v).expect("vendor");
+            assert_eq!(name, format!("\"{}\"", v.as_str()));
+        }
     }
 
     #[test]

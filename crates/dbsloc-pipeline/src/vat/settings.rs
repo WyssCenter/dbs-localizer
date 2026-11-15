@@ -7,7 +7,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 
 use dbsloc_reconstruct::electrode_by_name;
-use fastwarp_matfile::mat5::{mat5_bytes, Mat5Value};
+use fastwarp_matfile::mat5::{mat5_bytes, read_mat5, Mat5Value};
 use fastwarp_matfile::{read_any_with, MatError, ReadOptions};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -1069,10 +1069,29 @@ pub fn load(subject_dir: &Path, subject: &str, label: &str) -> Result<Stimulatio
 }
 
 pub fn save(subject_dir: &Path, stim: &Stimulation) -> Result<PathBuf, StimError> {
+    save_with(subject_dir, stim, true)
+}
+
+pub fn save_unstamped(subject_dir: &Path, stim: &Stimulation) -> Result<PathBuf, StimError> {
+    save_with(subject_dir, stim, false)
+}
+
+fn save_with(
+    subject_dir: &Path,
+    stim: &Stimulation,
+    stamp_time: bool,
+) -> Result<PathBuf, StimError> {
     check_label_path(&stim.label)?;
     let mut stamped = stim.clone();
     stamped.provenance.software = software_stamp();
-    stamped.provenance.written_at = utc_now_rfc3339();
+    if stamp_time {
+        stamped.provenance.written_at = utc_now_rfc3339();
+    } else {
+        stamped.provenance.written_at = String::new();
+        if let Some(o) = stamped.provenance.software.as_object_mut() {
+            o.remove("written_at");
+        }
+    }
     let text = canonical_json(&stamped)?;
     let path = stimulation_json_path(subject_dir, &stim.subject, &stim.label);
     write_replacing(&path, text.as_bytes())
@@ -1595,20 +1614,40 @@ pub fn write_stimparameters_mat(
     stim: &Stimulation,
     volume: [f64; 2],
 ) -> Result<Vec<String>, StimError> {
+    write_stimparameters_mat_with(path, stim, volume, true)
+}
+
+pub fn write_stimparameters_mat_unstamped(
+    path: &Path,
+    stim: &Stimulation,
+    volume: [f64; 2],
+) -> Result<Vec<String>, StimError> {
+    write_stimparameters_mat_with(path, stim, volume, false)
+}
+
+fn write_stimparameters_mat_with(
+    path: &Path,
+    stim: &Stimulation,
+    volume: [f64; 2],
+    stamp_time: bool,
+) -> Result<Vec<String>, StimError> {
     let (s, warnings) = export_s(stim, volume);
     let sha = sha256_hex(canonical_json(stim)?.as_bytes());
-    let written_at = if stim.provenance.written_at.is_empty() {
-        utc_now_rfc3339()
-    } else {
-        stim.provenance.written_at.clone()
-    };
-    let provenance = Mat5Value::struct_scalar(vec![
+    let mut fields = vec![
         field("product", Mat5Value::char(PRODUCT)),
         field("version", Mat5Value::char(&version_string())),
         field("git_hash", Mat5Value::char(GIT_HASH)),
         field("source_json_sha256", Mat5Value::char(&sha)),
-        field("written_at", Mat5Value::char(&written_at)),
-    ]);
+    ];
+    if stamp_time {
+        let written_at = if stim.provenance.written_at.is_empty() {
+            utc_now_rfc3339()
+        } else {
+            stim.provenance.written_at.clone()
+        };
+        fields.push(field("written_at", Mat5Value::char(&written_at)));
+    }
+    let provenance = Mat5Value::struct_scalar(fields);
     let vars = vec![
         ("S".to_owned(), s),
         (PROVENANCE_VARIABLE.to_owned(), provenance),
@@ -1617,6 +1656,69 @@ pub fn write_stimparameters_mat(
     write_replacing(path, &bytes)
         .map_err(|e| StimError::Io(format!("cannot write {}: {e}", path.display())))?;
     Ok(warnings)
+}
+
+pub fn label_mat_paths(subject_dir: &Path, subject: &str, label: &str) -> Vec<PathBuf> {
+    subdirs(&stimulations_dir(subject_dir))
+        .into_iter()
+        .filter(|(space, _)| !space.starts_with('.'))
+        .map(|(space, _)| stimparameters_mat_path(subject_dir, subject, &space, label))
+        .filter(|p| p.is_file())
+        .collect()
+}
+
+pub fn strip_stimparameters_write_time(path: &Path) -> Result<bool, StimError> {
+    let mat = |e: String| StimError::Mat(format!("{}: {e}", path.display()));
+    let bytes = std::fs::read(path)
+        .map_err(|e| StimError::Io(format!("cannot read {}: {e}", path.display())))?;
+    let vars = read_mat5(&bytes).map_err(|e| mat(e.to_string()))?;
+    let Some(at) = vars.iter().position(|(n, _)| n == PROVENANCE_VARIABLE) else {
+        return Ok(false);
+    };
+    let Mat5Value::Struct {
+        dims,
+        fields,
+        elements,
+    } = &vars[at].1
+    else {
+        return Ok(false);
+    };
+    let Some(field_at) = fields.iter().position(|n| n == "written_at") else {
+        return Ok(false);
+    };
+    if mat5_bytes(&vars, true).map_err(|e| mat(e.to_string()))? != bytes {
+        return Err(mat(
+            "not a file this program wrote byte for byte; left unchanged".to_owned(),
+        ));
+    }
+    let mut stripped = vars.clone();
+    let mut kept_fields = fields.clone();
+    kept_fields.remove(field_at);
+    let kept_elements: Vec<Vec<Mat5Value>> = elements
+        .iter()
+        .map(|e| {
+            let mut e = e.clone();
+            e.remove(field_at);
+            e
+        })
+        .collect();
+    stripped[at].1 = Mat5Value::Struct {
+        dims: dims.clone(),
+        fields: kept_fields,
+        elements: kept_elements,
+    };
+    let out = mat5_bytes(&stripped, true).map_err(|e| mat(e.to_string()))?;
+    let back = read_mat5(&out).map_err(|e| mat(e.to_string()))?;
+    if mat5_bytes(&back, false).map_err(|e| mat(e.to_string()))?
+        != mat5_bytes(&stripped, false).map_err(|e| mat(e.to_string()))?
+    {
+        return Err(mat(
+            "the rewritten file does not read back identically".to_owned()
+        ));
+    }
+    write_replacing(path, &out)
+        .map_err(|e| StimError::Io(format!("cannot write {}: {e}", path.display())))?;
+    Ok(true)
 }
 
 pub fn read_s_variable(path: &Path) -> Result<Mat5Value, StimError> {
