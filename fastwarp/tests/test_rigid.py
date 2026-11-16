@@ -10,6 +10,8 @@ from pathlib import Path
 import fastwarp as g
 import numpy as np
 import pytest
+from fastwarp import _api
+from fastwarp._api import register_rigid
 from test_register import SPACING, needs_gpu, phantom
 
 ants = pytest.importorskip("ants")
@@ -47,7 +49,7 @@ def _corr(a, b) -> float:
 @needs_gpu
 def test_recovers_a_rigid_pose_and_ants_reads_the_transform(pair, tmp_path: Path):
     fixed, moving, tx, _ = pair
-    info = g.register_rigid(fixed, moving, out_prefix=tmp_path / "r_")
+    info = register_rigid(fixed, moving, out_prefix=tmp_path / "r_")
     mat = tmp_path / "r_0GenericAffine.mat"
     assert mat.is_file() and info["metric"] < 0
     p = np.asarray(info["parameters"])
@@ -66,7 +68,7 @@ def test_an_explicit_start_is_used(pair):
     fixed, moving, tx, centre = pair
     # Starting exactly at the answer ends there; the reported start is the one given.
     start = (np.concatenate([_rot(ANGLE).ravel(), SHIFT]), centre)
-    info = g.register_rigid(fixed, moving, initial=start)
+    info = register_rigid(fixed, moving, initial=start)
     np.testing.assert_allclose(info["initial_parameters"], start[0], atol=1e-9)
     np.testing.assert_allclose(info["initial_center"], centre, atol=1e-9)
     np.testing.assert_allclose(np.asarray(info["parameters"])[:9], start[0][:9], atol=0.01)
@@ -75,9 +77,9 @@ def test_an_explicit_start_is_used(pair):
 @needs_gpu
 def test_an_all_ones_mask_changes_nothing_and_runs_are_deterministic(pair):
     fixed, moving, _, _ = pair
-    a = g.register_rigid(fixed, moving)
-    b = g.register_rigid(fixed, moving, fixed_mask=fixed.new_image_like(np.ones(fixed.shape)))
-    c = g.register_rigid(fixed, moving)
+    a = register_rigid(fixed, moving)
+    b = register_rigid(fixed, moving, fixed_mask=fixed.new_image_like(np.ones(fixed.shape)))
+    c = register_rigid(fixed, moving)
     assert a["parameters"] == b["parameters"] == c["parameters"]
 
 
@@ -85,7 +87,7 @@ def test_an_all_ones_mask_changes_nothing_and_runs_are_deterministic(pair):
 def test_a_short_stage_and_winsorizing_run(pair):
     fixed, moving, _, _ = pair
     stage = {"iterations": [50, 20], "shrink_factors": [4, 2], "smoothing_sigmas": [2.0, 1.0]}
-    info = g.register_rigid(fixed, moving, stage=stage, winsorize=(0.005, 0.995))
+    info = register_rigid(fixed, moving, stage=stage, winsorize=(0.005, 0.995))
     assert len(info["iterations"]) == 2 and info["stage"]["iterations"] == [50, 20]
     assert all(0 < n <= m for n, m in zip(info["iterations"], [50, 20], strict=True))
 
@@ -105,9 +107,9 @@ def test_bad_arguments_are_refused_before_any_work(pair, monkeypatch, kwargs, ma
     fixed, moving, _, _ = pair
     monkeypatch.setenv("FASTWARP_GPU_ADAPTER", "no such adapter")
     if kwargs.pop("_no_mkdir", False):
-        monkeypatch.setattr(g, "_prepared_prefix", str)
+        monkeypatch.setattr(_api, "_prepared_prefix", str)
     with pytest.raises((ValueError, TypeError), match=match):
-        g.register_rigid(fixed, moving, **kwargs)
+        register_rigid(fixed, moving, **kwargs)
 
 
 @needs_gpu
@@ -115,9 +117,9 @@ def test_a_session_gives_the_one_shot_result_and_reuses_its_preparation(pair):
     """Kept smoothed images must not change a fit: the same start gives the same affine."""
     fixed, moving, _, _ = pair
     mask = fixed.new_image_like((fixed.numpy() > 0.05).astype("float32"))
-    one = g.register_rigid(fixed, moving, winsorize=(0.005, 0.995))
-    one_masked = g.register_rigid(fixed, moving, winsorize=(0.005, 0.995), fixed_mask=mask)
-    with g.rigid_session(fixed, moving, fixed_mask=mask, winsorize=(0.005, 0.995)) as s:
+    one = register_rigid(fixed, moving, winsorize=(0.005, 0.995))
+    one_masked = register_rigid(fixed, moving, winsorize=(0.005, 0.995), fixed_mask=mask)
+    with g.linear_session(fixed, moving, fixed_mask=mask, winsorize=(0.005, 0.995)) as s:
         a = s.register(use_mask=False)
         b = s.register(use_mask=True)
         c = s.register(use_mask=False)

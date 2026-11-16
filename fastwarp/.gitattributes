@@ -3,3 +3,4 @@
 *.h5 -text
 *.nii -text
 *.nii.gz -text
+*.sh text eol=lf

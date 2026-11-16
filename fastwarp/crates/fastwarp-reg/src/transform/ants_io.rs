@@ -26,13 +26,13 @@ pub const WARP_SUFFIX: &str = "1Warp.nii.gz";
 /// Suffix of the inverse warp of the triplet.
 pub const INVERSE_WARP_SUFFIX: &str = "1InverseWarp.nii.gz";
 
-/// `prefix` with `suffix` appended to its file name (ANTs output naming).
+/// `prefix` with `suffix` appended as text (ANTs output naming): `out/sub_` gives
+/// `out/sub_Composite.h5`, and a prefix ending in a path separator names a folder, so `out/sub/`
+/// gives `out/sub/Composite.h5`.
 pub fn with_suffix(prefix: &Path, suffix: &str) -> PathBuf {
-    let name = prefix
-        .file_name()
-        .map(|n| n.to_string_lossy().into_owned())
-        .unwrap_or_default();
-    prefix.with_file_name(format!("{name}{suffix}"))
+    let mut path = prefix.as_os_str().to_owned();
+    path.push(suffix);
+    PathBuf::from(path)
 }
 
 /// Reads one transform file, choosing the reader from the extension: `.h5` / `.hdf5` / `.hdf`
@@ -87,6 +87,18 @@ impl CompositePair {
                 TransformElem::DisplacementField(inverse_warp),
                 TransformElem::Affine(affine.inverse()?),
             ]),
+        })
+    }
+}
+
+impl CompositePair {
+    /// The pair of a linear-only registration: `[affine]` and `[affine^-1]`, what ANTs writes as
+    /// `Composite.h5` / `InverseComposite.h5` for a run without a deformable stage. Fails when the
+    /// affine is singular.
+    pub fn linear(affine: &AffineTransform) -> Result<Self> {
+        Ok(Self {
+            forward: TransformChain::from_queue(vec![TransformElem::Affine(*affine)]),
+            inverse: TransformChain::from_queue(vec![TransformElem::Affine(affine.inverse()?)]),
         })
     }
 }
@@ -178,5 +190,18 @@ mod tests {
     fn suffix_goes_after_the_file_name() {
         let p = with_suffix(Path::new("/a/b/sub-01_"), "Composite.h5");
         assert_eq!(p, PathBuf::from("/a/b/sub-01_Composite.h5"));
+    }
+
+    #[test]
+    fn a_prefix_ending_in_a_separator_names_a_folder() {
+        let p = with_suffix(Path::new("a/b/"), "Composite.h5");
+        assert_eq!(p, PathBuf::from("a/b/Composite.h5"));
+        assert_eq!(p.parent(), Some(Path::new("a/b")));
+        if cfg!(windows) {
+            let p = with_suffix(Path::new("a\\b\\"), "Composite.h5");
+            assert_eq!(p.parent(), Some(Path::new("a\\b")));
+        }
+        let p = with_suffix(Path::new("a/b"), "Composite.h5");
+        assert_eq!(p, PathBuf::from("a/bComposite.h5"));
     }
 }

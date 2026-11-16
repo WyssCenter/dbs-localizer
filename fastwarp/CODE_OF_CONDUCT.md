@@ -36,7 +36,7 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at TODO(author): contact address. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement, the maintainers Richard Köhler and Jan Philipp Payonk, by email to Richard Köhler at <richard.koehler@outlook.de>. Do not report through a public issue. All complaints will be reviewed and investigated fairly and as soon as the maintainers can.
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 

@@ -7,7 +7,8 @@ mod common;
 use std::time::Instant;
 
 use common::*;
-use fastwarp_gpu::{plan_capacity, plan_capacity_pair, CapacityCaps, WgpuBackend};
+use fastwarp_gpu::capacity::SELFTEST_POOL_BYTES;
+use fastwarp_gpu::{plan_capacity_syn, CapacityCaps, WgpuBackend};
 use fastwarp_reg::apply::{apply_chain, Interpolation};
 use fastwarp_reg::backend::Backend;
 use fastwarp_reg::cpu::CpuBackend;
@@ -287,7 +288,7 @@ fn a_syn_iteration_reads_back_four_scalar_blocks_with_one_channel_and_five_with_
     }
 }
 
-fn capacity_plan_bounds_pool_peak(n: usize, moving_n: usize, iterations: u32) {
+fn capacity_plan_bounds_pool_peak(n: usize, moving_n: usize, factors: &[u32], iterations: u32) {
     let n_full = (n * n * n) as u64;
     let mut h = head([n, n, n], 2.0, 3.0);
     if moving_n != n {
@@ -300,7 +301,11 @@ fn capacity_plan_bounds_pool_peak(n: usize, moving_n: usize, iterations: u32) {
     let mut failures = Vec::new();
     for channels in [1usize, 2] {
         let Some(gpu) = backend() else { return };
-        let mut recipe = small_recipe(&[(2, 1.0, iterations), (1, 0.0, iterations)], 2);
+        let levels: Vec<(u32, f64, u32)> = factors
+            .iter()
+            .map(|&f| (f, if f > 1 { 1.0 } else { 0.0 }, iterations))
+            .collect();
+        let mut recipe = small_recipe(&levels, 2);
         let mut ch = vec![SynChannel {
             fixed: h.fixed.clone(),
             moving: h.moving.clone(),
@@ -326,29 +331,27 @@ fn capacity_plan_bounds_pool_peak(n: usize, moving_n: usize, iterations: u32) {
             max_storage_buffer_binding_size: u64::MAX,
             memory_budget: u64::MAX,
         };
-        let plan = plan_capacity_pair([n; 3], [moving_n; 3], channels, &caps).unwrap();
+        let plan = plan_capacity_syn([n; 3], [moving_n; 3], channels, factors, &caps).unwrap();
         eprintln!(
-            "channels {channels}: peak {peak} bytes = {:.1} B/voxel, planned {} bytes = {:.1} B/voxel",
+            "{n}^3 {factors:?} channels {channels}: peak {peak} bytes = {:.1} B/voxel, planned {} bytes = {:.1} B/voxel",
             peak as f64 / n_full as f64,
             plan.level_total_bytes,
             plan.level_total_bytes as f64 / n_full as f64
         );
-        failures.extend((peak > plan.level_total_bytes + 16 * n_full).then(|| {
+        failures.extend((peak > plan.level_total_bytes).then(|| {
             format!(
-                "channels {channels}: peak {peak} above plan {} + 16 n",
+                "{n}^3 {factors:?} channels {channels}: peak {peak} above plan {}",
                 plan.level_total_bytes
             )
         }));
         if moving_n != n {
-            let fixed_only = plan_capacity([n; 3], channels, &caps).unwrap();
-            failures.extend(
-                (peak <= fixed_only.level_total_bytes + 16 * n_full).then(|| {
-                    format!(
-                        "channels {channels}: peak {peak} within the fixed-only plan {} + 16 n",
-                        fixed_only.level_total_bytes
-                    )
-                }),
-            );
+            let fixed_only = plan_capacity_syn([n; 3], [n; 3], channels, factors, &caps).unwrap();
+            failures.extend((peak <= fixed_only.level_total_bytes).then(|| {
+                format!(
+                    "channels {channels}: peak {peak} within the fixed-only plan {}",
+                    fixed_only.level_total_bytes
+                )
+            }));
         }
     }
     assert!(failures.is_empty(), "{failures:?}");
@@ -356,18 +359,39 @@ fn capacity_plan_bounds_pool_peak(n: usize, moving_n: usize, iterations: u32) {
 
 #[test]
 fn the_capacity_plan_bounds_the_pool_peak_of_a_two_level_run() {
-    capacity_plan_bounds_pool_peak(96, 96, 1);
+    capacity_plan_bounds_pool_peak(96, 96, &[2, 1], 1);
 }
 
 #[test]
 fn the_capacity_plan_bounds_the_pool_peak_with_a_finer_moving_grid() {
-    capacity_plan_bounds_pool_peak(96, 191, 1);
+    capacity_plan_bounds_pool_peak(96, 191, &[2, 1], 1);
 }
 
 #[test]
 #[ignore = "recalibration at 128^3; run with --ignored --release"]
 fn the_capacity_plan_bounds_the_pool_peak_of_a_two_level_run_at_128() {
-    capacity_plan_bounds_pool_peak(128, 128, 3);
+    capacity_plan_bounds_pool_peak(128, 128, &[2, 1], 3);
+    capacity_plan_bounds_pool_peak(128, 128, &[8, 4, 2, 1], 1);
+}
+
+#[test]
+fn the_capacity_plan_bounds_the_pool_peak_of_small_grids() {
+    for n in [24, 33, 48] {
+        capacity_plan_bounds_pool_peak(n, n, &[8, 4, 2, 1], 1);
+        capacity_plan_bounds_pool_peak(n, n, &[2, 1], 1);
+    }
+}
+
+#[test]
+fn the_device_self_test_leaves_no_more_than_its_planned_pool_bytes() {
+    let Some(gpu) = backend() else { return };
+    let peak = gpu.peak_allocated_bytes();
+    eprintln!("self-test pool peak {peak} bytes, planned {SELFTEST_POOL_BYTES}");
+    assert!(peak > 0);
+    assert!(
+        peak <= SELFTEST_POOL_BYTES,
+        "{peak} > {SELFTEST_POOL_BYTES}"
+    );
 }
 
 #[test]

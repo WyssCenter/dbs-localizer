@@ -1240,6 +1240,10 @@ impl Backend for WgpuBackend {
         )
     }
 
+    fn release_idle_buffers(&self) {
+        self.release_idle();
+    }
+
     fn upload_image(&self, volume: &Volume<f64>) -> RegResult<GpuImage> {
         let grid = *volume.grid();
         let buf = self.image_buffer(&grid)?;

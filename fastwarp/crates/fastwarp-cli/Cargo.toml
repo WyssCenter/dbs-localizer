@@ -1,0 +1,31 @@
+[package]
+name = "fastwarp-cli"
+version.workspace = true
+license.workspace = true
+publish = false
+edition = "2021"
+description = "The fastwarp command line, and the engine calls it shares with the Python extension"
+
+[lib]
+name = "fastwarp_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "fastwarp"
+path = "src/main.rs"
+
+[dependencies]
+fastwarp-reg = { path = "../fastwarp-reg" }
+fastwarp-gpu = { path = "../fastwarp-gpu" }
+fastwarp-niftiio = { path = "../fastwarp-niftiio" }
+clap = { version = "4.5", features = ["derive", "std"] }
+ndarray = "0.17"
+rayon = "1.10"
+serde_json = "1"
+
+[dev-dependencies]
+nifti = "0.18"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

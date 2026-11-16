@@ -1,0 +1,1034 @@
+{
+ "mindboggle_volumes": [
+  {
+   "path": "OASIS-TRT-20_volumes.tar.gz",
+   "url": "https://osf.io/download/tyvhs/",
+   "size": 408405203,
+   "sha256": "fc710839e7495caf73a9633b7eb01f4203198206fca53ec3fadcc0e458bfce66"
+  }
+ ],
+ "snsx": [
+  {
+   "path": "derivatives/afids_groundtruth/sub-C001/anat/sub-C001_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C001:anat:sub-C001_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4422,
+   "sha256": "d617ebb0ae555772844919b35e4c1fe19e25dbe38b322f13e7b65795bbe958d7"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C002/anat/sub-C002_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C002:anat:sub-C002_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4376,
+   "sha256": "8f552f572edb53d91c49cd52495c526bee14af337d276eb1dacb7ebc85a01b75"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C003/anat/sub-C003_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C003:anat:sub-C003_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4446,
+   "sha256": "623cf98770602a2dda49e0c4e99ed18e593947368210f06f85d84d7ea33e8f2a"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C004/anat/sub-C004_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C004:anat:sub-C004_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4344,
+   "sha256": "d588f1c9e56d117dc645ec13e493d350071614f4bf3ab31e6ece56cd4e169ddd"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C005/anat/sub-C005_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C005:anat:sub-C005_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4443,
+   "sha256": "7dc91b4b02923123a388ba08bf1d1367e2ad4a86fb6d213b73e9686d8ca8df1f"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C006/anat/sub-C006_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C006:anat:sub-C006_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4377,
+   "sha256": "d4c5bda002e93660476f20ee8627e663b4c62e4cad1aad58bf9416af84075394"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C007/anat/sub-C007_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C007:anat:sub-C007_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4351,
+   "sha256": "8369f70150de61b0e1d93c70049bfc3a1c9898fa2baf873eaebf993431f0d7da"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C008/anat/sub-C008_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C008:anat:sub-C008_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4425,
+   "sha256": "351441cee685d3849343905ed1f3353f2e79588c7bfcf9bcf0b03f57df9ec0ad"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C009/anat/sub-C009_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C009:anat:sub-C009_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4424,
+   "sha256": "ab7e2529caf9d6502c0dcc620d5a8e32e533ae50c031e1e9e1777d38812f0bef"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C010/anat/sub-C010_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C010:anat:sub-C010_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4439,
+   "sha256": "458cea6ef3da38a55b55a929432e55691d565e5c8c458e77cca11939cdd23b7c"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C011/anat/sub-C011_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C011:anat:sub-C011_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4413,
+   "sha256": "c8eda4ec921bb5e1510afb97209e45f28851d074c8042c74fba436a015c1813e"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C012/anat/sub-C012_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C012:anat:sub-C012_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4432,
+   "sha256": "adccfcdb6df028e5a210d40c16aa94f94cfad211ae9bab07e51b450bb8789cd6"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C013/anat/sub-C013_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C013:anat:sub-C013_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4348,
+   "sha256": "ac92b44120afd4b1c6d57cc73986ca22a2ca8a6b6968fc0231893ab29c135824"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C015/anat/sub-C015_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C015:anat:sub-C015_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4430,
+   "sha256": "778ca404157ffb0615fc4c3e4d4780945d00656f941eb6328ba1768cc7ab8267"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C016/anat/sub-C016_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C016:anat:sub-C016_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4325,
+   "sha256": "baae1877bbb74b03cf340d1cdbf8830bcc3d81839f5c029033d38e0e8b23f733"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C018/anat/sub-C018_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C018:anat:sub-C018_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4403,
+   "sha256": "9f97a271d21784807697f853687f196f6b92835398db96e39b7c815f0398f3c3"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C019/anat/sub-C019_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C019:anat:sub-C019_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4441,
+   "sha256": "e3b5e43570dc9cc62f35d0d7e84f4641ba6c7658db612bad374a06e2be74d806"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C020/anat/sub-C020_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C020:anat:sub-C020_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4450,
+   "sha256": "e8f2924f3997402c7d01b5ed129a9b1f7ec7f2c37b204e2caab66c019d78fd80"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C021/anat/sub-C021_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C021:anat:sub-C021_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4386,
+   "sha256": "82226b4392ad8a03a4383fc77ec4497b90ba544c40be4679f482ca68584e60a3"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C022/anat/sub-C022_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C022:anat:sub-C022_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4433,
+   "sha256": "d2d354468bd449b6103b518e1225b34af1c9b71a65162bb11f6591a3c50dbede"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C023/anat/sub-C023_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C023:anat:sub-C023_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4415,
+   "sha256": "e4dd9d4d1adf3fc5d9ab197d4f52cb650b9c986e31dcd3aacf89192e607209c2"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C024/anat/sub-C024_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C024:anat:sub-C024_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4398,
+   "sha256": "ab9639def5714f702c7a85077f220bd7b877161d2f37815f82c61b9043ebf3ff"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C025/anat/sub-C025_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C025:anat:sub-C025_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4390,
+   "sha256": "dac0db3ff01a6933c1c64b568edf6e5baaf8c35f94e8b25471dcfe26c2fc7389"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C026/anat/sub-C026_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C026:anat:sub-C026_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4409,
+   "sha256": "d9ab5304187a93f6ed060c8697cad4ff6e72d42d2273e2dd1657b4cebe30f9bd"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C027/anat/sub-C027_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C027:anat:sub-C027_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4397,
+   "sha256": "ac6aa5e33b57aa162effff6f3dde5baf59cc6b902685b17d35631b44ea37f73e"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C028/anat/sub-C028_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C028:anat:sub-C028_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4329,
+   "sha256": "d49f0b0704251822003ce8468e2c3db798bab451fa93fc83dda411994a646c35"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C029/anat/sub-C029_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C029:anat:sub-C029_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4491,
+   "sha256": "09b470d6a18a0c60d8dc10d38b9847445832d09662cc358c33f5ef9cb9fd8640"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C030/anat/sub-C030_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C030:anat:sub-C030_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4370,
+   "sha256": "5acd8a63db5ea0f6f5013f1e63148e4b31e894c5ebe06149b899f5ade8055b74"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C031/anat/sub-C031_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C031:anat:sub-C031_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4435,
+   "sha256": "ddd13b7e2d0f03591dc7a6d0c8cf0f25ad5770b5669c6cc7a0db334d8125f130"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C032/anat/sub-C032_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C032:anat:sub-C032_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4469,
+   "sha256": "c0247d3ce5e5ae20ef69ecb1e5e7d3703ae99475a5f4de72793fdb35794d24df"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C033/anat/sub-C033_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C033:anat:sub-C033_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4414,
+   "sha256": "fa69737c52c50686deb78f36324b89728513ad848e2b586e95d2df4cba8bbb2a"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-C034/anat/sub-C034_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-C034:anat:sub-C034_acq-MP2RAGE_run-01_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 4357,
+   "sha256": "bbb02e3c972a95e3b924c45ba0eff5840000cad4af855ff44b71575560617d9b"
+  },
+  {
+   "path": "sub-C001/anat/sub-C001_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C001:anat:sub-C001_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33164670,
+   "sha256": "4569c5e45fa61362ebde1e214fee1e5385978000d298c8da82f99f10e4b23688"
+  },
+  {
+   "path": "sub-C002/anat/sub-C002_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C002:anat:sub-C002_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 34165250,
+   "sha256": "8b8e998cd0a657f9c37d6c733c83f4773a7e357c9c0219df38f8c18f52d86de4"
+  },
+  {
+   "path": "sub-C003/anat/sub-C003_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C003:anat:sub-C003_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 32733365,
+   "sha256": "5346c9b05f493a76b719fed6138033ab2ccdb2e89686a43fd9f31d8432bb8adf"
+  },
+  {
+   "path": "sub-C004/anat/sub-C004_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C004:anat:sub-C004_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33702573,
+   "sha256": "20db7259082f7702af91fcf2670a7e7d2a68deae744c8d3bc5620cfe2af126dd"
+  },
+  {
+   "path": "sub-C005/anat/sub-C005_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C005:anat:sub-C005_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33922770,
+   "sha256": "51923617cb44bafeb09e5decb3a9b92d7a79d8942510b2a8d10a4c94a627f001"
+  },
+  {
+   "path": "sub-C006/anat/sub-C006_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C006:anat:sub-C006_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 32508965,
+   "sha256": "f3879c970cbe10d95c63d1d5d45fe8eda46dd805c4fc462525ef02c82d17bbba"
+  },
+  {
+   "path": "sub-C007/anat/sub-C007_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C007:anat:sub-C007_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33041730,
+   "sha256": "c029a22ae814b6bf6b4d88efb8b033bc56a89e0a7d5c5caf208753603b2f459c"
+  },
+  {
+   "path": "sub-C008/anat/sub-C008_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C008:anat:sub-C008_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 34176705,
+   "sha256": "d43356b35352dc92e89c14b9536135b6424e731744ac5219956404631900101f"
+  },
+  {
+   "path": "sub-C009/anat/sub-C009_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C009:anat:sub-C009_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 34219599,
+   "sha256": "0bffa140e454ed0d4bf3ec8c7a52b2a2d4d332784c91b1446852f7e81877a86b"
+  },
+  {
+   "path": "sub-C010/anat/sub-C010_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C010:anat:sub-C010_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33691858,
+   "sha256": "f078a3dd9aa1e5d34d5e10a82e740cc11b346a239c1f854ef731399eae467e05"
+  },
+  {
+   "path": "sub-C011/anat/sub-C011_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C011:anat:sub-C011_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33617962,
+   "sha256": "1db74244c7dde7a1018820383917d13b50e794165d278430d57bb01299a52560"
+  },
+  {
+   "path": "sub-C012/anat/sub-C012_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C012:anat:sub-C012_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 32858343,
+   "sha256": "9411bddd0ea5a393c4b14e74f18e9a9d5c49b5acaf6ef2d064d3b1ab1a4ba5ae"
+  },
+  {
+   "path": "sub-C013/anat/sub-C013_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C013:anat:sub-C013_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 34203142,
+   "sha256": "9e79774dffa99a0ec8db0c4e25982d6f2098779d721617b15e9be2ae1129503f"
+  },
+  {
+   "path": "sub-C015/anat/sub-C015_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C015:anat:sub-C015_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 32583455,
+   "sha256": "05bfa2e1c4444e48fd63ec3504d8c65b44ddbd36f369788a23f6a3a43462c942"
+  },
+  {
+   "path": "sub-C016/anat/sub-C016_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C016:anat:sub-C016_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33577741,
+   "sha256": "9643bc05a427229229665603edad0d7fd1bb5336f9c64b6db2900b5b9f7acb0c"
+  },
+  {
+   "path": "sub-C018/anat/sub-C018_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C018:anat:sub-C018_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 32519670,
+   "sha256": "46607eeddc95ad7d45b814ac8df90d769c873f48a169b74ec26ab36bffcb40d5"
+  },
+  {
+   "path": "sub-C019/anat/sub-C019_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C019:anat:sub-C019_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33304628,
+   "sha256": "721677432e19b0517bf080f871aef4ff4b4e22f60f2f55a0ec4dac5aa8dd4000"
+  },
+  {
+   "path": "sub-C020/anat/sub-C020_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C020:anat:sub-C020_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 34020640,
+   "sha256": "a6c713888474e5c32fd5cab2dacbe2ed5eda642649442168b83405c386c84722"
+  },
+  {
+   "path": "sub-C021/anat/sub-C021_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C021:anat:sub-C021_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33169985,
+   "sha256": "c5cc929dfef594473d43756d1925b57633427cac1803a5b1829ff737bf8f9e56"
+  },
+  {
+   "path": "sub-C022/anat/sub-C022_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C022:anat:sub-C022_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 34132186,
+   "sha256": "5b7f834ca498d6f3f0952caefb801772b37cceb87fc009049d4a3f6e3a2ac997"
+  },
+  {
+   "path": "sub-C023/anat/sub-C023_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C023:anat:sub-C023_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33746705,
+   "sha256": "1ed63a54a301db5a1090b42b7374aa328d3b247cdc60ec7f2dc6dcc9036412de"
+  },
+  {
+   "path": "sub-C024/anat/sub-C024_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C024:anat:sub-C024_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33613038,
+   "sha256": "806834cb0f1f32924b91e70bc233717f7f254aef5538f68faa385b8aa6019319"
+  },
+  {
+   "path": "sub-C025/anat/sub-C025_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C025:anat:sub-C025_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 32506844,
+   "sha256": "3225e3af960dad2e7959b3f0a8f2d572174266221e760260689e63d30f3ce375"
+  },
+  {
+   "path": "sub-C026/anat/sub-C026_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C026:anat:sub-C026_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 34027493,
+   "sha256": "7f10d4e42da98d430efa39e7e04e1b9a62ee2ef34d91e4f9f9e2161fc9938e42"
+  },
+  {
+   "path": "sub-C027/anat/sub-C027_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C027:anat:sub-C027_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 34085329,
+   "sha256": "a0c06d951e3e3bf1d9fc156c6952d2835b9b3af023c5e1d2ecf63b02102e893a"
+  },
+  {
+   "path": "sub-C028/anat/sub-C028_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C028:anat:sub-C028_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33665129,
+   "sha256": "61e15dc57467a4b0e458d14fcb343fb4b1e9d12304c4a9fa8af4114fd8075765"
+  },
+  {
+   "path": "sub-C029/anat/sub-C029_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C029:anat:sub-C029_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 34283836,
+   "sha256": "400cb714a9eebc4f24dfc91f231364a1467f3d30e97aeb177a9f7b681d14040a"
+  },
+  {
+   "path": "sub-C030/anat/sub-C030_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C030:anat:sub-C030_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 34149178,
+   "sha256": "1a9ff5e76ecb63cb3476c4fe55f187a7a7ed044b33ef6eb24183d32d5776998f"
+  },
+  {
+   "path": "sub-C031/anat/sub-C031_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C031:anat:sub-C031_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33849665,
+   "sha256": "16b539f8349bf2d5bcecec7798c941d96aa1b1f1ca13fecc2cf7ca2fd123a321"
+  },
+  {
+   "path": "sub-C032/anat/sub-C032_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C032:anat:sub-C032_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33396849,
+   "sha256": "aaf157dbc3abc44552dbc95e8ead7535ece2b5ed3228b3738c9338c4fe43b891"
+  },
+  {
+   "path": "sub-C033/anat/sub-C033_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C033:anat:sub-C033_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33691180,
+   "sha256": "95ce5114f57dc9ec5cf97953f91fdb67beba0998fd5773ba2eb534c8a650801a"
+  },
+  {
+   "path": "sub-C034/anat/sub-C034_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004470/snapshots/1.0.1/files/sub-C034:anat:sub-C034_acq-MP2RAGE_run-01_T1w.nii.gz",
+   "size": 33632969,
+   "sha256": "f728299dc327c088aea8b943e00db5f409a69a4c472fa981211b591ac255f53c"
+  }
+ ],
+ "lhscpd": [
+  {
+   "path": "derivatives/afids_groundtruth/sub-087/anat/sub-087_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-087:anat:sub-087_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3643,
+   "sha256": "bf50ea51ef78f0dc4018a0b5a3ce21c028a8c879c7987034ff44b184df44366a"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-093/anat/sub-093_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-093:anat:sub-093_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3658,
+   "sha256": "4fa43ef7e0405910a5bc16e6bd508ef72558a812868013f941b834c7c10a229d"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-103/anat/sub-103_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-103:anat:sub-103_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3671,
+   "sha256": "aa5ece44f49c711ce11c261b0db855ee4883118369ab743cb874aec19de7d327"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-106/anat/sub-106_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-106:anat:sub-106_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3660,
+   "sha256": "0db921fa0947a7998476822ce93dc7a0d45c4ed4bed27c26ffd6a47838bb9017"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-107/anat/sub-107_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-107:anat:sub-107_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3637,
+   "sha256": "c54a7b0126951f244194888654bfdc0a598ed8d565e38097fce1e64a1e089a26"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-113/anat/sub-113_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-113:anat:sub-113_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3647,
+   "sha256": "e048893302dfd7242eb2af31c925ba62a62c7222d86bf7bcc61d1301e08b1f44"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-115/anat/sub-115_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-115:anat:sub-115_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3641,
+   "sha256": "7ec657f2465a05ba8f1d6c9892989a292bc87674563f5cbc964d8bdff6912af1"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-116/anat/sub-116_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-116:anat:sub-116_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3651,
+   "sha256": "e1e99dd0515a3de4740da2585b0c5aa223b6aeb6a61459f00d3ce74887a68304"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-118/anat/sub-118_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-118:anat:sub-118_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3634,
+   "sha256": "43197b2bb2477ebbafddc7feec18401eb746717e9ec893e8b23fca0bae8e24c6"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-120/anat/sub-120_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-120:anat:sub-120_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3654,
+   "sha256": "67eae623f76380261759067c236a78f9d9a7063ac919fef010b429c5334eda0b"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-122/anat/sub-122_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-122:anat:sub-122_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3642,
+   "sha256": "f02e75955280e4df4a4c734192f3c7dfbe27dea897ff06e909707381bef02fde"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-124/anat/sub-124_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-124:anat:sub-124_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3632,
+   "sha256": "9b2363c01d6ffe60c1daa11168743d999ef0345d8cb246c264c941b708b4b7eb"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-125/anat/sub-125_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-125:anat:sub-125_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3653,
+   "sha256": "1754f389bb04fd89b0dcc026ea7f8da869d94d45a677a8e776ba4a58f11273c0"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-126/anat/sub-126_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-126:anat:sub-126_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3678,
+   "sha256": "b1a68086a675313e51bd4c92d68be4b19b1933a3d0fe8a3f9e8f86c7ebd9213e"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-127/anat/sub-127_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-127:anat:sub-127_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3666,
+   "sha256": "8b532ddd72d498cdad5e79b0c67784b04b2039daaa155eb438820b64945752f7"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-128/anat/sub-128_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-128:anat:sub-128_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3652,
+   "sha256": "9729c4dc91b5d20e3535479241b3d0167406ac424cf6020d02a8248d5ba83afd"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-131/anat/sub-131_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-131:anat:sub-131_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3674,
+   "sha256": "af438af6543e7e6b461c790295350da88f563068dc6e7140a4ac082d4f0f11f1"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-132/anat/sub-132_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-132:anat:sub-132_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3658,
+   "sha256": "ad5ea42dc43148991e8922c7a6b0e51df089266d145c9168f617782305017a33"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-133/anat/sub-133_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-133:anat:sub-133_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3651,
+   "sha256": "451df55cb0ea210987cb1f8af29ff7baafa290d0f1d0b095a4d102b5b99b01ae"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-135/anat/sub-135_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-135:anat:sub-135_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3683,
+   "sha256": "71c9780756c1fe91c1099d9edb6c06c1a502a467bb28c6840ab9c75ac7f0aeb6"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-136/anat/sub-136_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-136:anat:sub-136_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3657,
+   "sha256": "3d2607779347b25ed5c5e163711d8cb1a3bdb15b5d05d29aa2fb509def9e4f38"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-138/anat/sub-138_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-138:anat:sub-138_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3667,
+   "sha256": "797cff6605e02150a0eba3403bcffda8e42051d7cbdeff4fe9c82c367875a9f9"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-139/anat/sub-139_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-139:anat:sub-139_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3643,
+   "sha256": "4d362b8bfdbedca3010f00d269494cdf2ecff864cbff03096015ba4575709c2a"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-141/anat/sub-141_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-141:anat:sub-141_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3683,
+   "sha256": "65608beb95b37d710d73ed265ca38a356659933457aea7403060ca37de0888e6"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-145/anat/sub-145_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-145:anat:sub-145_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3637,
+   "sha256": "c58dcd00185de45da54ea23b63d65899ba57992bc9222110bd4627cd3a673e2e"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-146/anat/sub-146_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-146:anat:sub-146_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3652,
+   "sha256": "1ab5a3419303c332b23250f8d60b98dee4531a3190a027359153960e4416f35d"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-147/anat/sub-147_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-147:anat:sub-147_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3640,
+   "sha256": "4021925c4904a8ff2711120b452b07b51169922cc571c0f6d488d5b119a570b1"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-148/anat/sub-148_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-148:anat:sub-148_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3627,
+   "sha256": "8894e91b7023d0e77a887a290799b59e684a78a5b5f6dd8511c3abb8253ea80d"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-149/anat/sub-149_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-149:anat:sub-149_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3635,
+   "sha256": "04b067ecd58a8dd17a5cfc11e612b103a5792c27fb017755835bdc43719f858b"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-150/anat/sub-150_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-150:anat:sub-150_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3654,
+   "sha256": "3470683808a237b04297d1046d944c053c34dd23b0e81f4a8854fb135c133d1d"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-151/anat/sub-151_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-151:anat:sub-151_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3644,
+   "sha256": "15a26ced887c7b06d2428a220134906f29edefbc5685ea44f57c19688806c7fe"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-152/anat/sub-152_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-152:anat:sub-152_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3667,
+   "sha256": "1f158722a1bd39284f01ecb1d72b45df594ea6968a954e26f18be473e2f1a05b"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-153/anat/sub-153_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-153:anat:sub-153_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3668,
+   "sha256": "9bd4a0f243aa53126f5018150eb25d296ed916185391eae15f63a7c3484efc04"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-156/anat/sub-156_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-156:anat:sub-156_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3654,
+   "sha256": "0f75f939a4d3c721a769825a1945e4299462d8b0ca1fcfdac21ef907b2d37d82"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-157/anat/sub-157_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-157:anat:sub-157_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3649,
+   "sha256": "7149de701197bb4b4efb19a3ce1e7bcf7fbcd9fe126d58d52c6f9d02f0c6cd3e"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-158/anat/sub-158_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-158:anat:sub-158_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3650,
+   "sha256": "176c0ce0b28744b08ff1850f65ceb007e144861184327f1bd262ec3e8f95b57a"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-161/anat/sub-161_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-161:anat:sub-161_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3676,
+   "sha256": "03671e0a5b12b6a7ac7ae0119b4968dddfc11bb2da184f2b545ffe3e2730416f"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-162/anat/sub-162_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-162:anat:sub-162_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3656,
+   "sha256": "489258958a5896f23430296f5ec62c224c8eeaa93eb5843ab34d85fa8c53f81d"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-163/anat/sub-163_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-163:anat:sub-163_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3655,
+   "sha256": "43e4b68e336445aea89b72cbe67b3e6715c30ea45ec5b1f243dbfcb67b58db95"
+  },
+  {
+   "path": "derivatives/afids_groundtruth/sub-168/anat/sub-168_space-T1w_desc-groundtruth_afids.fcsv",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/derivatives:afids_groundtruth:sub-168:anat:sub-168_space-T1w_desc-groundtruth_afids.fcsv",
+   "size": 3647,
+   "sha256": "09edbb0b99c3cd08b53325ecaf25e8fce59a804e36c9c841b1112ca66f3670ad"
+  },
+  {
+   "path": "sub-087/anat/sub-087_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-087:anat:sub-087_run-01_T1w.nii.gz",
+   "size": 8639813,
+   "sha256": "1d4f0574ec8569680d0a135cd0d0987ff689c69e77bc286d19eb6eaac81245c9"
+  },
+  {
+   "path": "sub-093/anat/sub-093_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-093:anat:sub-093_run-01_T1w.nii.gz",
+   "size": 7926506,
+   "sha256": "2a3176c566a76baa4e8d551e987fa044bf7d5c808f74f7823ceb6f0ab5b3f035"
+  },
+  {
+   "path": "sub-103/anat/sub-103_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-103:anat:sub-103_run-01_T1w.nii.gz",
+   "size": 8574545,
+   "sha256": "ec1b36a5331d4d8a912d58cc854b2206990b12b2fd8d72df3a7eae90888f7969"
+  },
+  {
+   "path": "sub-106/anat/sub-106_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-106:anat:sub-106_run-01_T1w.nii.gz",
+   "size": 8787683,
+   "sha256": "4af1b5589231d76f845351156428a314070a90a820aa5df1405db66c86ea335e"
+  },
+  {
+   "path": "sub-107/anat/sub-107_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-107:anat:sub-107_run-01_T1w.nii.gz",
+   "size": 6905486,
+   "sha256": "81f900bb5a1297581ae1b867da946635b5752150265be5b915cfa0ee95930fe9"
+  },
+  {
+   "path": "sub-113/anat/sub-113_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-113:anat:sub-113_run-01_T1w.nii.gz",
+   "size": 8698237,
+   "sha256": "ef308bb4db7d64369669e11aa832b8b7002bee66afb59b82e40d3a5044c32c0b"
+  },
+  {
+   "path": "sub-115/anat/sub-115_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-115:anat:sub-115_run-01_T1w.nii.gz",
+   "size": 7756745,
+   "sha256": "340ce09e2b41839fe8a20e5a48f9a60064ae6e31fef7ac78996625e6c67164bb"
+  },
+  {
+   "path": "sub-116/anat/sub-116_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-116:anat:sub-116_run-01_T1w.nii.gz",
+   "size": 9953537,
+   "sha256": "b98a328f7b05298a8434a58ba3c16932ef6cc487465926dc7f9ef346c69c10f0"
+  },
+  {
+   "path": "sub-118/anat/sub-118_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-118:anat:sub-118_run-01_T1w.nii.gz",
+   "size": 7864806,
+   "sha256": "381bc5459601e97a6d0c5eb28de95f218eff3651761f3fa82924ec3237a4a890"
+  },
+  {
+   "path": "sub-120/anat/sub-120_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-120:anat:sub-120_run-01_T1w.nii.gz",
+   "size": 10124309,
+   "sha256": "84e83cd6bf6fe67fd932fdbaec956bea16c3c76874253d09984ef245827ebe0c"
+  },
+  {
+   "path": "sub-122/anat/sub-122_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-122:anat:sub-122_run-01_T1w.nii.gz",
+   "size": 7843771,
+   "sha256": "e561bb9490c4004e0d84479de0d1c1520cb76faa459bf609ad2dd26c89742045"
+  },
+  {
+   "path": "sub-124/anat/sub-124_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-124:anat:sub-124_run-01_T1w.nii.gz",
+   "size": 7273054,
+   "sha256": "3e9c2ce33e46d51b6aae6c41e47cc3f6dd9a8901cd85bdc644a314e9f599edff"
+  },
+  {
+   "path": "sub-125/anat/sub-125_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-125:anat:sub-125_run-01_T1w.nii.gz",
+   "size": 8663889,
+   "sha256": "5b2f7eb0856d27bcd7273697b0a4f865e8aa576a8340fd0278600fb9ba8b4fc2"
+  },
+  {
+   "path": "sub-126/anat/sub-126_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-126:anat:sub-126_run-01_T1w.nii.gz",
+   "size": 7010152,
+   "sha256": "92fef435e59ecafd603ccf5408e1a3fe435b82e4fc2285e0abba8bacdd12fc87"
+  },
+  {
+   "path": "sub-127/anat/sub-127_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-127:anat:sub-127_run-01_T1w.nii.gz",
+   "size": 8761572,
+   "sha256": "8b9cf52d5ad05e83c1180a6f40a7efee8e46a8bea3ed8bb93086d0f393594175"
+  },
+  {
+   "path": "sub-128/anat/sub-128_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-128:anat:sub-128_run-01_T1w.nii.gz",
+   "size": 7063809,
+   "sha256": "6333977912b1e0415407c40bb84bb18cc00a7f5e12ac0becfddc462184b54796"
+  },
+  {
+   "path": "sub-131/anat/sub-131_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-131:anat:sub-131_run-01_T1w.nii.gz",
+   "size": 8238552,
+   "sha256": "d5eba9ac3c7d63cb14a92fb35d13bc60f7f17daf71842336ec3af2ed3939849f"
+  },
+  {
+   "path": "sub-132/anat/sub-132_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-132:anat:sub-132_run-01_T1w.nii.gz",
+   "size": 9331027,
+   "sha256": "fc74e26ed699f34e0dd67c2b1d15e1bf6302ae7df7210b2f99136dac9d8d0b34"
+  },
+  {
+   "path": "sub-133/anat/sub-133_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-133:anat:sub-133_run-01_T1w.nii.gz",
+   "size": 9646153,
+   "sha256": "7e7ce1c8657aeefc1b06a0d8cb1b71e489f4fb3c588d2c5ee51d58961573cd27"
+  },
+  {
+   "path": "sub-135/anat/sub-135_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-135:anat:sub-135_run-01_T1w.nii.gz",
+   "size": 7441612,
+   "sha256": "09da252cc1542a816e067f026a5313cfc80cd046f991dcaf4e934ede98c11abf"
+  },
+  {
+   "path": "sub-136/anat/sub-136_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-136:anat:sub-136_run-01_T1w.nii.gz",
+   "size": 7779521,
+   "sha256": "7d66ec8a746970c0efc310b368baeaeb2ae0449d80f25e09f5570ffe5039d911"
+  },
+  {
+   "path": "sub-138/anat/sub-138_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-138:anat:sub-138_run-01_T1w.nii.gz",
+   "size": 8471836,
+   "sha256": "c54dbd31a2b4a11092ba4f85245e848723aad5c3079c399fd5cb8223480c2187"
+  },
+  {
+   "path": "sub-139/anat/sub-139_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-139:anat:sub-139_run-01_T1w.nii.gz",
+   "size": 7305847,
+   "sha256": "dbe989fcc6eccb10ba23f3be7419eef898f4b69ce6c47daa0ba00d3e9fbcacc9"
+  },
+  {
+   "path": "sub-141/anat/sub-141_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-141:anat:sub-141_run-01_T1w.nii.gz",
+   "size": 8643267,
+   "sha256": "95012cb1248373887d7547d38c3a17f5e7a1de31cd546deb6ec68a0ec6b0d488"
+  },
+  {
+   "path": "sub-145/anat/sub-145_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-145:anat:sub-145_run-01_T1w.nii.gz",
+   "size": 7118626,
+   "sha256": "12fd04f18f2c8ed2a32676b4274eb62cc7801b1ba94e510288a83aa50dd65a47"
+  },
+  {
+   "path": "sub-146/anat/sub-146_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-146:anat:sub-146_run-01_T1w.nii.gz",
+   "size": 6946583,
+   "sha256": "c9fa3ecdee8a71470ce59d1b8e5ae21b87957091d1c99e66d608e6fea17ab327"
+  },
+  {
+   "path": "sub-147/anat/sub-147_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-147:anat:sub-147_run-01_T1w.nii.gz",
+   "size": 8014059,
+   "sha256": "2d133696a8219a8032958271bf5b0ab1264f668e16c7eabf1767cc50107ae844"
+  },
+  {
+   "path": "sub-148/anat/sub-148_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-148:anat:sub-148_run-01_T1w.nii.gz",
+   "size": 8639067,
+   "sha256": "cc0511fd161bf4b540c033f3d2ee151f8b1906c01ad073b618a38a064215c6d8"
+  },
+  {
+   "path": "sub-149/anat/sub-149_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-149:anat:sub-149_run-01_T1w.nii.gz",
+   "size": 8446101,
+   "sha256": "7fd5d87d0e8776ff71f67c232ac5a9481de21079eea3d12293c0cbc1aec4655f"
+  },
+  {
+   "path": "sub-150/anat/sub-150_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-150:anat:sub-150_run-01_T1w.nii.gz",
+   "size": 8884356,
+   "sha256": "f2c61a855947816e9d196cd81d12710dcbdaecb74e920f2bf4e7260453548fe5"
+  },
+  {
+   "path": "sub-151/anat/sub-151_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-151:anat:sub-151_run-01_T1w.nii.gz",
+   "size": 6912868,
+   "sha256": "820f21a50263ec2b8d21053e2ea3b478d500a468fc1bcb85d1a342f9c7f75514"
+  },
+  {
+   "path": "sub-152/anat/sub-152_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-152:anat:sub-152_run-01_T1w.nii.gz",
+   "size": 8125281,
+   "sha256": "636fe7663462c581375563e1387d7dffdecc705a48a93d9969c94c3effd09538"
+  },
+  {
+   "path": "sub-153/anat/sub-153_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-153:anat:sub-153_run-01_T1w.nii.gz",
+   "size": 9022665,
+   "sha256": "d1d9c353ef38265e1cbab4bca59695d33181f25e329c725cbae274b6210deb45"
+  },
+  {
+   "path": "sub-156/anat/sub-156_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-156:anat:sub-156_run-01_T1w.nii.gz",
+   "size": 8328623,
+   "sha256": "03aea16c248985aaed7cc3c52746874c3417db83ce1ced90fb9a04814d958a6e"
+  },
+  {
+   "path": "sub-157/anat/sub-157_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-157:anat:sub-157_run-01_T1w.nii.gz",
+   "size": 7566000,
+   "sha256": "e3bb4ffaf0526ea37d1a604c45f5bd778db0bc1f28309a178029f7fe9ed1b895"
+  },
+  {
+   "path": "sub-158/anat/sub-158_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-158:anat:sub-158_run-01_T1w.nii.gz",
+   "size": 7913702,
+   "sha256": "e7a4e70085f572b008b0d0431ece7031f4ec7a23563633a50e0d6861f7c4af46"
+  },
+  {
+   "path": "sub-161/anat/sub-161_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-161:anat:sub-161_run-01_T1w.nii.gz",
+   "size": 7702531,
+   "sha256": "932ea18eec6249b1bf76f30409f81635a074abb079c8854e40f4c6a112e493fc"
+  },
+  {
+   "path": "sub-162/anat/sub-162_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-162:anat:sub-162_run-01_T1w.nii.gz",
+   "size": 7369220,
+   "sha256": "83d2c14d70f002d3f1b4f04566fe36fcee54ce4a030cc137d52dc265e416607c"
+  },
+  {
+   "path": "sub-163/anat/sub-163_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-163:anat:sub-163_run-01_T1w.nii.gz",
+   "size": 7679652,
+   "sha256": "430c72c4d3ff312d668a697e0f743e2ba9981c2a8a3d62f8204bac7d43245dc4"
+  },
+  {
+   "path": "sub-168/anat/sub-168_run-01_T1w.nii.gz",
+   "url": "https://openneuro.org/crn/datasets/ds004471/snapshots/1.0.1/files/sub-168:anat:sub-168_run-01_T1w.nii.gz",
+   "size": 7353379,
+   "sha256": "f61ea15782c9bf6690e0850659801e45829a1e7b7ce3100fb929ce612b233c78"
+  }
+ ],
+ "mni2009c": [
+  {
+   "path": "tpl-MNI152NLin2009cAsym_res-01_T1w.nii.gz",
+   "url": "https://templateflow.s3.amazonaws.com/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-01_T1w.nii.gz",
+   "size": 13685075,
+   "sha256": "1f27aabea9f7183dc0c69dafa71e1787b921ca778d655d9c1bf302b273d5627a"
+  },
+  {
+   "path": "tpl-MNI152NLin2009cAsym_res-01_desc-brain_mask.nii.gz",
+   "url": "https://templateflow.s3.amazonaws.com/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-01_desc-brain_mask.nii.gz",
+   "size": 159538,
+   "sha256": "e40bb1816736504d4c25abc243c1c8503df1d308f64c048318aa4b829e09a7ae"
+  },
+  {
+   "path": "tpl-MNI152NLin2009cAsym_res-01_desc-groundtruth_afids.fcsv",
+   "url": "https://raw.githubusercontent.com/afids/tpl-MNI152NLin2009cAsym/a44e5a7f5227a6219416ef842f149c05961133ab/tpl-MNI152NLin2009cAsym_res-01_desc-groundtruth_afids.fcsv",
+   "size": 4624,
+   "sha256": "8290b044e4198acf732700473db113985784cc6f0205534d88a38422fb94d4c0"
+  },
+  {
+   "path": "LICENSE_MNI152NLin2009cAsym.txt",
+   "url": "https://raw.githubusercontent.com/afids/tpl-MNI152NLin2009cAsym/a44e5a7f5227a6219416ef842f149c05961133ab/LICENSE",
+   "size": 682,
+   "sha256": "46e280fe1a24c6f37feef2445ed288435e0ad063504a06030b206b12fdd2629d"
+  }
+ ],
+ "mindboggle_labels": [
+  {
+   "path": "labels/OASIS-TRT-20-1_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/s5f42/",
+   "size": 380150,
+   "sha256": "4a9847a38e181e8055928c7732bf8eb6f016e24a4f60a5b0e08eec7f4cee0c5e"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-2_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/jq9yf/",
+   "size": 369245,
+   "sha256": "4c652ea11e91265b6aadce07a65ab90803c8b4e9d5895b738b2b6e495199b458"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-3_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/df85m/",
+   "size": 345021,
+   "sha256": "26678c51d23e8bffc03a548eb616ea3f2239d9eaf30cbea851629069ae4a5b40"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-4_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/mnd43/",
+   "size": 335585,
+   "sha256": "d1bce895d1244d3c77be29547f896b647cd74018e0559cf46405eef20400cee4"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-5_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/svugt/",
+   "size": 378509,
+   "sha256": "4e5ba05496c8320d19c89a726d7715874b47f2bdb48e470c188f12c3dfaa750a"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-6_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/uctmh/",
+   "size": 373880,
+   "sha256": "0490ca725f022e4e83b1f580a7e3f39a00fe52dce4207a2103ed21d90a1cc153"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-7_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/am5qn/",
+   "size": 360234,
+   "sha256": "68b1011f8d6646c44c887ec0e5cedf5c371f8289d55da942c6e8b5882d455941"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-8_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/km37u/",
+   "size": 348224,
+   "sha256": "c9a2c6b0d3c844b79cf5b4543fe4bb4427186721bb29032f95bd736c749e8294"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-9_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/z9e3n/",
+   "size": 347221,
+   "sha256": "82ba5f6b010b4e3db9e8843a8c4e5d61743e961da517bd2858adcee0382e47e1"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-10_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/q7xnq/",
+   "size": 332529,
+   "sha256": "74e4b35c45f345cb120c06cc2ab000ba0f2a36875382d5f17429bf5b86542845"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-11_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/8jcd9/",
+   "size": 357781,
+   "sha256": "8e4088536efaef402f0de212077e816a47af21fe9ec4c693c7e6015e31063772"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-12_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/2ztm3/",
+   "size": 357204,
+   "sha256": "a8185fc7d6f844c804771a8b3185fb3097cddaebf522220e2daa8884d1d0d606"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-13_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/f2c75/",
+   "size": 324721,
+   "sha256": "ffd8888be151fdd3c32eb69ff6826e45616843d1c12cfe98b7798769d2acf6e1"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-14_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/t2sjm/",
+   "size": 330583,
+   "sha256": "e6eede0d445f02c40c9ee9dc63c26489c29d65a0777dbeb5e0ea73638304e73f"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-15_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/v8bak/",
+   "size": 314274,
+   "sha256": "1372e4a9b091ce41159518a6e43100ac55eb9306f7580ba53fe99909a8c93288"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-16_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/z2apm/",
+   "size": 350380,
+   "sha256": "52cf4052027a48136a9d2d462cf0320670f8d02c79bfb7203b4181cea671e188"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-17_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/6vktg/",
+   "size": 360527,
+   "sha256": "fab8d765195afc795f850dc1d646eca5b0b1ab90ee765f09db50aa17e8380319"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-18_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/dgcp5/",
+   "size": 355183,
+   "sha256": "539c512f6b8f22bf4f1556bae0b7961ddb4ab8cb33dc3223dbc59e9325809101"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-19_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/kuxec/",
+   "size": 304383,
+   "sha256": "2822bdfa6c1fcaadc7c27fd59f31b879db5e2f098228d468c6af75260f39dff2"
+  },
+  {
+   "path": "labels/OASIS-TRT-20-20_DKT31_CMA_labels.nii.gz",
+   "url": "https://osf.io/download/2wdsq/",
+   "size": 327535,
+   "sha256": "15c8a26401874fc28de77ef1fed7a00fff349247610a702190c1390813100d69"
+  }
+ ],
+ "deep7t": [
+  {
+   "path": "osf_dataset.tar.gz",
+   "url": "https://osf.io/download/59kjv/",
+   "size": 2848439260,
+   "sha256": "7375fd90625c54ac2712b9dc3a6557d77d174576a329c216d7f28647dcc6b606"
+  }
+ ]
+}

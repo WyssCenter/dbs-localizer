@@ -1,0 +1,218 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+html[data-theme="light"] {
+  --pst-color-primary: #1f5f99;
+  --pst-color-primary-bg: #e3edf7;
+  --pst-color-secondary: #1d6b54;
+  --pst-color-secondary-bg: #e2f2ec;
+  --pst-color-link: #1f5f99;
+  --pst-color-link-hover: #1d6b54;
+  --pst-color-inline-code: #2f4a63;
+  --pst-color-inline-code-links: #1f5f99;
+  --fw-output-bg: #f3f5f8;
+  --fw-output-border: #c9d1db;
+  --fw-diagram-box: #eef3f9;
+}
+
+html[data-theme="dark"] {
+  --pst-color-primary: #79b4e8;
+  --pst-color-primary-bg: #1b2d40;
+  --pst-color-secondary: #5cc9a7;
+  --pst-color-secondary-bg: #17302a;
+  --pst-color-link: #79b4e8;
+  --pst-color-link-hover: #5cc9a7;
+  --pst-color-inline-code: #d4dde6;
+  --pst-color-inline-code-links: #79b4e8;
+  --fw-output-bg: #1a1f26;
+  --fw-output-border: #3a4350;
+  --fw-diagram-box: #1d2735;
+}
+
+.bd-article h1 {
+  font-weight: 700;
+}
+
+.navbar-brand img {
+  height: 1.9rem;
+}
+
+.sd-card .sd-card-title {
+  font-weight: 600;
+}
+
+.sd-card .sd-card-title .fa-solid,
+.sd-card .sd-card-title svg {
+  color: var(--pst-color-primary);
+  margin-right: 0.35em;
+}
+
+.bd-article .sd-container-fluid {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.bd-article table td code,
+.bd-article table th code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.bd-article dl.py {
+  margin-bottom: 1.75rem;
+}
+
+div.fw-output {
+  position: relative;
+  margin-top: -0.5rem;
+}
+
+div.fw-output::before {
+  content: "Output";
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pst-color-text-muted);
+  margin-bottom: 0.2rem;
+}
+
+div.fw-output div.highlight,
+div.fw-output pre {
+  background: var(--fw-output-bg);
+  box-shadow: none;
+}
+
+div.fw-output pre {
+  border: 1px dashed var(--fw-output-border);
+  color: var(--pst-color-text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.fw-hero {
+  margin: 1.25rem 0 0.5rem;
+}
+
+.fw-hero img {
+  width: 100%;
+  height: auto;
+  border-radius: 0.4rem;
+}
+
+.fw-hero figcaption {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--pst-color-text-muted);
+  text-align: center;
+}
+
+.fw-hero p.fw-hero-note {
+  font-size: 0.85rem;
+  color: var(--pst-color-text-muted);
+}
+
+.fw-flow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 1rem 0 1.5rem;
+  counter-reset: none;
+}
+
+.fw-flow .fw-step {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--pst-color-border);
+  border-radius: 0.4rem;
+  background: var(--fw-diagram-box);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.fw-flow .fw-step strong {
+  display: block;
+  font-size: 0.92rem;
+  color: var(--pst-color-primary);
+}
+
+.fw-flow .fw-step.fw-gpu {
+  border-color: var(--pst-color-primary);
+  border-width: 2px;
+}
+
+.fw-flow .fw-arrow {
+  display: none;
+}
+
+@media (max-width: 575px) {
+  .fw-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.fw-legend {
+  font-size: 0.85rem;
+  color: var(--pst-color-text-muted);
+}
+
+svg.fw-diagram {
+  width: 100%;
+  max-width: 34rem;
+  height: auto;
+  display: block;
+  margin: 1rem auto;
+  font-family: var(--pst-font-family-base);
+}
+
+svg.fw-diagram .fw-box {
+  fill: var(--fw-diagram-box);
+  stroke: var(--pst-color-border);
+}
+
+svg.fw-diagram .fw-title {
+  fill: var(--pst-color-text-base);
+  font-weight: 600;
+  font-size: 21px;
+}
+
+svg.fw-diagram .fw-sub {
+  fill: var(--pst-color-text-muted);
+  font-size: 18px;
+}
+
+svg.fw-diagram .fw-label {
+  fill: var(--pst-color-text-base);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+svg.fw-diagram .fw-points {
+  stroke: var(--pst-color-primary);
+  stroke-width: 4;
+  fill: none;
+}
+
+svg.fw-diagram .fw-images {
+  stroke: var(--pst-color-secondary);
+  stroke-width: 4;
+  stroke-dasharray: 10 7;
+  fill: none;
+}
+
+svg.fw-diagram .fw-head-points {
+  fill: var(--pst-color-primary);
+}
+
+svg.fw-diagram .fw-head-images {
+  fill: var(--pst-color-secondary);
+}
+
+.fw-file-cards .sd-card-title code {
+  font-size: 0.95em;
+}

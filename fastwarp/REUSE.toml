@@ -14,3 +14,13 @@ path = "CODE_OF_CONDUCT.md"
 precedence = "override"
 SPDX-FileCopyrightText = "Contributor Covenant, https://www.contributor-covenant.org"
 SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = "docs/_static/figures/registration-checkerboard.png"
+precedence = "override"
+SPDX-FileCopyrightText = [
+    "1993-2004 Louis Collins, McConnell Brain Imaging Centre, Montreal Neurological Institute, McGill University",
+    "Stereotactic Neurosurgery Dataset (SNSX), OpenNeuro ds004470, Lau et al.",
+    "2026 Wyss Center for Bio and Neuroengineering",
+]
+SPDX-License-Identifier = "LicenseRef-MNI-ICBM2009 AND CC0-1.0"
