@@ -33,7 +33,7 @@ It is intended for **research** on DBS imaging: clinical neuroscientists, neuros
 - **View in 3D**: leads, contacts and atlas structures (DISTAL Minimal and AHEAD atlases included).
 - **Analyse groups**: overlap with atlas structures, sweet-spot maps, fibre filtering, network mapping and correlations with clinical scores, using normative connectomes that it can download for you.
 
-The project is young (version 0.1). Its outputs have not yet been compared number by number with Lead-DBS on every step; [`CHANGELOG.md`](CHANGELOG.md) lists what each release contains.
+The project is young. Its outputs have not yet been compared number by number with Lead-DBS on every step; [`CHANGELOG.md`](CHANGELOG.md) lists what each release contains.
 <!-- /docs:intro -->
 
 ## Installation

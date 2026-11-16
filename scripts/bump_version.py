@@ -8,10 +8,10 @@ Usage: python scripts/bump_version.py 0.2.0
 Turns the `## [Unreleased]` section of CHANGELOG.md into `## [0.2.0] - <today>`
 (leaving a new empty Unreleased section and updating the link references; stops without
 touching any file when nothing is listed under Unreleased), rewrites `version`
-under [workspace.package] in Cargo.toml, `version` in pyproject.toml and `__version__`
-in dbsloc/__init__.py, refreshes
-Cargo.lock (`cargo update --workspace`) and uv.lock (`uv lock`), checks that the release
-notes can be extracted, and prints the git commands that make the release. It never commits.
+under [workspace.package] in Cargo.toml, `version` in pyproject.toml and
+crates/dbsloc-pipeline/pyproject.toml and `__version__` in dbsloc/__init__.py (every new
+text is computed before any file is written), refreshes Cargo.lock (`cargo update
+--workspace`) and uv.lock (`uv lock`), checks that the release notes can be extracted, and prints the git commands that make the release. It never commits.
 """
 
 from __future__ import annotations
@@ -31,12 +31,12 @@ LINK_REF_RE = re.compile(r"^\[([^\]]+)\]: ")
 BULLET_RE = re.compile(r"^\s*[-*] \S")
 
 
-def replace_once(path: Path, pattern: str, repl: str) -> None:
+def replace_once(path: Path, pattern: str, repl: str) -> str:
     text = path.read_text(encoding="utf-8")
     new, n = re.subn(pattern, repl, text, count=1, flags=re.MULTILINE)
     if n != 1:
         raise SystemExit(f"{path}: version line not found")
-    path.write_text(new, encoding="utf-8", newline="\n")
+    return new
 
 
 def rotate_changelog(text: str, version: str, date: str, repo_url: str) -> str:
@@ -110,20 +110,28 @@ def main(argv: list[str]) -> int:
         )
     except ValueError as e:
         raise SystemExit(f"{changelog}: {e}") from None
-    replace_once(
-        REPO / "Cargo.toml",
-        r'^(\[workspace\.package\]\nversion = )"[^"]+"',
-        rf'\1"{version}"',
-    )
-    replace_once(
-        REPO / "pyproject.toml", r'^version = "[^"]+"', f'version = "{version}"'
-    )
-    replace_once(
-        REPO / "dbsloc" / "__init__.py",
-        r'^__version__ = "[^"]+"',
-        f'__version__ = "{version}"',
-    )
-    changelog.write_text(rotated, encoding="utf-8", newline="\n")
+    edits = [
+        (
+            REPO / "Cargo.toml",
+            r'^(\[workspace\.package\]\nversion = )"[^"]+"',
+            rf'\1"{version}"',
+        ),
+        (REPO / "pyproject.toml", r'^version = "[^"]+"', f'version = "{version}"'),
+        (
+            REPO / "crates" / "dbsloc-pipeline" / "pyproject.toml",
+            r'^version = "[^"]+"',
+            f'version = "{version}"',
+        ),
+        (
+            REPO / "dbsloc" / "__init__.py",
+            r'^__version__ = "[^"]+"',
+            f'__version__ = "{version}"',
+        ),
+    ]
+    texts = [(path, replace_once(path, pattern, repl)) for path, pattern, repl in edits]
+    texts.append((changelog, rotated))
+    for path, text in texts:
+        path.write_text(text, encoding="utf-8", newline="\n")
     subprocess.run(
         ["cargo", "update", "--workspace", "--offline"], cwd=REPO, check=True
     )
