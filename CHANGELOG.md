@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-16
+
 ### Added
 
 - Every release carries a `SHA256SUMS` file with the checksums of all its downloads, and a signed build provenance attestation for the installer, the packages and the archives, with which `gh attestation verify` shows that a download was built by the release workflow of this repository from the release tag (command in `docs/installation.md`, *Checking a download*).
@@ -55,9 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - What to do with reports anonymised by version 0.1.0 or earlier: first check that the anonymisation key file is the one you used before (`anonymization.key` in your user data folder, or the file you named with `--key-file` or `DBSLOC_ANONYMIZATION_KEY_FILE`); the import now warns `W_REPORT_key_created` when it has to create a new one. Then import every anonymised report again from its original PDF (anonymised imports keep no copy of the PDF) with the same key. Unaffected subjects are replaced in place (where you edited derived stimulation settings, the import adds `_2` settings instead; the write time is removed from the unedited ones, and from their `stimparameters.mat` files without changing the VTA volumes in them, or the import warns `W_REPORT_stamp_kept` on every anonymised import until the file is rewritten by running the vat step again with `--overwrite-approved` or, for a subject without VTA results, by saving the setting again with `dbsloc stim show --json` and `dbsloc stim set --from`, which writes the native `.mat` with zero volumes and is therefore only for that case). Rewriting the settings changes a file the vat step depends on: with fingerprinted locks an approved vat step becomes unapproved, so approve it again (`dbsloc lock approve <dataset_root> <subject> vat`) or run it again. For an affected subject the record is written again with shifted dates, the earlier record that had kept the true dates is removed, and the import warns `W_REPORT_superseded` with the number of stimulation label folders created from it that remain: list them with `dbsloc stim list`, delete them (renaming does not help, the earlier date is also inside the files), and create again under a new name the settings you still need (`dbsloc stim set` or the stimulation panel). Run `dbsloc report anonymize` again for files made earlier, and replace copies you already shared. The modification times of files on disk still show when a report was imported.
 - Updated bundled third-party components to versions without known security advisories (Python bindings, the browser client's TLS and root certificates, a yanked clipboard library).
 
-## [0.1.0] - 2026-10-26
+## 0.1.0 - 2026-10-26
 
-First release, for Windows and Linux (x86_64). The binaries are not code-signed, so Windows SmartScreen warns before the installer runs.
+First release, for Windows and Linux (x86_64), made before the source code was published; this repository has no tag or download for it. The binaries are not code-signed, so Windows SmartScreen warns before the installer runs.
 
 ### Added
 
@@ -101,5 +103,5 @@ First release, for Windows and Linux (x86_64). The binaries are not code-signed,
 - Separate windows (group analysis, 3D Viewer, stimulation editor, review, refine) had a black background.
 - The *Connectomes…* window could grow wider than the screen and hide its close button.
 
-[unreleased]: https://github.com/WyssCenter/dbs-localizer/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/WyssCenter/dbs-localizer/releases/tag/v0.1.0
+[unreleased]: https://github.com/WyssCenter/dbs-localizer/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/WyssCenter/dbs-localizer/releases/tag/v0.2.0

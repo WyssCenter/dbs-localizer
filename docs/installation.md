@@ -28,7 +28,7 @@ the script, read it, then run it:
 ```bash
 curl -fsSLO https://raw.githubusercontent.com/WyssCenter/dbs-localizer/main/scripts/install.sh
 bash install.sh              # the latest release
-bash install.sh -v v0.1.0    # a given release
+bash install.sh -v v0.2.0    # a given release
 ```
 
 The script downloads the archive and its `.sha256` file from the release and installs only when
