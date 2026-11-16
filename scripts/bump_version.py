@@ -11,7 +11,8 @@ touching any file when nothing is listed under Unreleased), rewrites `version`
 under [workspace.package] in Cargo.toml, `version` in pyproject.toml and
 crates/dbsloc-pipeline/pyproject.toml and `__version__` in dbsloc/__init__.py (every new
 text is computed before any file is written), refreshes Cargo.lock (`cargo update
---workspace`) and uv.lock (`uv lock`), checks that the release notes can be extracted,
+--workspace`), the versions of the path crates in crates/dbsloc-web/Cargo.lock (`cargo
+metadata`) and uv.lock (`uv lock`), checks that the release notes can be extracted,
 and prints the git commands that make the release. It never commits.
 """
 
@@ -135,6 +136,20 @@ def main(argv: list[str]) -> int:
         path.write_text(text, encoding="utf-8", newline="\n")
     subprocess.run(
         ["cargo", "update", "--workspace", "--offline"], cwd=REPO, check=True
+    )
+    subprocess.run(
+        [
+            "cargo",
+            "metadata",
+            "--offline",
+            "--format-version",
+            "1",
+            "--manifest-path",
+            "crates/dbsloc-web/Cargo.toml",
+        ],
+        cwd=REPO,
+        check=True,
+        stdout=subprocess.DEVNULL,
     )
     subprocess.run(["uv", "lock", "--offline"], cwd=REPO, check=True)
     subprocess.run(
