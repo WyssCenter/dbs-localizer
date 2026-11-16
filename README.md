@@ -39,7 +39,7 @@ The project is young (version 0.1). Its outputs have not yet been compared numbe
 
 | | |
 | --- | --- |
-| **Operating system** | Windows 10 or 11 (64-bit); Ubuntu 24.04 or newer, Debian 13 or newer, or another 64-bit (x86_64) Linux such as Arch or Fedora. macOS on Apple silicon works when built from source (see [CONTRIBUTING.md](CONTRIBUTING.md)). |
+| **Operating system** | Windows 10 or 11 (64-bit); Ubuntu 24.04 or newer, Debian 13 or newer, or another 64-bit (x86_64) Linux such as Arch or Fedora; macOS on Apple silicon (arm64). |
 | **Graphics card** | Optional but recommended. Any graphics card with a current driver for Vulkan, DirectX 12 or Metal speeds up registration many times over. Without one, the application still runs: it draws its windows in software and registers on the processor. |
 | **Other software** | None. Python, MATLAB and Rust are **not** needed to use the software. |
 
@@ -71,7 +71,19 @@ tar -xzf dbsloc-linux.tar.gz
 
 The desktop application needs the system packages `gtk3`, `vulkan-icd-loader`, `libxkbcommon` and `fontconfig` (Arch names); `install.sh` prints the install command for your distribution if one is missing.
 
-> [`docs/RELEASING.md`](docs/RELEASING.md#installing-a-release) also describes installing from the command line.
+### macOS (Apple silicon)
+
+Download `dbsloc-mac.tar.gz` from the [Releases page](https://github.com/WyssCenter/dbs-localizer/releases), then in the Terminal:
+
+```bash
+tar -xzf dbsloc-mac.tar.gz
+./dbsloc-mac/install.sh        # installs for your user account
+./dbsloc-mac/install.sh -u     # removes it again
+```
+
+The programs are not notarised by Apple; `install.sh` removes the quarantine flag that macOS puts on downloaded files (`README.txt` in the archive explains it).
+
+> [`docs/RELEASING.md`](docs/RELEASING.md#installing-a-release) also describes installing from the command line, and how to check a download against its checksum and its build provenance.
 
 ### Check that it works
 

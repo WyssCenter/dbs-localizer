@@ -1,6 +1,6 @@
 # Releasing Wyss DBS Localizer
 
-Releases are driven by git tags. Pushing a tag `vX.Y.Z` runs `.github/workflows/release.yml`: it creates a **draft** GitHub release with the notes of the version's section in `CHANGELOG.md`, builds and tests the Windows installer and the Linux packages in one job per platform, and a final job uploads each with its SHA-256 checksum to the draft and publishes it, only when every platform has succeeded (a failed platform leaves the draft unpublished, so `releases/latest` never points at an incomplete release). The build jobs hold a read-only token; only the jobs that create, fill and publish the draft can write to the repository. Nothing is published from a developer machine. Releases and their downloads are public (see *Installing a release* below).
+Releases are driven by git tags. Pushing a tag `vX.Y.Z` runs `.github/workflows/release.yml`: it creates a **draft** GitHub release with the notes of the version's section in `CHANGELOG.md`, builds and tests the Windows installer, the Linux packages and the macOS archive in one job per platform, a further job records a signed build provenance attestation for every installer, package and archive, and a final job uploads each with its SHA-256 checksum and a combined `SHA256SUMS` file to the draft and publishes it, only when every platform has succeeded (a failed platform leaves the draft unpublished, so `releases/latest` never points at an incomplete release). The build jobs hold a read-only token; only the jobs that create, fill and publish the draft can write to the repository, and only the attestation job can request a signing identity. Two runs for the same tag never run at the same time; a newer run by hand on a branch cancels the older one. GitHub keeps one waiting run per tag: a third run started while one runs and one waits replaces the waiting one. Nothing is published from a developer machine. Releases and their downloads are public (see *Installing a release* below).
 
 ## One version, recorded in three places
 
@@ -28,12 +28,12 @@ Releases are driven by git tags. Pushing a tag `vX.Y.Z` runs `.github/workflows/
    git push origin main v0.2.0
    ```
 
-4. Watch the *Release* workflow. On `windows-latest` and `ubuntu-latest` it runs `scripts/package_release.py --no-gui-smoke`: the job builds the release binaries, assembles the folder and archive, extracts it into a temporary folder and tests it with a clean environment (`--version`, bundled template, bundled ANTs and dcm2niix, viewer resolution, GPU probe, a preprocess run; on Windows a PE import check, on Linux an `ldd` check that records the glibc requirement and the system libraries the GUI needs, and that `install.sh` ships executable). Then Windows builds the installer with WiX 7 (`scripts/build_installer.py`) and installs, checks and uninstalls it silently (`--test`); Linux builds the `.deb` (`scripts/build_deb.py`) and installs, checks and removes it with `apt-get` (`--test`). Each platform job keeps its files as a workflow artifact. A failed check fails that job and the release stays a draft (re-run the failed job, or delete the draft and the tag). The *Publish* job runs only when every platform succeeded: it downloads the platforms' artifacts, checks that each holds exactly its own allow-listed files (installer, archive or package plus their `.sha256`, no other file, no artifact from a platform outside this run) and that the checksums match, uploads them to the draft (replacing files of the same name, so a re-run is safe) and publishes it.
+4. Watch the *Release* workflow. On `windows-latest`, `ubuntu-latest` and (with `DBSLOC_MACOS`) `macos-latest` it runs `scripts/package_release.py --no-gui-smoke`: the job builds the release binaries, assembles the folder and archive, extracts it into a temporary folder and tests it with a clean environment (`--version`, bundled template, bundled ANTs and dcm2niix, viewer resolution, GPU probe, a preprocess run; on Windows a PE import check, on Linux an `ldd` check that records the glibc requirement and the system libraries the GUI needs, and that `install.sh` ships executable). Then Windows builds the installer with WiX 7 (`scripts/build_installer.py`) and installs, checks and uninstalls it silently (`--test`); Linux builds the `.deb` (`scripts/build_deb.py`) and installs, checks and removes it with `apt-get` (`--test`). Each platform job keeps its files as a workflow artifact. A failed check fails that job and the release stays a draft (re-run the failed job, or delete the draft and the tag). The *Attest* job then records the build provenance of every installer, package and archive; when it fails the release stays a draft too. The *Publish* job runs only when every platform and the attestation succeeded: it downloads the platforms' artifacts, checks that each holds exactly its own allow-listed files (installer, archive or package plus their `.sha256`, no other file, no artifact from a platform outside this run) and that the checksums match, writes `SHA256SUMS` over them, uploads them to the draft (replacing files of the same name, so a re-run is safe) and publishes it.
 5. The release notes are the version's `CHANGELOG.md` section. Fix a mistake in `CHANGELOG.md` on `main` and copy it into the release on GitHub (*Edit release*); the tag stays where it is.
 
-To test the packaging jobs without publishing, run the workflow by hand from the Actions tab (`workflow_dispatch`, or `gh workflow run release.yml --ref main`): the installer and packages appear as workflow artifacts, the release-notes check is skipped and no release is created.
+To test the packaging jobs without publishing, run the workflow by hand from the Actions tab (`workflow_dispatch`, or `gh workflow run release.yml --ref main`): the installer and packages appear as workflow artifacts, the release-notes check is skipped and no release is created. Only the push of a tag creates, attests and publishes a release; a run started by hand never does, also when it is started on a tag.
 
-**macOS** is built only on request (where runner minutes are billed, macOS minutes count ten times): the macOS archive, the macOS test job and the macOS clippy job run only when the repository variable `DBSLOC_MACOS` is `true` (*Settings → Secrets and variables → Actions → Variables*, or `gh variable set DBSLOC_MACOS --body true`). The macOS code paths in `package_release.py` and `install.sh` are kept.
+**macOS** is built only on request (where runner minutes are billed, macOS minutes count ten times): the macOS archive, the macOS test job and the macOS clippy job run only when the repository variable `DBSLOC_MACOS` is `true` (*Settings → Secrets and variables → Actions → Variables*, or `gh variable set DBSLOC_MACOS --body true`). The macOS code paths in `package_release.py` and `install.sh` are kept. The variable is `true` since 2026-11-16: the repository is public, where standard runners are not billed.
 
 ## Release assets and where they run
 
@@ -55,6 +55,7 @@ Download from the [Releases page](https://github.com/WyssCenter/dbs-localizer/re
 - **Windows:** run `dbs-localizer-setup.exe`.
 - **Debian / Ubuntu:** `sudo apt install ./dbs-localizer_<version>_amd64.deb`.
 - **Other Linux:** `tar -xzf dbsloc-linux.tar.gz && ./dbsloc-linux/install.sh`.
+- **macOS (Apple silicon):** `tar -xzf dbsloc-mac.tar.gz && ./dbsloc-mac/install.sh`.
 
 Without a browser download, `install.sh` can fetch the archive itself (Linux and macOS). Download the script, read it, then run it:
 
@@ -67,6 +68,26 @@ bash install.sh -v v0.1.0    # a given release
 The script downloads the archive and its `.sha256` file from the release and installs only when the checksum matches. It uses the GitHub CLI when that is installed and signed in, a token in `GH_TOKEN` (or `GITHUB_TOKEN`) when one is set, and a plain download otherwise.
 
 - **Archive with checksum:** `bash install.sh -a dbsloc-linux.tar.gz` installs a downloaded archive after checking the `.sha256` beside it.
+
+### Checking a download
+
+Every release lists the SHA-256 of its files in `SHA256SUMS` (and per file in `<file>.sha256`). In the folder with the downloads:
+
+```bash
+sha256sum -c --ignore-missing SHA256SUMS
+```
+
+On macOS, print the checksum with `shasum -a 256 dbsloc-mac.tar.gz`; on Windows with `(Get-FileHash dbs-localizer-setup.exe).Hash.ToLower()`; then compare it with the line in `SHA256SUMS`.
+
+A checksum shows that the download is complete. The build provenance attestation also shows that the file was built by the release workflow of this repository from the tag. With the [GitHub CLI](https://cli.github.com/) (replace `vX.Y.Z` with the release):
+
+```bash
+gh attestation verify dbs-localizer-setup.exe --repo WyssCenter/dbs-localizer \
+  --signer-workflow WyssCenter/dbs-localizer/.github/workflows/release.yml \
+  --source-ref refs/tags/vX.Y.Z
+```
+
+The same command works for the `.deb` and the `.tar.gz` archives.
 
 ## Checklist before tagging
 
