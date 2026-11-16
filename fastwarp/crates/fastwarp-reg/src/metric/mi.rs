@@ -143,6 +143,25 @@ fn nearest_index_value(vol: &Volume<f64>, p: Vec3) -> Option<f64> {
     Some(vol.data()[vol.grid().linear_index(idx[0], idx[1], idx[2])])
 }
 
+/// What ITK's metric initialisation sees of the fixed image: how many of `samples` (mapped by
+/// `fixed_transform`) land on a voxel with a finite value (nearest voxel, points outside
+/// skipped), and the range of those values (`None` when none does).
+pub fn fixed_sample_range(
+    fixed: &Volume<f64>,
+    samples: &[Vec3],
+    fixed_transform: &TransformChain,
+) -> (usize, Option<(f64, f64)>) {
+    let observed: Vec<f64> = samples
+        .par_iter()
+        .filter_map(|s| nearest_index_value(fixed, fixed_transform.apply(*s)))
+        .filter(|v| v.is_finite())
+        .collect();
+    let range = observed.iter().fold(None, |r: Option<(f64, f64)>, &v| {
+        Some(r.map_or((v, v), |(lo, hi)| (lo.min(v), hi.max(v))))
+    });
+    (observed.len(), range)
+}
+
 impl MiBinning {
     /// ITK's `Initialize`: the fixed range from the sample points (mapped by `fixed_transform`
     /// into the fixed image, nearest voxel, points outside skipped), the moving range from the
@@ -160,21 +179,10 @@ impl MiBinning {
                 "at least five histogram bins are required",
             ));
         }
-        let observed: Vec<Option<f64>> = samples
-            .par_iter()
-            .map(|s| nearest_index_value(fixed, fixed_transform.apply(*s)))
-            .collect();
-        let mut fixed_min = f64::MAX;
-        let mut fixed_max = f64::MIN;
-        for v in observed.into_iter().flatten() {
-            if v.is_finite() {
-                fixed_min = fixed_min.min(v);
-                fixed_max = fixed_max.max(v);
-            }
-        }
-        if fixed_max < fixed_min {
+        let Some((fixed_min, fixed_max)) = fixed_sample_range(fixed, samples, fixed_transform).1
+        else {
             return Err(invalid("mattes", "no fixed-image samples were observed"));
-        }
+        };
         if fixed_max - fixed_min <= f64::EPSILON {
             return Err(invalid(
                 "mattes",

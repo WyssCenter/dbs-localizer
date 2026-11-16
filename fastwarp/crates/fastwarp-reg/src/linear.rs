@@ -42,7 +42,7 @@ use crate::init::{initial_transform, InitFeature};
 use crate::interp::linear_at_point;
 use crate::linalg::{mat3_mul_vec, vec3_add, vec3_sub, Vec3};
 use crate::mask::MaskVolume;
-use crate::metric::mi::{MattesMi, MiBinning, MiInputs};
+use crate::metric::mi::{fixed_sample_range, MattesMi, MiBinning, MiInputs};
 use crate::optimizer::{corner_points, optimise_level, CgSettings, CgTrace, LinearMetric};
 use crate::pyramid::{
     level_virtual_grid, shrink_factors_per_dimension, smooth_for_level, SigmaUnits,
@@ -399,6 +399,9 @@ pub struct LinearLevelTrace {
     pub seconds: f64,
     /// Parameters at the end of the level.
     pub parameters: Vec<f64>,
+    /// Why the level was skipped (its samples leave the metric undefined), with the parameters
+    /// carried over unchanged; `None` for a level that ran.
+    pub skipped: Option<String>,
 }
 
 /// Result of one linear stage.
@@ -417,6 +420,68 @@ impl LinearStageResult {
     /// stdout with `--verbose 1`). `None` when the last level took no iteration.
     pub fn final_metric(&self) -> Option<f64> {
         self.levels.last().and_then(|l| l.cg.final_value())
+    }
+
+    /// One message per skipped level, the stage named as `stage` (for example "rigid stage").
+    pub fn warnings(&self, stage: &str) -> Vec<String> {
+        let n = self.levels.len();
+        self.levels
+            .iter()
+            .filter_map(|l| {
+                l.skipped.as_ref().map(|why| {
+                    format!(
+                        "{stage}: level {} of {n} (shrink factors {}) was skipped: {why}; \
+                         its parameters carry over to the next level",
+                        l.level + 1,
+                        shrink_text(l.shrink_factors)
+                    )
+                })
+            })
+            .collect()
+    }
+}
+
+fn kind_label(kind: LinearKind) -> &'static str {
+    match kind {
+        LinearKind::Rigid => "Rigid",
+        LinearKind::Affine => "Affine",
+    }
+}
+
+fn shrink_text(f: [u32; 3]) -> String {
+    format!("{}x{}x{}", f[0], f[1], f[2])
+}
+
+/// Why a level's sample set leaves Mattes MI undefined (ITK would throw at the metric's
+/// initialisation): no candidate point lands on a fixed voxel, or all that do see one value.
+fn degenerate_level(fixed: &Volume<f64>, candidates: &[Vec3]) -> Option<String> {
+    let (observed, range) = fixed_sample_range(fixed, candidates, &TransformChain::new());
+    match range {
+        None => Some(format!(
+            "no sample point lands on the fixed image inside the fixed mask, if one is given ({} \
+             candidate points on the level grid)",
+            candidates.len()
+        )),
+        Some((lo, hi)) if hi - lo <= f64::EPSILON => Some(format!(
+            "the fixed image takes a single value at its {observed} sample point(s) ({} \
+             candidate points)",
+            candidates.len()
+        )),
+        _ => None,
+    }
+}
+
+fn skipped_trace() -> CgTrace {
+    CgTrace {
+        values: Vec::new(),
+        converged_value: None,
+        iterations: 0,
+        converged: false,
+        best_value: f64::NAN,
+        scales: Vec::new(),
+        initial_learning_rate: 0.0,
+        final_learning_rate: 0.0,
+        line_search_evaluations: 0,
     }
 }
 
@@ -619,7 +684,31 @@ pub fn run_linear_stage_cached<E: LinearEngine>(
             None => true,
         };
         let raw = metric_sample_points(&grid, spec, &mut seeds, Some(&keep));
-        let prepared = prepare_samples(&fixed_s, &moving_s, &raw, recipe.bins)?;
+        let skip = degenerate_level(&fixed_s, &raw);
+        let prepared = match skip {
+            Some(_) => None,
+            None => Some(prepare_samples(&fixed_s, &moving_s, &raw, recipe.bins)?),
+        };
+        let skip = match &prepared {
+            Some(p) if p.points.is_empty() => Some(format!(
+                "no sample point lies inside the fixed image ({} candidate points)",
+                raw.len()
+            )),
+            _ => skip,
+        };
+        let Some(prepared) = prepared.filter(|_| skip.is_none()) else {
+            levels.push(LinearLevelTrace {
+                level,
+                shrink_factors: factors,
+                grid_size: grid.size(),
+                samples: 0,
+                cg: skipped_trace(),
+                seconds: t0.elapsed().as_secs_f64(),
+                parameters: current.optimised.parameters(),
+                skipped: skip,
+            });
+            continue;
+        };
         let sample_count = prepared.points.len();
         let metric = engine.prepare_level_borrowed(&fixed_s, &moving_s, prepared)?;
         let corners = corner_points(&grid);
@@ -639,7 +728,31 @@ pub fn run_linear_stage_cached<E: LinearEngine>(
             cg,
             seconds: t0.elapsed().as_secs_f64(),
             parameters: current.optimised.parameters(),
+            skipped: None,
         });
+    }
+    if !levels.is_empty() && levels.iter().all(|l| l.skipped.is_some()) {
+        let detail: Vec<String> = levels
+            .iter()
+            .map(|l| {
+                format!(
+                    "level {} (shrink factors {}): {}",
+                    l.level + 1,
+                    shrink_text(l.shrink_factors),
+                    l.skipped.as_deref().unwrap_or_default()
+                )
+            })
+            .collect();
+        return Err(invalid(
+            "linear stage",
+            format!(
+                "every level of the {} stage has too few usable samples for Mattes mutual \
+                 information ({}); use smaller shrink factors, a larger sampling percentage, a \
+                 larger fixed mask, or a finer registration grid (iso_mm)",
+                kind_label(recipe.kind),
+                detail.join("; ")
+            ),
+        ));
     }
     Ok(LinearStageResult {
         transform: current.optimised,
@@ -1108,6 +1221,108 @@ mod tests {
         )
         .unwrap();
         assert!(masked.levels[0].samples < base.levels[0].samples);
+    }
+
+    fn plane_mask_missed_by_coarse_level(fixed: &Volume<f64>, shrink: u32) -> MaskVolume {
+        let g = *fixed.grid();
+        let coarse =
+            level_virtual_grid(&g, shrink_factors_per_dimension(shrink, g.spacing())).unwrap();
+        let hit: Vec<usize> = (0..coarse.num_voxels())
+            .map(|lin| {
+                let [i, j, k] = coarse.ijk(lin);
+                let p = coarse.index_to_point([i as f64, j as f64, k as f64]);
+                (g.point_to_index(p)[0] + 0.5).floor() as usize
+            })
+            .collect();
+        let n = g.size()[0];
+        let plane = (2..n - 2).find(|x| !hit.contains(x)).unwrap();
+        let data: Vec<f64> = (0..g.num_voxels())
+            .map(|lin| f64::from(u8::from(g.ijk(lin)[0] == plane)))
+            .collect();
+        MaskVolume::from_volume(Volume::from_vec(g, data).unwrap())
+    }
+
+    #[test]
+    fn a_level_without_samples_is_skipped_and_the_finer_levels_run() {
+        let fixed = volume(30, 1.0, &AffineTransform::identity());
+        let moving = volume(30, 1.0, &AffineTransform::identity());
+        let start = ParametricTransform::euler3d([0.0; 6], [14.5; 3]);
+        let recipe = LinearRecipe {
+            iterations: vec![5, 5],
+            shrink_factors: vec![6, 1],
+            smoothing_sigmas: vec![0.0, 0.0],
+            ..LinearRecipe::cohort(LinearKind::Rigid)
+        }
+        .with_mask(plane_mask_missed_by_coarse_level(&fixed, 6));
+        let out = run_linear_stage(
+            &CpuLinearEngine,
+            &recipe,
+            &fixed,
+            &moving,
+            AffineTransform::identity(),
+            start,
+        )
+        .unwrap();
+        assert_eq!(out.levels.len(), 2);
+        assert_eq!(out.levels[0].samples, 0);
+        assert_eq!(out.levels[0].cg.iterations, 0);
+        assert_eq!(out.levels[0].parameters, start.parameters());
+        let why = out.levels[0].skipped.clone().unwrap();
+        assert!(why.contains("candidate points"), "{why}");
+        assert!(out.levels[1].skipped.is_none());
+        assert!(out.levels[1].samples > 0);
+        let warnings = out.warnings("rigid stage");
+        assert_eq!(warnings.len(), 1);
+        assert!(
+            warnings[0].starts_with("rigid stage: level 1 of 2 (shrink factors 6x6x6) was skipped"),
+            "{}",
+            warnings[0]
+        );
+
+        let coarse_only = LinearRecipe {
+            iterations: vec![5],
+            shrink_factors: vec![6],
+            smoothing_sigmas: vec![0.0],
+            ..recipe
+        };
+        let e = run_linear_stage(
+            &CpuLinearEngine,
+            &coarse_only,
+            &fixed,
+            &moving,
+            AffineTransform::identity(),
+            start,
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(e.contains("every level of the Rigid stage"), "{e}");
+        assert!(e.contains("level 1 (shrink factors 6x6x6)"), "{e}");
+        assert!(e.contains("candidate points"), "{e}");
+        assert!(e.contains("smaller shrink factors"), "{e}");
+    }
+
+    #[test]
+    fn a_level_with_one_fixed_value_is_skipped() {
+        let g = Grid::new([24, 24, 24], [1.0; 3], [0.0; 3], IDENTITY3).unwrap();
+        let fixed = Volume::from_vec(g, vec![1.0; g.num_voxels()]).unwrap();
+        let moving = volume(24, 1.0, &AffineTransform::identity());
+        let recipe = LinearRecipe {
+            iterations: vec![3],
+            shrink_factors: vec![2],
+            smoothing_sigmas: vec![0.0],
+            ..LinearRecipe::cohort(LinearKind::Rigid)
+        };
+        let e = run_linear_stage(
+            &CpuLinearEngine,
+            &recipe,
+            &fixed,
+            &moving,
+            AffineTransform::identity(),
+            ParametricTransform::euler3d([0.0; 6], [11.5; 3]),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(e.contains("takes a single value"), "{e}");
     }
 
     #[test]

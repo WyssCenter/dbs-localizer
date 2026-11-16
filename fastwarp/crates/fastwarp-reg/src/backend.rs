@@ -39,6 +39,10 @@ pub trait Backend: Sync {
     /// A short name for records and logs.
     fn name(&self) -> String;
 
+    /// Frees buffers the backend keeps for reuse but nothing holds, before a phase with other
+    /// buffer sizes (the SyN stage after linear stages). No-op by default.
+    fn release_idle_buffers(&self) {}
+
     /// Moves a volume onto the backend.
     fn upload_image(&self, volume: &Volume<f64>) -> Result<Self::Image>;
 

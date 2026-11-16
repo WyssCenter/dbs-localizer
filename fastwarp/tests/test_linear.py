@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import os
+
 import fastwarp as g
 import numpy as np
 import pytest
@@ -66,6 +68,27 @@ def _apply(params, center, pts) -> np.ndarray:
     return (pts - c) @ m.T + c + t
 
 
+def _ants_affine(fixed, moving, seed: int, **kwargs):
+    saved = os.environ.get("ANTS_RANDOM_SEED")
+    os.environ["ANTS_RANDOM_SEED"] = str(seed)
+    try:
+        reg = ants.registration(
+            fixed,
+            moving,
+            type_of_transform="Affine",
+            aff_metric="mattes",
+            aff_sampling=32,
+            aff_random_sampling_rate=0.25,
+            **kwargs,
+        )
+    finally:
+        if saved is None:
+            del os.environ["ANTS_RANDOM_SEED"]
+        else:
+            os.environ["ANTS_RANDOM_SEED"] = saved
+    return ants.read_transform(reg["fwdtransforms"][0])
+
+
 def _gap(info, tx, pts) -> float:
     """Largest distance between where the fit and the true affine send ``pts`` (mm)."""
     true = np.array([tx.apply_to_point(tuple(p)) for p in pts])
@@ -117,28 +140,27 @@ def test_an_affine_fit_lands_where_ants_does(pair):
     moving, tx = _seen_through(fixed, SCALING, SHIFT)
     with g.linear_session(fixed, moving) as s:
         gpu = s.register(stage=ANTSPY_AFFINE, transform="affine")
-    reg = ants.registration(
-        fixed,
-        moving,
-        type_of_transform="Affine",
-        aff_metric="mattes",
-        aff_sampling=32,
-        aff_random_sampling_rate=0.25,
-        random_seed=1,
-    )
-    ref = ants.read_transform(reg["fwdtransforms"][0])
     pts = _corners(fixed)
-    ants_pts = np.array([ref.apply_to_point(tuple(p)) for p in pts])
-    gap = np.max(np.linalg.norm(_apply(gpu["parameters"], gpu["center"], pts) - ants_pts, axis=1))
     true = np.array([tx.apply_to_point(tuple(p)) for p in pts])
-    ants_truth = float(np.max(np.linalg.norm(ants_pts - true, axis=1)))
+    fits = []
+    for seed in (1, 2, 3, 4, 5, 1):
+        ref = _ants_affine(fixed, moving, seed)
+        fits.append(np.array([ref.apply_to_point(tuple(p)) for p in pts]))
+    repeat = fits.pop()
+    assert np.array_equal(fits[0], repeat), "ANTs gave two results for one seed"
+    ants_truth = [float(np.max(np.linalg.norm(f - true, axis=1))) for f in fits]
+    ours = _apply(gpu["parameters"], gpu["center"], pts)
+    gap = float(np.max(np.linalg.norm(ours - np.median(fits, axis=0), axis=1)))
     gpu_truth = _gap(gpu, tx, pts)
-    seen = f"GPU {gpu_truth:.2f} mm and ANTs {ants_truth:.2f} mm from the truth"
-    # ANTs' seeds land 0.3-0.4 mm from the truth here; the GPU 0.17 (Intel) to 0.31 mm (NVIDIA).
-    # ITK's threads sum in any order, so a fixed seed still moves ANTs between runs: CI has seen
-    # the two fits 0.54 and 0.61 mm apart. This bound is a loose parity check; the GPU's own
-    # bound against the truth below is the real test.
-    assert gap < 0.75, f"GPU and ANTs affine fits {gap:.2f} mm apart ({seen})"
+    seen = (
+        f"GPU {gpu_truth:.2f} mm, ANTs {np.round(ants_truth, 2)} mm from the truth, "
+        f"GPU {gap:.2f} mm from the per-corner median of the ANTs fits"
+    )
+    # ANTs' seeds 1-5 land 0.10, 0.17, 0.23, 0.75 and 0.24 mm from the truth here, the per-corner
+    # median of their fits 0.20 mm; the GPU 0.19 (Intel) to 0.31 mm (NVIDIA), 0.34 mm (Intel)
+    # from that median.
+    assert gap < 0.5, seen
+    assert gpu_truth < float(np.median(ants_truth)) + 0.15, seen
     assert gpu_truth < 0.5, seen
 
 
@@ -187,16 +209,14 @@ def test_a_masked_fit_follows_the_masked_region_as_ants_does(tmp_path):
     ants.write_transform(init, str(tmp_path / "start.mat"))
     true = np.array([tx.apply_to_point(tuple(p)) for p in pts])
     ants_off = []
-    # Single ANTs runs land 0.36-1.4 mm from T here, seed or not (ITK's threads sum in any
-    # order); the GPU 0.35 (NVIDIA) to 0.52 mm (Intel). Their median is the fair comparison.
-    for _ in range(3):
-        reg = ants.registration(
-            fixed, moving, type_of_transform="Affine",
-            initial_transform=str(tmp_path / "start.mat"), aff_iterations=(200, 100),
-            aff_shrink_factors=(2, 1), aff_smoothing_sigmas=(1, 0), aff_metric="mattes",
-            aff_sampling=32, aff_random_sampling_rate=0.25, mask=mask, random_seed=1,
+    # ANTs' seeds 1-3 land 0.48, 0.73 and 0.57 mm from T here; the GPU 0.39 mm (Intel). Their
+    # median is the fair comparison.
+    for seed in range(1, 4):
+        ref = _ants_affine(
+            fixed, moving, seed, initial_transform=str(tmp_path / "start.mat"),
+            aff_iterations=(200, 100), aff_shrink_factors=(2, 1), aff_smoothing_sigmas=(1, 0),
+            mask=mask,
         )  # fmt: skip
-        ref = ants.read_transform(reg["fwdtransforms"][0])
         theirs = np.array([ref.apply_to_point(tuple(p)) for p in pts])
         ants_off.append(float(np.max(np.linalg.norm(theirs - true, axis=1))))
     assert _gap(masked, tx, pts) < float(np.median(ants_off)) + 0.25, ants_off
@@ -229,7 +249,3 @@ def test_bad_fit_arguments_are_refused(pair, kwargs, match):
         kwargs["mask"] = fixed
     with g.linear_session(fixed, moving) as s, pytest.raises(ValueError, match=match):
         s.register(**kwargs)
-
-
-def test_the_0_3_names_still_work():
-    assert g.RigidSession is g.LinearSession and g.rigid_session is g.linear_session

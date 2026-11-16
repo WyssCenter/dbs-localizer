@@ -3,7 +3,7 @@
 accessible-pygments==0.0.5 ; python_full_version >= '3.11.5' \
     --hash=sha256:40918d3e6a2b619ad424cb91e556bd3bd8865443d9f22f1dcdf79e33c8046872 \
     --hash=sha256:88ae3211e68a1d0b011504b2ffc1691feafce124b845bd072ab6f9f66f34d4b7
-    # via furo
+    # via pydata-sphinx-theme
 alabaster==1.0.0 ; python_full_version >= '3.11.5' \
     --hash=sha256:c00dca57bca26fa62a6d7d0a9fcce65f3e026e9bfe33e9c538fd3fbb2144fd9e \
     --hash=sha256:fc6786402dc3fcb2de3cabd5fe455a2db534b371124f1f21de8731783dec828b
@@ -15,11 +15,13 @@ astroid==4.3.4 ; python_full_version >= '3.11.5' \
 babel==2.18.0 ; python_full_version >= '3.11.5' \
     --hash=sha256:b80b99a14bd085fcacfa15c9165f651fbb3406e66cc603abf11c5750937c992d \
     --hash=sha256:e2b422b277c2b9a9630c1d7903c2a00d0830c409c59ac8cae9081c92f1aeba35
-    # via sphinx
+    # via
+    #   pydata-sphinx-theme
+    #   sphinx
 beautifulsoup4==4.15.0 ; python_full_version >= '3.11.5' \
     --hash=sha256:288e3ca7d54b06f2ac191970bc275c1939cb46d450b255bf6718b04aa37ab4f7 \
     --hash=sha256:d6f88de62e1d4e38ecb1077eb9724cd0eff29d2a08ca16a401e9b9e93f117cf9
-    # via furo
+    # via pydata-sphinx-theme
 certifi==2026.10.23 ; python_full_version >= '3.11.5' \
     --hash=sha256:a9895e6e2758b371e0545e321a3a8fd1fcfd9829ada8824a936dfb16aaaf36cd \
     --hash=sha256:e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1
@@ -175,10 +177,8 @@ docutils==0.22.4 ; python_full_version >= '3.11.5' \
     --hash=sha256:d0013f540772d1420576855455d050a2180186c91c15779301ac2ccb3eeb68de
     # via
     #   myst-parser
+    #   pydata-sphinx-theme
     #   sphinx
-furo==2025.12.19 ; python_full_version >= '3.11.5' \
-    --hash=sha256:188d1f942037d8b37cd3985b955839fea62baa1730087dc29d157677c857e2a7 \
-    --hash=sha256:bb0ead5309f9500130665a26bee87693c41ce4dbdff864dbfb6b0dae4673d24f
 idna==3.20 ; python_full_version >= '3.11.5' \
     --hash=sha256:a7db850025b95ded1eae8a46181a1a6c56c92c96f0e2b005d9ff8dc0210cab44 \
     --hash=sha256:ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c
@@ -192,6 +192,7 @@ jinja2==3.1.6 ; python_full_version >= '3.11.5' \
     --hash=sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67
     # via
     #   myst-parser
+    #   pydata-sphinx-theme
     #   sphinx
     #   sphinx-autoapi
 markdown-it-py==4.2.0 ; python_full_version >= '3.11.5' \
@@ -338,12 +339,15 @@ packaging==26.3 ; python_full_version >= '3.11.5' \
     --hash=sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79 \
     --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
     # via sphinx
+pydata-sphinx-theme==0.24.0 ; python_full_version >= '3.11.5' \
+    --hash=sha256:195bc167ab1dcf0b31037e26f145f60461dc9cbb1eb2011283565567ee4fb6e5 \
+    --hash=sha256:bc9050daac696ab62c817e324ef29ee43720c2e6068fde809c76a52d4c788ac2
 pygments==2.21.0 ; python_full_version >= '3.11.5' \
     --hash=sha256:2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9 \
     --hash=sha256:610ca751c9bc2492b38eb9a38a7fbc93edbbb2d7182edaf34e66ae493dee5c8c
     # via
     #   accessible-pygments
-    #   furo
+    #   pydata-sphinx-theme
     #   sphinx
 pyyaml==6.0.3 ; python_full_version >= '3.11.5' \
     --hash=sha256:00c4bdeba853cc34e7dd471f16b4114f4162dc03e6b7afcc2128711f0eca823c \
@@ -400,7 +404,9 @@ pyyaml==6.0.3 ; python_full_version >= '3.11.5' \
 requests==2.34.2 ; python_full_version >= '3.11.5' \
     --hash=sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0 \
     --hash=sha256:f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed
-    # via sphinx
+    # via
+    #   pydata-sphinx-theme
+    #   sphinx
 roman-numerals==4.1.0 ; python_full_version >= '3.11.5' \
     --hash=sha256:1af8b147eb1405d5839e78aeb93131690495fe9da5c91856cb33ad55a7f1e5b2 \
     --hash=sha256:647ba99caddc2cc1e55a51e4360689115551bf4476d90e8162cf8c345fe233c7
@@ -417,33 +423,38 @@ sphinx==9.0.4 ; python_full_version >= '3.11.5' and python_full_version < '3.12'
     --hash=sha256:594ef59d042972abbc581d8baa577404abe4e6c3b04ef61bd7fc2acbd51f3fa3 \
     --hash=sha256:5bebc595a5e943ea248b99c13814c1c5e10b3ece718976824ffa7959ff95fffb
     # via
-    #   furo
     #   myst-parser
+    #   pydata-sphinx-theme
     #   sphinx-autoapi
-    #   sphinx-basic-ng
+    #   sphinx-copybutton
+    #   sphinx-design
 sphinx==9.1.1 ; python_full_version == '3.12.*' \
     --hash=sha256:48b627f02908f22c601b3ba9c7b17265b4f315dd05c8bc64cd4da41183f44fbc \
     --hash=sha256:f8b60013ce25017be41a509e5c2d265bc1918410061315c36b809c7f335646c0
     # via
-    #   furo
     #   myst-parser
+    #   pydata-sphinx-theme
     #   sphinx-autoapi
-    #   sphinx-basic-ng
+    #   sphinx-copybutton
+    #   sphinx-design
 sphinx==9.2.0 ; python_full_version >= '3.13' \
     --hash=sha256:4c3ec13b612712c0d3ce4cbdd9e3eb91e68577e07a8e31f32f21cf178453578c \
     --hash=sha256:90470459f3cab15d9dfed146c71cf77694b0445df17b2e0e69059cb9f7fc9ee4
     # via
-    #   furo
     #   myst-parser
+    #   pydata-sphinx-theme
     #   sphinx-autoapi
-    #   sphinx-basic-ng
+    #   sphinx-copybutton
+    #   sphinx-design
 sphinx-autoapi==3.9.0 ; python_full_version >= '3.11.5' \
     --hash=sha256:0b2a47beac401c5fe437fbcd41c650c6cdc072234e576f56ef04456805bddabf \
     --hash=sha256:8ecba31815322b00e9fb01973c210ba651522d25f92705a4384fd6c429c5a28f
-sphinx-basic-ng==1.0.0b2 ; python_full_version >= '3.11.5' \
-    --hash=sha256:9ec55a47c90c8c002b5960c57492ec3021f5193cb26cebc2dc4ea226848651c9 \
-    --hash=sha256:eb09aedbabfb650607e9b4b68c9d240b90b1e1be221d6ad71d61c52e29f7932b
-    # via furo
+sphinx-copybutton==0.5.2 ; python_full_version >= '3.11.5' \
+    --hash=sha256:4cf17c82fb9646d1bc9ca92ac280813a3b605d8c421225fd9913154103ee1fbd \
+    --hash=sha256:fb543fd386d917746c9a2c50360c7905b605726b9355cd26e9974857afeae06e
+sphinx-design==0.7.0 ; python_full_version >= '3.11.5' \
+    --hash=sha256:d2a3f5b19c24b916adb52f97c5f00efab4009ca337812001109084a740ec9b7a \
+    --hash=sha256:f82bf179951d58f55dca78ab3706aeafa496b741a91b1911d371441127d64282
 sphinxcontrib-applehelp==2.0.0 ; python_full_version >= '3.11.5' \
     --hash=sha256:2f29ef331735ce958efa4734873f084941970894c6090408b079c61b2e1c06d1 \
     --hash=sha256:4cd3f0ec4ac5dd9c17ec65e9ab272c9b867ea77425228e68ecf08d6b28ddbdb5

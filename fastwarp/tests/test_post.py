@@ -109,6 +109,70 @@ def test_transform_order_is_ants_order(scene):
         assert np.abs(_field(field) - _field(ants_field)).max() < 1e-4
 
 
+@pytest.mark.parametrize("which", [[True], [True, False], [False, True], [True, True]])
+def test_invert_is_whichtoinvert(scene, which):
+    """``invert`` inverts the affines ANTsPy's ``whichtoinvert`` does, in place in the list."""
+    d, moving, reference, mat = scene
+    shift = ants.create_ants_transform(
+        transform_type="AffineTransform",
+        dimension=3,
+        matrix=np.array([[0.98, 0.0, 0.05], [0.0, 1.03, 0.0], [-0.02, 0.0, 1.0]]),
+        translation=(3.0, 0.0, -1.0),
+        center=(1.0, 2.0, 3.0),
+    )
+    ants.write_transform(shift, str(d / "skew.mat"))
+    order = [str(mat), str(d / "skew.mat")][: len(which)]
+    mine = g.apply_transforms(moving, reference, order, invert=which)
+    theirs = ants.apply_transforms(
+        fixed=reference, moving=moving, transformlist=order, whichtoinvert=list(which)
+    )
+    assert np.abs(mine.numpy() - theirs.numpy()).max() < 1e-3
+    field = g.compose_field(order, reference, d / "inv.nii.gz", invert=which)
+    ants_field = ants.apply_transforms(
+        fixed=reference,
+        moving=moving,
+        transformlist=order,
+        whichtoinvert=list(which),
+        compose=str(d / "inv_ants"),
+    )
+    assert np.abs(_field(field) - _field(ants_field)).max() < 1e-4
+
+
+def test_invert_none_or_all_false_is_the_plain_chain(scene):
+    _, moving, reference, mat = scene
+    plain = g.apply_transforms(moving, reference, [mat]).numpy()
+    for flags in (None, [False], [np.bool_(False)]):
+        out = g.apply_transforms(moving, reference, [mat], invert=flags).numpy()
+        assert np.array_equal(plain, out)
+
+
+def test_bad_invert_flags_are_refused(scene, tmp_path):
+    _, moving, reference, mat = scene
+    for bad, match in (
+        ([True, False], "2 flags for 1 transforms"),
+        (True, "one bool per transform"),
+        ([1], "bools"),
+        (["yes"], "bools"),
+    ):
+        with pytest.raises(ValueError, match=match):
+            g.apply_transforms(moving, reference, [mat], invert=bad)
+        with pytest.raises(ValueError, match=match):
+            g.compose_field([mat], reference, tmp_path / "x.nii.gz", invert=bad)
+    assert not (tmp_path / "x.nii.gz").exists()
+
+
+def test_inverting_a_displacement_field_is_refused(scene, tmp_path):
+    d, moving, reference, mat = scene
+    field = g.compose_field(mat, reference, d / "as_field.nii.gz")
+    with pytest.raises(ValueError, match="cannot invert the displacement field"):
+        g.apply_transforms(moving, reference, [mat, field], invert=[False, True])
+    with pytest.raises(ValueError, match="cannot invert the displacement field"):
+        g.compose_field(
+            [mat, field], reference, tmp_path / "new" / "y.nii.gz", invert=[False, True]
+        )
+    assert not (tmp_path / "new").exists()
+
+
 def test_stored_gzip_is_gzip_and_holds_the_same_field(scene):
     d, _, reference, mat = scene
     a = g.compose_field(mat, reference, d / "l0.nii.gz", compression_level=0)

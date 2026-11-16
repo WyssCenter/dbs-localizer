@@ -104,6 +104,44 @@ pub fn write_field(path: &Path, field: &DisplacementField, level: Option<u32>) -
     })
 }
 
+/// The displacement field file as ANTs writes it: [`write_field`] with the vectors stored as
+/// `float64` when `double` (what ANTs writes without `--float`), else as `float32`, and the
+/// header fields ANTs sets (`pixdim[4..8]` 0, units mm and s). The values are the
+/// field's `float32` values either way.
+pub fn write_field_as(
+    path: &Path,
+    field: &DisplacementField,
+    level: Option<u32>,
+    double: bool,
+) -> Result<()> {
+    let g = field.grid();
+    let [nx, ny, nz] = g.size();
+    let shape = (nx, ny, nz, 1, 3).strides((3, 3 * nx, 3 * nx * ny, 1, 1));
+    let nifti_err = |message: String| RegError::Nifti {
+        path: path.to_path_buf(),
+        message,
+    };
+    let mut hdr = header_from_grid(g);
+    hdr.intent_code = INTENT_VECTOR;
+    hdr.pixdim[4..].fill(0.0);
+    hdr.xyzt_units = 10;
+    let mut opts = WriterOptions::new(path).reference_header(&hdr);
+    if let (Some(level), true) = (level, path.to_string_lossy().ends_with(".gz")) {
+        opts = opts.compression_level(level);
+    }
+    if double {
+        let data: Vec<f64> = field.data().par_iter().map(|v| f64::from(*v)).collect();
+        let view =
+            ArrayView5::from_shape(shape, &data[..]).map_err(|e| nifti_err(e.to_string()))?;
+        opts.write_nifti(&view)
+    } else {
+        let view =
+            ArrayView5::from_shape(shape, field.data()).map_err(|e| nifti_err(e.to_string()))?;
+        opts.write_nifti(&view)
+    }
+    .map_err(|e| nifti_err(e.to_string()))
+}
+
 /// `image` resampled onto `reference` through `chain`; points outside the image buffer take
 /// `default_value`.
 pub fn resample(

@@ -7,7 +7,7 @@ The registration engine (crates/fastwarp-core, fastwarp-niftiio, fastwarp-matfil
 fastwarp-gpu) is copied from Wyss DBS Localizer, the project in which the code was first developed, written by
 Richard Köhler and Jan Philipp Payonk.
 
-Portions of fastwarp-reg, fastwarp-gpu and fastwarp-py are derived from the Insight Toolkit
+Portions of fastwarp-reg, fastwarp-gpu and fastwarp-cli are derived from the Insight Toolkit
 (ITK) v5.4.4 and from ANTs (Advanced Normalization Tools) v2.6.5, both licensed under the
 Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0). Each derived file
 carries the upstream copyright line and the Apache header and states what was changed;

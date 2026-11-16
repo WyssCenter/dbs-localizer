@@ -1,0 +1,77 @@
+# Builds the Sphinx documentation the way Read the Docs does (.readthedocs.yaml), warnings as
+# errors. The link check depends on every linked site, so it runs weekly and on demand only.
+name: docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "python/fastwarp/**"
+      - "CHANGELOG.md"
+      - "CODE_OF_CONDUCT.md"
+      - "CONTRIBUTING.md"
+      - "SECURITY.md"
+      - "LICENSE"
+      - "NOTICE"
+      - "Cargo.toml"
+      - "pyproject.toml"
+      - ".readthedocs.yaml"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "python/fastwarp/**"
+      - "CHANGELOG.md"
+      - "CODE_OF_CONDUCT.md"
+      - "CONTRIBUTING.md"
+      - "SECURITY.md"
+      - "LICENSE"
+      - "NOTICE"
+      - "Cargo.toml"
+      - "pyproject.toml"
+      - ".readthedocs.yaml"
+      - ".github/workflows/docs.yml"
+  schedule:
+    - cron: "41 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  html:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: Install the pinned documentation requirements
+        run: |
+          python -m pip install --require-hashes --only-binary :all: -r docs/requirements.txt
+      - run: python -m sphinx -W --keep-going -b html docs "$RUNNER_TEMP/html"
+
+  linkcheck:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: Install the pinned documentation requirements
+        run: |
+          python -m pip install --require-hashes --only-binary :all: -r docs/requirements.txt
+      - run: python -m sphinx -W --keep-going -b linkcheck docs "$RUNNER_TEMP/linkcheck"

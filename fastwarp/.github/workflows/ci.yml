@@ -36,18 +36,18 @@ jobs:
         with:
           version: "0.13.7"
       - run: uv sync --locked --no-install-project
-      - run: uv run --no-sync ruff check python tests && uv run --no-sync ruff format --check python tests
+      - run: uv run --no-sync ruff check python tests benchmarks scripts && uv run --no-sync ruff format --check python tests benchmarks scripts
 
-  test:
+  rust:
+    name: Rust tests
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     env:
       # Mesa's lavapipe is the only adapter on the runner; the engine refuses software
       # adapters unless this is set.
       WGPU_FORCE_FALLBACK_ADAPTER: "1"
       FASTWARP_GPU_ALLOW_SOFTWARE: "1"
       FASTWARP_GPU_REQUIRE_ADAPTER: "1"
-      FASTWARP_REQUIRE_ANTSPY: "1"
       UV_PYTHON: "3.13"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -69,11 +69,93 @@ jobs:
         run: |
           export PYO3_PYTHON="$PWD/.venv/bin/python"
           cargo nextest run --locked --workspace --features fastwarp-gpu/dev-tools --profile ci
+
+  python:
+    name: Python tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      WGPU_FORCE_FALLBACK_ADAPTER: "1"
+      FASTWARP_GPU_ALLOW_SOFTWARE: "1"
+      FASTWARP_GPU_REQUIRE_ADAPTER: "1"
+      FASTWARP_REQUIRE_ANTSPY: "1"
+      UV_PYTHON: "3.13"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Mesa Vulkan software driver (lavapipe)
+        run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: release-test
+          cache-on-failure: true
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.7"
+      - run: uv sync --locked --no-install-project --group ants
       - name: Build and install the wheel
         run: |
           uv run --no-sync maturin build --locked --release -o dist
           uv pip install --no-deps dist/*.whl
+      - name: Build the standalone fastwarp program
+        run: cargo build --locked --release -p fastwarp-py -p fastwarp-cli --bin fastwarp
       - name: Python tests
+        env:
+          FASTWARP_BIN: ${{ github.workspace }}/target/release/fastwarp
         run: |
           uv run --no-sync python -c "import fastwarp as g; print(g.gpu_info())"
-          uv run --no-sync pytest tests -v -rs
+          uv run --no-sync pytest tests -v -rs -n auto --durations=20
+
+  test:
+    if: always()
+    needs: [rust, python]
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    steps:
+      - env:
+          RUST: ${{ needs.rust.result }}
+          PYTHON: ${{ needs.python.result }}
+        run: |
+          echo "rust: $RUST, python: $PYTHON"
+          [ "$RUST" = success ] && [ "$PYTHON" = success ]
+
+  installers:
+    name: Installer scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SHELLCHECK_VERSION: v0.11.0
+      SHELLCHECK_SHA256: 8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198
+      PSSA_VERSION: 1.25.0
+      PSSA_SHA512: e7fb573262e604bab29914ae62921d24b97c2f88b519b41277b403ef6ce163f14b7d1b36dc73449a68e5ae5a8d9502891b10c264131fd1813adf29bf131c1663
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: ShellCheck
+        run: |
+          f="shellcheck-$SHELLCHECK_VERSION.linux.x86_64.tar.xz"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/$f" "https://github.com/koalaman/shellcheck/releases/download/$SHELLCHECK_VERSION/$f"
+          echo "$SHELLCHECK_SHA256  $RUNNER_TEMP/$f" | sha256sum -c -
+          tar -xJf "$RUNNER_TEMP/$f" -C "$RUNNER_TEMP"
+          "$RUNNER_TEMP/shellcheck-$SHELLCHECK_VERSION/shellcheck" scripts/install.sh ci/test-install.sh
+      - name: End-to-end test of install.sh (dash)
+        run: sh ci/test-install.sh
+      - name: Download PSScriptAnalyzer
+        run: |
+          f="$RUNNER_TEMP/psscriptanalyzer.$PSSA_VERSION.nupkg"
+          curl -fsSL --retry 3 -o "$f" "https://www.powershellgallery.com/api/v2/package/PSScriptAnalyzer/$PSSA_VERSION"
+          echo "$PSSA_SHA512  $f" | sha512sum -c -
+          unzip -q "$f" -d "$RUNNER_TEMP/PSScriptAnalyzer"
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Import-Module (Join-Path $env:RUNNER_TEMP 'PSScriptAnalyzer/PSScriptAnalyzer.psd1')
+          $found = foreach ($file in 'scripts/install.ps1', 'ci/test-install.ps1') {
+            Invoke-ScriptAnalyzer -Path $file -Severity Warning, Error
+          }
+          if ($found) {
+            $found | Format-Table ScriptName, Line, RuleName, Message -AutoSize -Wrap
+            exit 1
+          }
+          Write-Output "PSScriptAnalyzer $($env:PSSA_VERSION): no findings"

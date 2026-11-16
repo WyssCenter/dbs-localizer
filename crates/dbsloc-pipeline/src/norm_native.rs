@@ -28,7 +28,8 @@ use crate::error::{PipelineError, PipelineResult};
 use crate::protocol::RunEvent;
 use crate::reg_backend::{cancelled_or, RegEngine};
 use crate::stage_impl::{
-    file_name_of, load_reg_volume, load_reg_volume_pair, log, NormChannels, NORM_T2_CHANNEL,
+    file_name_of, load_reg_volume, load_reg_volume_pair, log, log_linear_warnings, NormChannels,
+    NORM_T2_CHANNEL,
 };
 
 pub(crate) struct NativeApply {
@@ -210,6 +211,7 @@ fn stage_levels(stage: &LinearStageResult) -> Value {
             "converged": l.cg.converged,
             "best_value": l.cg.best_value,
             "seconds": l.seconds,
+            "skipped": l.skipped,
         }))
         .collect::<Vec<_>>())
 }
@@ -286,6 +288,18 @@ fn register_and_write(
     timings.insert("warp_s".into(), json!(tm.warp_s));
     extra.insert("reg_syn_levels".into(), syn_levels(&out));
     if let Some(chain) = &out.linear {
+        for (label, linear_stage) in [
+            ("rigid stage", &chain.rigid),
+            ("affine stage", &chain.affine),
+        ] {
+            log_linear_warnings(
+                tx,
+                stage,
+                label,
+                linear_stage,
+                &mut std::collections::HashSet::new(),
+            );
+        }
         extra.insert("reg_rigid_levels".into(), stage_levels(&chain.rigid));
         extra.insert("reg_affine_levels".into(), stage_levels(&chain.affine));
         extra.insert(
@@ -426,6 +440,13 @@ fn run_inner(
                                 reg_failed(engine, "the T2w to anchor rigid registration", e)
                             })
                         })?;
+                    log_linear_warnings(
+                        tx,
+                        "normalize",
+                        "T2w to anchor rigid stage",
+                        &rigid.rigid,
+                        &mut std::collections::HashSet::new(),
+                    );
                     extra.insert("reg_t2_coreg_levels".into(), stage_levels(&rigid.rigid));
                     rigid.total
                 }
@@ -533,6 +554,16 @@ fn run_inner(
 mod tests {
     use super::{parse_injected_t2, T2_COREG_FROM_ENV};
     use crate::coreg_multistart::write_itk_affine_text;
+
+    #[test]
+    fn stage_levels_record_the_skip_reason_or_null() {
+        let stage = crate::stage_impl::test_linear_stage(&[Some("one fixed value"), None]);
+        let levels = super::stage_levels(&stage);
+        assert_eq!(levels[0]["skipped"], serde_json::json!("one fixed value"));
+        assert_eq!(levels[1]["skipped"], serde_json::Value::Null);
+        assert!(levels[1].as_object().unwrap().contains_key("skipped"));
+        assert_eq!(levels[1]["iterations"], serde_json::json!(3));
+    }
 
     #[test]
     fn injected_t2_rigid_reads_the_first_affine_of_a_transform_file() {

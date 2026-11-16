@@ -11,10 +11,8 @@ name = "_core"
 crate-type = ["cdylib"]
 
 [dependencies]
+fastwarp-cli = { path = "../fastwarp-cli" }
 fastwarp-reg = { path = "../fastwarp-reg" }
-fastwarp-gpu = { path = "../fastwarp-gpu" }
-fastwarp-niftiio = { path = "../fastwarp-niftiio" }
-ndarray = "0.17"
 pyo3 = { version = "0.30", features = ["abi3-py311"] }
 numpy = "0.30"
-rayon = "1.10"
+serde_json = "1"

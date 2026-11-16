@@ -9,12 +9,14 @@ FASTWARP_GPU_ALLOW_SOFTWARE=1.
 
 from __future__ import annotations
 
+import sys
 import threading
 from pathlib import Path
 
 import fastwarp as g
 import numpy as np
 import pytest
+from fastwarp._api import _image_args, _prepared_prefix
 
 SPACING = 2.0
 SHAPE = (56, 64, 48)
@@ -45,10 +47,8 @@ def phantom(shift_mm=(0.0, 0.0, 0.0)) -> tuple:
 
 
 @pytest.fixture(scope="module")
-def result(tmp_path_factory):
-    out = tmp_path_factory.mktemp("reg") / "sub_"
-    info = g.register_syn(phantom(), phantom(SHIFT_MM), out, iso_mm=SPACING, write_warped=True)
-    return out, info
+def result(baseline):
+    return baseline
 
 
 @needs_gpu
@@ -118,6 +118,78 @@ def test_capacity_refused_before_work(tmp_path, monkeypatch):
     assert not Path(f"{tmp_path}/cap_Composite.h5").exists()
 
 
+def blank(shape, spacing=SPACING):
+    return (np.zeros(shape), (spacing,) * 3, (0.0,) * 3, np.eye(3))
+
+
+def test_fits_gpu_rejects_an_empty_moving_list():
+    with pytest.raises(ValueError):
+        g.fits_gpu(phantom(), [], iso_mm=SPACING)
+
+
+def test_fits_gpu_without_a_gpu_is_false(monkeypatch):
+    monkeypatch.setattr(
+        "fastwarp._api._fits_gpu", lambda *a: (_ for _ in ()).throw(g.GpuUnavailableError("x"))
+    )
+    assert not g.fits_gpu(phantom(), phantom(), iso_mm=SPACING)
+    assert not g.fits_gpu([phantom()], [phantom()], iso_mm=SPACING)
+
+
+def test_fits_gpu_passes_the_largest_moving_grid(monkeypatch):
+    seen = []
+    monkeypatch.setattr("fastwarp._api._fits_gpu", lambda *a: seen.append(a) or True)
+    g.fits_gpu(phantom(), iso_mm=SPACING)
+    g.fits_gpu([phantom(), phantom()], [blank((10, 10, 10)), blank((90, 20, 20))], iso_mm=SPACING)
+    assert seen[0] == (SHAPE, 1, None, None, None)
+    assert seen[1] == (SHAPE, 2, None, (90, 20, 20), None)
+
+
+def test_fits_gpu_validates_arguments():
+    p = phantom()
+    for call in (
+        lambda: g.fits_gpu([]),
+        lambda: g.fits_gpu([p, p, p]),
+        lambda: g.fits_gpu(p, [p, p]),
+        lambda: g.fits_gpu([p, p], p),
+        lambda: g.fits_gpu([p, p], channels=1),
+        lambda: g.fits_gpu(p, channels=0),
+        lambda: g.fits_gpu(p, channels=3),
+        lambda: g.fits_gpu(p, iso_mm=-1.0),
+        lambda: g.fits_gpu(p, iso_mm=float("nan")),
+    ):
+        with pytest.raises(ValueError):
+            call()
+
+
+def test_fits_gpu_channels_follow_the_fixed_images(monkeypatch):
+    seen = []
+    monkeypatch.setattr("fastwarp._api._fits_gpu", lambda *a: seen.append(a[1]) or True)
+    p = phantom()
+    g.fits_gpu(p)
+    g.fits_gpu([p, p], [p, p])
+    g.fits_gpu(p, channels=2)
+    assert seen == [1, 2, 2]
+
+
+@needs_gpu
+def test_fits_gpu_counts_both_channels(monkeypatch):
+    monkeypatch.setenv("FASTWARP_GPU_MEMORY_BUDGET_MB", "34")
+    p = phantom()
+    assert g.fits_gpu(p, iso_mm=SPACING)
+    assert not g.fits_gpu([p, p], [p, p], iso_mm=SPACING)
+
+
+@needs_gpu
+def test_fits_gpu_checks_the_moving_grid(tmp_path, monkeypatch):
+    monkeypatch.setenv("FASTWARP_GPU_MEMORY_BUDGET_MB", "40")
+    big = blank((SHAPE[0] * 4, SHAPE[1] * 4, SHAPE[2] * 4))
+    assert g.fits_gpu(phantom(), iso_mm=SPACING)
+    assert not g.fits_gpu(phantom(), big, iso_mm=SPACING)
+    with pytest.raises(g.GpuCapacityError):
+        g.register_syn(phantom(), big, tmp_path / "big_", iso_mm=SPACING)
+    assert g.fits_gpu(phantom(), phantom(), iso_mm=SPACING)
+
+
 @needs_gpu
 def test_gpu_info():
     info = g.gpu_info()
@@ -166,10 +238,9 @@ def _hashes(prefix: Path) -> tuple[str, str]:
 
 
 @needs_gpu
-def test_runs_are_deterministic(tmp_path):
-    g.register_syn(phantom(), phantom(SHIFT_MM), tmp_path / "a_", iso_mm=SPACING)
+def test_runs_are_deterministic(tmp_path, baseline):
     g.register_syn(phantom(), phantom(SHIFT_MM), tmp_path / "b_", iso_mm=SPACING)
-    assert _hashes(tmp_path / "a_") == _hashes(tmp_path / "b_")
+    assert _hashes(baseline[0]) == _hashes(tmp_path / "b_")
 
 
 @needs_gpu
@@ -185,7 +256,7 @@ def test_float32_input_equals_the_same_values_as_float64(tmp_path):
 
 def test_float32_fortran_data_is_passed_without_a_copy():
     arr = np.asfortranarray(np.zeros((4, 5, 6), dtype=np.float32))
-    flat = g._image_args((arr, (1.0,) * 3, (0.0,) * 3, np.eye(3)))[0]
+    flat = _image_args((arr, (1.0,) * 3, (0.0,) * 3, np.eye(3)))[0]
     assert flat.dtype == np.float32 and np.shares_memory(flat, arr)
 
 
@@ -200,9 +271,17 @@ def test_non_finite_voxels_are_refused(tmp_path):
 def test_a_missing_output_folder_is_refused_before_any_work(tmp_path):
     from fastwarp import _core
 
-    args = g._image_args(phantom())
+    args = _image_args(phantom())
     with pytest.raises(ValueError, match="does not exist"):
         _core.register_syn([args], [args], str(tmp_path / "missing" / "x_"))
+    with pytest.raises(ValueError, match="does not exist"):
+        _core.register_syn([args], [args], f"{tmp_path}/missing/")
+
+
+def test_a_folder_prefix_is_kept_and_its_folder_created(tmp_path):
+    prefix = f"{tmp_path}/a/b/"
+    assert _prepared_prefix(prefix) == prefix
+    assert (tmp_path / "a" / "b").is_dir()
 
 
 @needs_gpu
@@ -211,9 +290,35 @@ def test_the_wrapper_creates_the_output_folder(tmp_path):
     assert (tmp_path / "new" / "dir" / "x_Composite.h5").is_file()
 
 
+FOLDER_PREFIXES = ["{}/out/sub/", "{}/out/sub"]
+if sys.platform == "win32":
+    FOLDER_PREFIXES.append("{}\\out\\sub\\")
+OUTPUTS = ("Composite.h5", "InverseComposite.h5", "0GenericAffine.mat", "_Warped.nii.gz")
+
+
+def _written(root: Path) -> set[str]:
+    return {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}
+
+
+@pytest.mark.parametrize("prefix", FOLDER_PREFIXES)
+@needs_gpu
+def test_a_prefix_ending_in_a_separator_names_a_folder(tmp_path, prefix):
+    prefix = prefix.format(tmp_path)
+    folder = "out/sub/" if prefix[-1] in "/\\" else "out/sub"
+    g.register_syn(phantom(), phantom(SHIFT_MM), prefix, iso_mm=3.0, write_warped=True)
+    assert _written(tmp_path) == {folder + name for name in OUTPUTS}
+    for f in tmp_path.rglob("*"):
+        if f.is_file():
+            f.unlink()
+    stage = {"iterations": [5], "shrink_factors": [1], "smoothing_sigmas": [0.0]}
+    with g.linear_session(phantom(), phantom(SHIFT_MM)) as s:
+        s.register(stage=stage, out_prefix=prefix)
+    assert _written(tmp_path) == {folder + "0GenericAffine.mat"}
+
+
 def test_integer_images_are_accepted():
     arr = np.ones((4, 5, 6), dtype=np.int16)
-    assert g._image_args((arr, (1.0,) * 3, (0.0,) * 3, np.eye(3)))[0].dtype == np.float32
+    assert _image_args((arr, (1.0,) * 3, (0.0,) * 3, np.eye(3)))[0].dtype == np.float32
 
 
 @needs_gpu

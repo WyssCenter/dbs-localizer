@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="FastWarp">
+  <!-- SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering -->
+  <!-- SPDX-License-Identifier: Apache-2.0 -->
+  <rect width="32" height="32" rx="6" fill="#1f5f99"/>
+  <text x="16" y="23.5" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="21" font-weight="700" fill="#ffffff">FW</text>
+</svg>

@@ -233,6 +233,30 @@ pub(crate) fn log(tx: Option<&mpsc::Sender<RunEvent>>, line: impl Into<String>) 
     }
 }
 
+pub(crate) fn unseen_linear_warnings(
+    stage: &LinearStageResult,
+    label: &str,
+    seen: &mut std::collections::HashSet<String>,
+) -> Vec<String> {
+    stage
+        .warnings(label)
+        .into_iter()
+        .filter(|w| seen.insert(w.clone()))
+        .collect()
+}
+
+pub(crate) fn log_linear_warnings(
+    tx: Option<&mpsc::Sender<RunEvent>>,
+    stage_name: &str,
+    label: &str,
+    stage: &LinearStageResult,
+    seen: &mut std::collections::HashSet<String>,
+) {
+    for w in unseen_linear_warnings(stage, label, seen) {
+        log(tx, format!("dbsloc: warning: {stage_name}: {w}"));
+    }
+}
+
 fn ants_env(max_threads: Option<u32>) -> Option<std::collections::HashMap<String, String>> {
     max_threads.map(|n| {
         let mut m = std::collections::HashMap::new();
@@ -1180,6 +1204,13 @@ fn coregister_mr_native(
                     native_coreg_err(engine, "the post-op MR rigid registration", e)
                 })
             })?;
+        log_linear_warnings(
+            tx,
+            "coreg",
+            &format!("post-op MR {key} rigid stage"),
+            &out.rigid,
+            &mut std::collections::HashSet::new(),
+        );
         write_linear_output(tmp_prefix, &out.total)
             .map_err(|e| PipelineError::Message(format!("coreg: {e}")))?;
         let chain = TransformChain::from_queue(vec![TransformElem::Affine(out.total)]);
@@ -1282,6 +1313,7 @@ fn coregister_native_with(
     );
 
     let record_tmp = staged.tmp(&paths.record);
+    let mut seen_coarse_warnings = std::collections::HashSet::new();
     let mut coarse = |start: &StartPaths,
                       pitch: f64,
                       c_f: [f64; 3],
@@ -1315,6 +1347,13 @@ fn coregister_native_with(
                 });
             }
         };
+        log_linear_warnings(
+            tx,
+            "coreg",
+            "coarse multi-start rigid stage",
+            &out.rigid,
+            &mut seen_coarse_warnings,
+        );
         write_linear_output(&start.coarse_prefix, &out.total)
             .map_err(|e| PipelineError::Message(format!("coreg: {e}")))?;
         Ok(CoarseStart {
@@ -1356,6 +1395,13 @@ fn coregister_native_with(
         })?;
     let full_s = t.elapsed().as_secs_f64();
     drop((pre_fixed, pre_moving));
+    log_linear_warnings(
+        tx,
+        "coreg",
+        "masked rigid stage",
+        &out.rigid,
+        &mut std::collections::HashSet::new(),
+    );
 
     write_linear_output(tmp_prefix, &out.total)
         .map_err(|e| PipelineError::Message(format!("coreg: {e}")))?;
@@ -1608,8 +1654,50 @@ fn linear_levels(stage: &LinearStageResult) -> Value {
             "converged": l.cg.converged,
             "best_value": l.cg.best_value,
             "seconds": l.seconds,
+            "skipped": l.skipped,
         }))
         .collect::<Vec<_>>())
+}
+
+#[cfg(test)]
+pub(crate) fn test_linear_stage(skips: &[Option<&str>]) -> LinearStageResult {
+    use fastwarp_reg::linear::LinearLevelTrace;
+    use fastwarp_reg::optimizer::CgTrace;
+    use fastwarp_reg::transform::ParametricTransform;
+
+    let affine = AffineTransform::new(
+        [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+        [0.0; 3],
+        [0.0; 3],
+    );
+    LinearStageResult {
+        transform: ParametricTransform::affine(&affine),
+        affine,
+        levels: skips
+            .iter()
+            .enumerate()
+            .map(|(i, why)| LinearLevelTrace {
+                level: i,
+                shrink_factors: [6, 6, 6],
+                grid_size: [4, 5, 6],
+                samples: 10,
+                cg: CgTrace {
+                    values: Vec::new(),
+                    converged_value: None,
+                    iterations: 3,
+                    converged: true,
+                    best_value: -0.5,
+                    scales: Vec::new(),
+                    initial_learning_rate: 0.0,
+                    final_learning_rate: 0.0,
+                    line_search_evaluations: 0,
+                },
+                seconds: 0.25,
+                parameters: vec![0.0; 6],
+                skipped: why.map(str::to_owned),
+            })
+            .collect(),
+    }
 }
 
 fn merge_record_timings(
@@ -4143,6 +4231,45 @@ mod tests {
 
     fn opts_without_model() -> RunOptions {
         RunOptions::new("/data", "1")
+    }
+
+    #[test]
+    fn linear_levels_record_the_skip_reason_or_null() {
+        let stage = test_linear_stage(&[Some("no sample point lands on the fixed image"), None]);
+        let levels = linear_levels(&stage);
+        assert_eq!(
+            levels[0]["skipped"],
+            json!("no sample point lands on the fixed image")
+        );
+        assert_eq!(levels[1]["skipped"], Value::Null);
+        assert!(levels[1].as_object().unwrap().contains_key("skipped"));
+        assert_eq!(levels[0]["samples"], json!(10));
+    }
+
+    #[test]
+    fn linear_warnings_are_logged_once_per_distinct_line() {
+        let stage = test_linear_stage(&[Some("one fixed value"), None]);
+        let other = test_linear_stage(&[None, Some("one fixed value")]);
+        let (tx, rx) = mpsc::channel();
+        let mut seen = std::collections::HashSet::new();
+        log_linear_warnings(Some(&tx), "coreg", "rigid stage", &stage, &mut seen);
+        log_linear_warnings(Some(&tx), "coreg", "rigid stage", &stage, &mut seen);
+        log_linear_warnings(Some(&tx), "coreg", "rigid stage", &other, &mut seen);
+        drop(tx);
+        let lines: Vec<String> = rx
+            .try_iter()
+            .filter_map(|e| match e {
+                RunEvent::LogLine { line } => Some(line),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(lines.len(), 2, "{lines:?}");
+        assert!(lines[0].starts_with(
+            "dbsloc: warning: coreg: rigid stage: level 1 of 2 (shrink factors 6x6x6) was skipped: one fixed value"
+        ));
+        assert!(lines[1].contains("level 2 of 2"));
+        let none = test_linear_stage(&[None]);
+        assert!(unseen_linear_warnings(&none, "rigid stage", &mut seen).is_empty());
     }
 
     #[test]

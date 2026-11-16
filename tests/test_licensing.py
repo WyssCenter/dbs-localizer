@@ -29,7 +29,7 @@ APACHE_CRATES = frozenset(
         "fastwarp-gpu",
     }
 )
-GPUREG_CRATES = APACHE_CRATES | {"fastwarp-py"}
+GPUREG_CRATES = APACHE_CRATES | {"fastwarp-py", "fastwarp-cli"}
 AGPL_CRATES = frozenset({"dbsloc-pacer"})
 PACER_FEATURE = "pacer"
 SHIPPED_CRATES = frozenset({"dbsloc-cli", "dbsloc-app"})
