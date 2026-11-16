@@ -302,10 +302,15 @@ mod tests {
                 && note.contains("binds at most"),
             "{note}"
         );
+        let dims = |mm: f64| crate::resample::resampled_grid([40, 40, 40], [0.5; 3], mm).0;
+        let needed = |mm: f64| {
+            fastwarp_gpu::plan_capacity(dims(mm), 2, &fits_all).map(|p| p.level_total_bytes)
+        };
         let coarse = CapacityCaps {
             max_storage_buffer_binding_size: u64::MAX,
-            memory_budget: voxels(1.5) * 188,
+            memory_budget: needed(1.5).unwrap(),
         };
+        assert!(needed(1.0).unwrap() > coarse.memory_budget);
         let r = resolve_for_template(NormGrid::Template, Some(&t), 2, Some(&coarse));
         assert_eq!((r.mm, r.source), (Some(1.5), NormGridSource::Capacity));
         let nothing = CapacityCaps {
