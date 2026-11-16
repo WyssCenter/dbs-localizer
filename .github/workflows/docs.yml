@@ -1,6 +1,6 @@
 # Builds the Sphinx documentation the way Read the Docs does (.readthedocs.yaml), warnings as
-# errors, after checking that docs/requirements.txt is the export of uv.lock (check.yml runs
-# ruff on docs/conf.py). The link check depends on every linked site, so it runs weekly and on demand only.
+# errors, after checking docs/conf.py with the locked ruff and that docs/requirements.txt is the
+# export of uv.lock. The link check depends on every linked site, so it runs weekly and on demand only.
 name: Docs
 
 on:
@@ -18,6 +18,14 @@ on:
       - "pyproject.toml"
       - "uv.lock"
       - "crates/dbsloc-viz/assets/**"
+      - "specs/**"
+      - ".github/**"
+      - "AGENTS.md"
+      - "TRADEMARKS.md"
+      - "REUSE.toml"
+      - "LICENSES/**"
+      - "deny.toml"
+      - "rust-toolchain.toml"
       - ".readthedocs.yaml"
       - ".github/workflows/docs.yml"
   pull_request:
@@ -34,6 +42,14 @@ on:
       - "pyproject.toml"
       - "uv.lock"
       - "crates/dbsloc-viz/assets/**"
+      - "specs/**"
+      - ".github/**"
+      - "AGENTS.md"
+      - "TRADEMARKS.md"
+      - "REUSE.toml"
+      - "LICENSES/**"
+      - "deny.toml"
+      - "rust-toolchain.toml"
       - ".readthedocs.yaml"
       - ".github/workflows/docs.yml"
   schedule:
@@ -61,6 +77,11 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "0.13.6"
+
+      - name: Ruff on docs/conf.py
+        run: |
+          uv run --locked --only-group dev ruff check docs/conf.py
+          uv run --locked --only-group dev ruff format --check docs/conf.py
 
       - name: docs/requirements.txt matches uv.lock
         run: |

@@ -86,7 +86,7 @@ xattr -dr com.apple.quarantine dbsloc-mac   # see below
 ./dbsloc-mac/install.sh -u       # removes it again
 ```
 
-The programs are not notarised, so macOS quarantines a copy downloaded in a browser and may refuse to run it; the `xattr` line removes that flag from the extracted folder, as the archive's `README.txt` explains. Start the application with `dbs-localizer` in a terminal; if `~/.local/bin` is not on your `PATH`, `install.sh` prints the line that adds it.
+The programs are not notarised, so macOS quarantines a copy downloaded in a browser and may refuse to run it; the `xattr` line removes that flag from the extracted folder, as the archive's `README.txt` explains (`install.sh` clears it on the installed copy too; the line matters when you run the programs from the extracted folder). Start the application with `dbs-localizer` in a terminal; if `~/.local/bin` is not on your `PATH`, `install.sh` prints the line that adds it.
 
 ### Check that it works
 
