@@ -262,6 +262,13 @@ fn native_rigid(
                     ))
                 })
             })?;
+        crate::stage_impl::log_linear_warnings(
+            tx,
+            PRECOREG_STAGE,
+            "rigid stage",
+            &out.rigid,
+            &mut std::collections::HashSet::new(),
+        );
         write_linear_output(matrix_prefix_tmp, &out.total)
             .map_err(|e| PipelineError::Message(format!("precoreg: {e}")))?;
         Ok((
