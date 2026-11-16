@@ -1,150 +1,164 @@
 // SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
 // SPDX-License-Identifier: Apache-2.0
 
-//! The registration recipe as a Python dict: `{"rigid": {...}, "affine": {...}, "syn": {...}}`,
-//! each field of [`LinearRecipe`] / [`SynRecipe`] under its own name. A missing stage or field
-//! keeps the dbs-localizer cohort value, an unknown one is an error, so a caller (leaddbs-py) can
-//! state the whole schedule and a typo never passes silently.
+//! The registration recipe as a Python dict. The dict is converted to JSON and read by the
+//! command line's recipe parser (`fastwarp_cli::recipe`), so both front ends accept the same two
+//! forms (`{"rigid": ..., "affine": ..., "syn": ...}` and `{"initial": ..., "stages": [...]}`,
+//! both with `"winsorize"`) with the same keys, defaults, checks and messages. The single linear
+//! stage of `LinearSession.register` keeps its own dict reader below.
 
+use fastwarp_cli::recipe::{
+    check_linear, cohort_linear, parse_units, units_name, Recipe, LINEAR_KEYS,
+};
 use fastwarp_reg::linear::LinearRecipe;
 use fastwarp_reg::pyramid::SigmaUnits;
-use fastwarp_reg::recipe::SynRecipe;
-use fastwarp_reg::register::LinearPlan;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
+use serde_json::{Map, Number, Value};
 
-/// Histogram bins the GPU Mattes MI kernels are built for.
-const GPU_MI_BINS: usize = 32;
-/// Largest CC radius of the GPU box-sum kernels.
-const GPU_CC_RADIUS_MAX: usize = 8;
-
-const LINEAR_KEYS: &[&str] = &[
-    "gradient_step",
-    "iterations",
-    "convergence_threshold",
-    "convergence_window",
-    "shrink_factors",
-    "smoothing_sigmas",
-    "sigma_units",
-    "bins",
-    "sampling_percentage",
-    "seed",
-];
-const SYN_KEYS: &[&str] = &[
-    "gradient_step",
-    "update_field_variance",
-    "total_field_variance",
-    "cc_radius",
-    "channel_weights",
-    "iterations",
-    "convergence_threshold",
-    "convergence_window",
-    "shrink_factors",
-    "smoothing_sigmas",
-    "sigma_units",
-];
-
-/// The three stages that run: Rigid, Affine (Mattes MI, first channel) and SyN (CC, all channels).
-pub struct Recipe {
-    pub linear: LinearPlan,
-    pub syn: SynRecipe,
+fn value_err(msg: String) -> PyErr {
+    PyValueError::new_err(msg)
 }
 
-impl Recipe {
-    /// The dbs-localizer cohort recipe for `channels` channels (weights 1, or 0.5 each for two).
-    pub fn cohort(channels: usize) -> Self {
-        Self {
-            linear: LinearPlan::cohort(),
-            syn: if channels == 2 {
-                SynRecipe::cohort_multispectral()
+/// A Python value as JSON: dicts with string keys, lists and tuples, strings, bools, integers,
+/// finite floats, `None`, and an `os.PathLike` as its string. `what` names the value in errors.
+fn to_json(v: &Bound<'_, PyAny>, what: &str) -> PyResult<Value> {
+    if v.is_none() {
+        return Ok(Value::Null);
+    }
+    if let Ok(b) = v.cast::<PyBool>() {
+        return Ok(Value::Bool(b.is_true()));
+    }
+    if v.is_instance_of::<PyInt>() {
+        return int_json(v, what);
+    }
+    if v.is_instance_of::<PyFloat>() {
+        return float_json(v, what);
+    }
+    if let Ok(s) = v.cast::<PyString>() {
+        return Ok(Value::String(s.to_str()?.to_string()));
+    }
+    if let Ok(d) = v.cast::<PyDict>() {
+        let mut m = Map::new();
+        for (k, item) in d.iter() {
+            let key: String = k
+                .extract()
+                .map_err(|_| value_err(format!("{what}: keys must be strings")))?;
+            let inner = format!("{what}['{key}']");
+            m.insert(key, to_json(&item, &inner)?);
+        }
+        return Ok(Value::Object(m));
+    }
+    if v.is_instance_of::<PyList>() || v.is_instance_of::<PyTuple>() {
+        let mut out = Vec::new();
+        for (i, item) in v.try_iter()?.enumerate() {
+            out.push(to_json(&item?, &format!("{what}[{i}]"))?);
+        }
+        return Ok(Value::Array(out));
+    }
+    if v.hasattr("__fspath__")? {
+        let p = v.call_method0("__fspath__")?;
+        if let Ok(s) = p.cast::<PyString>() {
+            return Ok(Value::String(s.to_str()?.to_string()));
+        }
+    }
+    if v.hasattr("tolist")? {
+        return to_json(&v.call_method0("tolist")?, what);
+    }
+    if v.hasattr("__index__")? {
+        return int_json(v, what);
+    }
+    if v.hasattr("__float__")? {
+        return float_json(v, what);
+    }
+    let name = v
+        .get_type()
+        .name()
+        .map(|n| n.to_string())
+        .unwrap_or_else(|_| "value".to_string());
+    Err(value_err(format!("{what}: a {name} is not a recipe value")))
+}
+
+fn int_json(v: &Bound<'_, PyAny>, what: &str) -> PyResult<Value> {
+    if let Ok(n) = v.extract::<u64>() {
+        return Ok(Value::Number(n.into()));
+    }
+    if let Ok(n) = v.extract::<i64>() {
+        return Ok(Value::Number(n.into()));
+    }
+    Err(value_err(format!("{what}: integer {v} is out of range")))
+}
+
+fn float_json(v: &Bound<'_, PyAny>, what: &str) -> PyResult<Value> {
+    let f: f64 = v
+        .extract()
+        .map_err(|_| value_err(format!("{what}: {v} is not a number")))?;
+    Number::from_f64(f).map(Value::Number).ok_or_else(|| {
+        value_err(format!(
+            "{what}: got {f}, but values must be finite numbers"
+        ))
+    })
+}
+
+/// JSON as the Python value `json.loads` would give.
+pub fn from_json<'py>(py: Python<'py>, v: &Value) -> PyResult<Bound<'py, PyAny>> {
+    Ok(match v {
+        Value::Null => py.None().into_bound(py),
+        Value::Bool(b) => PyBool::new(py, *b).to_owned().into_any(),
+        Value::Number(n) => {
+            if let Some(u) = n.as_u64() {
+                u.into_pyobject(py)?.into_any()
+            } else if let Some(i) = n.as_i64() {
+                i.into_pyobject(py)?.into_any()
             } else {
-                SynRecipe::cohort()
-            },
-        }
-    }
-
-    /// The cohort recipe with the stages and fields `d` names replaced, checked for `channels`
-    /// channels and for what the GPU kernels support.
-    pub fn from_dict(d: Option<&Bound<'_, PyDict>>, channels: usize) -> PyResult<Self> {
-        let mut r = Self::cohort(channels);
-        if let Some(d) = d {
-            check_keys(d, &["rigid", "affine", "syn"], "recipe")?;
-            if let Some(s) = stage(d, "rigid")? {
-                linear_from(&s, &mut r.linear.rigid, "recipe['rigid']")?;
-            }
-            if let Some(s) = stage(d, "affine")? {
-                linear_from(&s, &mut r.linear.affine, "recipe['affine']")?;
-            }
-            if let Some(s) = stage(d, "syn")? {
-                syn_from(&s, &mut r.syn)?;
+                n.as_f64().unwrap_or(f64::NAN).into_pyobject(py)?.into_any()
             }
         }
-        r.check(channels)?;
-        Ok(r)
-    }
-
-    fn check(&self, channels: usize) -> PyResult<()> {
-        check_linear("recipe['rigid']", &self.linear.rigid)?;
-        check_linear("recipe['affine']", &self.linear.affine)?;
-        self.syn
-            .validate()
-            .map_err(|e| PyValueError::new_err(format!("recipe['syn']: {e}")))?;
-        if self.syn.cc_radius > GPU_CC_RADIUS_MAX {
-            return Err(PyValueError::new_err(format!(
-                "recipe['syn']['cc_radius']: the GPU kernels support 1 to {GPU_CC_RADIUS_MAX}, \
-                 not {}",
-                self.syn.cc_radius
-            )));
+        Value::String(s) => PyString::new(py, s).into_any(),
+        Value::Array(a) => {
+            let l = PyList::empty(py);
+            for item in a {
+                l.append(from_json(py, item)?)?;
+            }
+            l.into_any()
         }
-        if self.syn.channel_weights.len() != channels {
-            return Err(PyValueError::new_err(format!(
-                "recipe['syn']['channel_weights'] has {} weights for {channels} channel(s)",
-                self.syn.channel_weights.len()
-            )));
+        Value::Object(m) => {
+            let d = PyDict::new(py);
+            for (k, item) in m {
+                d.set_item(k, from_json(py, item)?)?;
+            }
+            d.into_any()
         }
-        Ok(())
-    }
+    })
+}
 
-    /// The recipe as the dict [`Recipe::from_dict`] reads (every field present).
-    pub fn to_dict<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
-        let d = PyDict::new(py);
-        d.set_item("rigid", linear_dict(py, &self.linear.rigid)?)?;
-        d.set_item("affine", linear_dict(py, &self.linear.affine)?)?;
-        let s = PyDict::new(py);
-        let r = &self.syn;
-        s.set_item("gradient_step", r.gradient_step)?;
-        s.set_item("update_field_variance", r.update_field_variance)?;
-        s.set_item("total_field_variance", r.total_field_variance)?;
-        s.set_item("cc_radius", r.cc_radius)?;
-        s.set_item("channel_weights", r.channel_weights.clone())?;
-        s.set_item("iterations", r.iterations.clone())?;
-        s.set_item("convergence_threshold", r.convergence_threshold)?;
-        s.set_item("convergence_window", r.convergence_window)?;
-        s.set_item("shrink_factors", r.shrink_factors.clone())?;
-        s.set_item("smoothing_sigmas", r.smoothing_sigmas.clone())?;
-        s.set_item("sigma_units", units_name(r.sigma_units))?;
-        d.set_item("syn", s)?;
-        Ok(d)
+/// The recipe `d` describes (the cohort recipe with the stages and fields it names replaced),
+/// checked for `channels` channels and for what the GPU kernels support.
+pub fn from_dict(d: Option<&Bound<'_, PyDict>>, channels: usize) -> PyResult<Recipe> {
+    match d {
+        None => {
+            let r = Recipe::cohort(channels);
+            r.check(channels).map_err(value_err)?;
+            Ok(r)
+        }
+        Some(d) => Recipe::from_json(&to_json(d.as_any(), "recipe")?, channels).map_err(value_err),
     }
+}
+
+/// The recipe as the dict [`from_dict`] reads (every field present, in the form it was given).
+pub fn to_dict<'py>(py: Python<'py>, r: &Recipe) -> PyResult<Bound<'py, PyDict>> {
+    Ok(from_json(py, &r.to_json())?.cast_into::<PyDict>()?)
 }
 
 /// One `Rigid` (`transform = "rigid"`) or `Affine` (`"affine"`) stage: the cohort's, with the
 /// fields `d` names replaced, checked like a recipe.
 pub fn linear_stage(d: Option<&Bound<'_, PyDict>>, transform: &str) -> PyResult<LinearRecipe> {
-    let mut stage = match transform {
-        "rigid" => LinearRecipe::cohort_rigid(),
-        "affine" => LinearRecipe::cohort_affine(),
-        other => {
-            return Err(PyValueError::new_err(format!(
-                "transform must be 'rigid' or 'affine', not {other:?}"
-            )))
-        }
-    };
+    let mut stage = cohort_linear(transform).map_err(value_err)?;
     if let Some(d) = d {
         linear_from(d, &mut stage, "stage")?;
     }
-    check_linear("stage", &stage)?;
+    check_linear("stage", &stage).map_err(value_err)?;
     Ok(stage)
 }
 
@@ -154,18 +168,6 @@ pub fn linear_stage_dict<'py>(
     stage: &LinearRecipe,
 ) -> PyResult<Bound<'py, PyDict>> {
     linear_dict(py, stage)
-}
-
-fn check_linear(what: &str, l: &LinearRecipe) -> PyResult<()> {
-    l.validate()
-        .map_err(|e| PyValueError::new_err(format!("{what}: {e}")))?;
-    if l.bins != GPU_MI_BINS {
-        return Err(PyValueError::new_err(format!(
-            "{what}['bins']: the GPU MI kernels support {GPU_MI_BINS} bins, not {}",
-            l.bins
-        )));
-    }
-    Ok(())
 }
 
 fn linear_dict<'py>(py: Python<'py>, l: &LinearRecipe) -> PyResult<Bound<'py, PyDict>> {
@@ -183,13 +185,6 @@ fn linear_dict<'py>(py: Python<'py>, l: &LinearRecipe) -> PyResult<Bound<'py, Py
     Ok(d)
 }
 
-fn units_name(u: SigmaUnits) -> &'static str {
-    match u {
-        SigmaUnits::Voxels => "vox",
-        SigmaUnits::Millimetres => "mm",
-    }
-}
-
 fn check_keys(d: &Bound<'_, PyDict>, allowed: &[&str], what: &str) -> PyResult<()> {
     for key in d.keys() {
         let k: String = key
@@ -203,17 +198,6 @@ fn check_keys(d: &Bound<'_, PyDict>, allowed: &[&str], what: &str) -> PyResult<(
         }
     }
     Ok(())
-}
-
-fn stage<'py>(d: &Bound<'py, PyDict>, key: &str) -> PyResult<Option<Bound<'py, PyDict>>> {
-    match d.get_item(key)? {
-        None => Ok(None),
-        Some(v) if v.is_none() => Ok(None),
-        Some(v) => v
-            .cast_into::<PyDict>()
-            .map(Some)
-            .map_err(|_| PyValueError::new_err(format!("recipe['{key}'] must be a dict"))),
-    }
 }
 
 /// Replaces `slot` with `d[key]` when present; a value of the wrong type is a `ValueError`
@@ -242,15 +226,7 @@ fn set<'py, T: FromPyObjectOwned<'py>>(
 fn units(d: &Bound<'_, PyDict>, what: &str, slot: &mut SigmaUnits) -> PyResult<()> {
     let mut name = units_name(*slot).to_string();
     set(d, "sigma_units", what, &mut name)?;
-    *slot = match name.as_str() {
-        "vox" => SigmaUnits::Voxels,
-        "mm" => SigmaUnits::Millimetres,
-        other => {
-            return Err(PyValueError::new_err(format!(
-                "{what}['sigma_units']: 'vox' or 'mm', not '{other}'"
-            )))
-        }
-    };
+    *slot = parse_units(&name, what).map_err(value_err)?;
     Ok(())
 }
 
@@ -273,32 +249,5 @@ fn linear_from(d: &Bound<'_, PyDict>, l: &mut LinearRecipe, what: &str) -> PyRes
     set(d, "sampling_percentage", what, &mut sampling)?;
     l.sampling_percentage = sampling as f32;
     set(d, "seed", what, &mut l.seed)?;
-    Ok(())
-}
-
-fn syn_from(d: &Bound<'_, PyDict>, r: &mut SynRecipe) -> PyResult<()> {
-    let what = "recipe['syn']";
-    check_keys(d, SYN_KEYS, what)?;
-    set(d, "gradient_step", what, &mut r.gradient_step)?;
-    set(
-        d,
-        "update_field_variance",
-        what,
-        &mut r.update_field_variance,
-    )?;
-    set(d, "total_field_variance", what, &mut r.total_field_variance)?;
-    set(d, "cc_radius", what, &mut r.cc_radius)?;
-    set(d, "channel_weights", what, &mut r.channel_weights)?;
-    set(d, "iterations", what, &mut r.iterations)?;
-    set(
-        d,
-        "convergence_threshold",
-        what,
-        &mut r.convergence_threshold,
-    )?;
-    set(d, "convergence_window", what, &mut r.convergence_window)?;
-    set(d, "shrink_factors", what, &mut r.shrink_factors)?;
-    set(d, "smoothing_sigmas", what, &mut r.smoothing_sigmas)?;
-    units(d, what, &mut r.sigma_units)?;
     Ok(())
 }

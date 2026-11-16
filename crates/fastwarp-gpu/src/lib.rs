@@ -25,8 +25,8 @@ pub mod syn_kernels;
 pub mod wgpu_backend;
 
 pub use capacity::{
-    memory_budget, plan_capacity, plan_capacity_pair, BudgetSource, CapacityCaps, CapacityError,
-    CapacityPlan, DeviceMemory, MemoryFigure,
+    memory_budget, plan_capacity, plan_capacity_linear, plan_capacity_pair, plan_capacity_syn,
+    BudgetSource, CapacityCaps, CapacityError, CapacityPlan, DeviceMemory, MemoryFigure,
 };
 pub use caps::{CapCheck, GpuCaps, Verdict};
 pub use device::{AdapterRecord, BackendChoice, BackendSelect, GpuContext};

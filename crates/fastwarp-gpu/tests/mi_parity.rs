@@ -397,3 +397,60 @@ fn the_gpu_linear_chain_is_bit_identical_from_run_to_run() {
         assert_eq!(x.cg.values, y.cg.values);
     }
 }
+
+#[test]
+fn a_level_without_usable_samples_is_skipped_alike_on_cpu_and_gpu() {
+    let Some(be) = backend() else { return };
+    let fixed = scene(30, 1.0, &AffineTransform::identity());
+    let moving = scene(30, 1.0, &AffineTransform::identity());
+    let g = *fixed.grid();
+    let coarse = level_virtual_grid(
+        &g,
+        fastwarp_reg::pyramid::shrink_factors_per_dimension(6, g.spacing()),
+    )
+    .unwrap();
+    let hit: Vec<usize> = (0..coarse.num_voxels())
+        .map(|lin| {
+            let [i, j, k] = coarse.ijk(lin);
+            let p = coarse.index_to_point([i as f64, j as f64, k as f64]);
+            (g.point_to_index(p)[0] + 0.5).floor() as usize
+        })
+        .collect();
+    let plane = (2..28).find(|x| !hit.contains(x)).unwrap();
+    let data: Vec<f64> = (0..g.num_voxels())
+        .map(|lin| f64::from(u8::from(g.ijk(lin)[0] == plane)))
+        .collect();
+    let recipe = LinearRecipe {
+        iterations: vec![5, 5],
+        shrink_factors: vec![6, 1],
+        smoothing_sigmas: vec![0.0, 0.0],
+        ..LinearRecipe::cohort_rigid()
+    }
+    .with_mask(MaskVolume::from_volume(Volume::from_vec(g, data).unwrap()));
+    let start = ParametricTransform::euler3d([0.0; 6], [14.5; 3]);
+    let cpu = run_linear_stage(
+        &CpuLinearEngine,
+        &recipe,
+        &fixed,
+        &moving,
+        AffineTransform::identity(),
+        start,
+    )
+    .unwrap();
+    let gpu = run_linear_stage(
+        &be,
+        &recipe,
+        &fixed,
+        &moving,
+        AffineTransform::identity(),
+        start,
+    )
+    .unwrap();
+    for out in [&cpu, &gpu] {
+        assert!(out.levels[0].skipped.is_some());
+        assert_eq!(out.levels[0].samples, 0);
+        assert!(out.levels[1].skipped.is_none());
+    }
+    assert_eq!(cpu.levels[1].samples, gpu.levels[1].samples);
+    assert_eq!(cpu.warnings("rigid"), gpu.warnings("rigid"));
+}

@@ -48,6 +48,7 @@ pub mod pyramid;
 pub mod recipe;
 pub mod register;
 pub mod sampling;
+pub mod stages;
 pub mod syn;
 pub mod transform;
 pub mod volume;

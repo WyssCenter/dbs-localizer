@@ -8,11 +8,12 @@ members = [
     "crates/fastwarp-matfile",
     "crates/fastwarp-reg",
     "crates/fastwarp-gpu",
+    "crates/fastwarp-cli",
     "crates/fastwarp-py",
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 license = "Apache-2.0"
 
 [profile.release]

@@ -24,6 +24,7 @@
 
 //! Transform elements and ITK composite chains.
 
+use crate::error::{RegError, Result};
 use crate::linalg::Vec3;
 use crate::transform::affine::AffineTransform;
 use crate::transform::field::DisplacementField;
@@ -51,8 +52,8 @@ impl TransformElem {
 ///
 /// **The last transform added is applied first.** `[A, W]` therefore maps `p` to `A(W(p))`;
 /// ANTs writes `Composite.h5` as `[affine, warp]` and `InverseComposite.h5` as
-/// `[inverse warp, inverse affine]`. `antsApplyTransforms -t T1 -t T2` builds the queue
-/// `[T1, T2]`, so `T2` is applied first.
+/// `[inverse warp, inverse affine]`. `antsApplyTransforms -t T1 -t T2` maps a reference point
+/// through `T1` first (the queue `[T2, T1]`; measured with ANTs 2.6.5 in `tests/ants_compat.rs`).
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct TransformChain {
     queue: Vec<TransformElem>,
@@ -99,6 +100,24 @@ impl TransformChain {
     pub fn apply(&self, p: Vec3) -> Vec3 {
         self.queue.iter().rev().fold(p, |q, t| t.apply(q))
     }
+
+    /// The inverse chain, what `antsApplyTransforms -t [file,1]` applies: the queue reversed and
+    /// every element inverted. Only linear chains are invertible here; a displacement field (whose
+    /// inverse ANTs does not compute either) or a singular matrix is [`RegError::NotInvertible`].
+    pub fn inverse(&self) -> Result<TransformChain> {
+        let queue = self
+            .queue
+            .iter()
+            .rev()
+            .map(|t| match t {
+                TransformElem::Affine(a) => a.inverse().map(TransformElem::Affine),
+                TransformElem::DisplacementField(_) => Err(RegError::NotInvertible(
+                    "a displacement field has no closed-form inverse".into(),
+                )),
+            })
+            .collect::<Result<Vec<_>>>()?;
+        Ok(Self { queue })
+    }
 }
 
 #[cfg(test)]
@@ -131,5 +150,44 @@ mod tests {
             TransformChain::new().apply([5.0, 6.0, 7.0]),
             [5.0, 6.0, 7.0]
         );
+    }
+
+    #[test]
+    fn the_inverse_of_a_linear_chain_undoes_it_and_a_field_is_refused() {
+        let rot = AffineTransform::new(
+            [[0.9, -0.2, 0.05], [0.15, 1.1, 0.0], [0.0, 0.1, 0.95]],
+            [1.5, -2.0, 0.25],
+            [10.0, -4.0, 6.0],
+        );
+        let c = TransformChain::from_queue(vec![
+            shift([1.0, 2.0, -3.0]),
+            TransformElem::Affine(rot),
+            scale2(),
+        ]);
+        let inv = c.inverse().unwrap();
+        assert_eq!(inv.len(), 3);
+        for p in [[0.0, 0.0, 0.0], [12.0, -7.0, 30.0]] {
+            let back = inv.apply(c.apply(p));
+            for a in 0..3 {
+                assert!((back[a] - p[a]).abs() < 1e-12, "{back:?} {p:?}");
+            }
+        }
+        assert!(TransformChain::new().inverse().unwrap().is_empty());
+        let grid = crate::grid::Grid::new([2, 2, 2], [1.0; 3], [0.0; 3], crate::linalg::IDENTITY3)
+            .unwrap();
+        let field = TransformChain::from_queue(vec![
+            shift([1.0, 0.0, 0.0]),
+            TransformElem::DisplacementField(DisplacementField::zeros(grid)),
+        ]);
+        assert!(matches!(field.inverse(), Err(RegError::NotInvertible(_))));
+        let singular =
+            TransformChain::from_queue(vec![TransformElem::Affine(AffineTransform::from_offset(
+                [[1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0]],
+                [0.0; 3],
+            ))]);
+        assert!(matches!(
+            singular.inverse(),
+            Err(RegError::NotInvertible(_))
+        ));
     }
 }

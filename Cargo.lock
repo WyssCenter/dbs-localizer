@@ -324,15 +324,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
 
 [[package]]
+name = "fastwarp-cli"
+version = "0.2.0"
+dependencies = [
+ "clap",
+ "fastwarp-gpu",
+ "fastwarp-niftiio",
+ "fastwarp-reg",
+ "ndarray",
+ "nifti",
+ "rayon",
+ "serde_json",
+]
+
+[[package]]
 name = "fastwarp-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "nifti",
 ]
 
 [[package]]
 name = "fastwarp-gpu"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "ash",
  "bytemuck",
@@ -349,7 +363,7 @@ dependencies = [
 
 [[package]]
 name = "fastwarp-matfile"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "flate2",
  "miniz_oxide",
@@ -359,7 +373,7 @@ dependencies = [
 
 [[package]]
 name = "fastwarp-niftiio"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bytemuck",
  "crc32fast",
@@ -372,20 +386,18 @@ dependencies = [
 
 [[package]]
 name = "fastwarp-py"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
- "fastwarp-gpu",
- "fastwarp-niftiio",
+ "fastwarp-cli",
  "fastwarp-reg",
- "ndarray",
  "numpy",
  "pyo3",
- "rayon",
+ "serde_json",
 ]
 
 [[package]]
 name = "fastwarp-reg"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "fastwarp-core",
  "fastwarp-matfile",

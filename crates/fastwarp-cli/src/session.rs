@@ -54,6 +54,8 @@ pub struct Fit {
     pub total: AffineTransform,
     pub metric: Option<f64>,
     pub iterations: Vec<u32>,
+    /// One message per level that was skipped because its samples left the metric undefined.
+    pub warnings: Vec<String>,
 }
 
 impl Session {
@@ -93,6 +95,10 @@ impl Session {
             total: with_center(&collapsed, fitted.affine.center),
             metric: fitted.final_metric(),
             iterations: fitted.levels.iter().map(|l| l.cg.iterations).collect(),
+            warnings: fitted.warnings(match recipe.kind {
+                LinearKind::Rigid => "rigid stage",
+                LinearKind::Affine => "affine stage",
+            }),
         })
     }
 }

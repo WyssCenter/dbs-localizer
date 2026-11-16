@@ -294,3 +294,153 @@ fn ants_reads_our_mat_affine() {
     assert!(err < TOL_MM, "[mat,1]: max error {err} mm");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[test]
+#[ignore = "runs antsApplyTransforms from FASTWARP_ANTS_DIR; slow, run with --ignored"]
+fn ants_inverts_linear_files_as_our_chain_inverse_does() {
+    let Some(_) = ants_exe() else {
+        eprintln!("skipped: set FASTWARP_ANTS_DIR to the directory holding antsApplyTransforms");
+        return;
+    };
+    let dir = tmp("chaininv");
+    let (a, w, _) = pieces();
+    let probe = make_probe(&dir);
+    let pair = CompositePair::linear(&a).unwrap();
+    let prefix = dir.join("lin_");
+    write_composite_pair(&prefix, &pair).unwrap();
+    let composite = with_suffix(&prefix, COMPOSITE_SUFFIX);
+    let out = run_ants(
+        &probe,
+        &dir,
+        "lininv",
+        &t(&with_suffix(&prefix, INVERSE_COMPOSITE_SUFFIX)),
+    );
+    let err = max_error(&probe, &out, &pair.inverse);
+    assert!(
+        err < TOL_MM,
+        "linear InverseComposite.h5: max error {err} mm"
+    );
+    let out = run_ants(&probe, &dir, "compinv", &t_inv(&composite));
+    let ours = fastwarp_reg::transform::read_transform_file(&composite)
+        .unwrap()
+        .inverse()
+        .unwrap();
+    let err = max_error(&probe, &out, &ours);
+    assert!(err < TOL_MM, "[Composite.h5,1]: max error {err} mm");
+    let mat = dir.join("a.mat");
+    write_mat_file(&mat, &[TransformElem::Affine(a)]).unwrap();
+    let field = dir.join("w.nii.gz");
+    fastwarp_reg::transform::field_nifti::write_field_nifti(&field, &w).unwrap();
+    let mut tokens = t(&field);
+    tokens.extend(t_inv(&mat));
+    let out = run_ants(&probe, &dir, "stack", &tokens);
+    let mut chain = fastwarp_reg::transform::read_transform_file(&mat)
+        .unwrap()
+        .inverse()
+        .unwrap();
+    chain.push(TransformElem::DisplacementField(w));
+    let err = max_error(&probe, &out, &chain);
+    assert!(err < TOL_MM, "-t field -t [mat,1]: max error {err} mm");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+#[ignore = "runs antsApplyTransforms from FASTWARP_ANTS_DIR; slow, run with --ignored"]
+fn ants_reads_the_split_outputs_of_a_syn_only_and_a_linear_only_run() {
+    let Some(_) = ants_exe() else {
+        eprintln!("skipped: set FASTWARP_ANTS_DIR to the directory holding antsApplyTransforms");
+        return;
+    };
+    use fastwarp_reg::linalg::IDENTITY3;
+    use fastwarp_reg::linear::{CpuLinearEngine, LinearRecipe};
+    use fastwarp_reg::recipe::SynRecipe;
+    use fastwarp_reg::stages::{
+        register_stages, write_stage_outputs, InitialTransform, OutputLayout, StagePlan,
+    };
+    use fastwarp_reg::syn::SynOptions;
+    use fastwarp_reg::{CpuBackend, Volume};
+    let dir = tmp("stages");
+    let g = Grid::new([20, 20, 20], [3.0; 3], [-28.5; 3], IDENTITY3).unwrap();
+    let blob = |shift: [f64; 3]| {
+        let data: Vec<f64> = (0..g.num_voxels())
+            .map(|lin| {
+                let [i, j, k] = g.ijk(lin);
+                let p = g.index_to_point([i as f64, j as f64, k as f64]);
+                let r2 = (p[0] - shift[0]).powi(2)
+                    + (p[1] - shift[1]).powi(2)
+                    + (p[2] - shift[2]).powi(2);
+                let lobe = (p[0] - shift[0] - 9.0).powi(2) + (p[1] - shift[1] + 6.0).powi(2);
+                (-r2 / 300.0).exp() + 0.5 * (-lobe / 40.0).exp()
+            })
+            .collect();
+        Volume::from_vec(g, data).unwrap()
+    };
+    let fixed = [blob([0.0; 3])];
+    let moving = [blob([3.0, -2.0, 1.5])];
+    let syn = SynRecipe {
+        iterations: vec![5, 3],
+        shrink_factors: vec![2, 1],
+        smoothing_sigmas: vec![1.0, 0.0],
+        ..SynRecipe::cohort()
+    };
+    let linear = LinearRecipe {
+        iterations: vec![10, 5],
+        shrink_factors: vec![2, 1],
+        smoothing_sigmas: vec![1.0, 0.0],
+        ..LinearRecipe::cohort_affine()
+    };
+    let probe = make_probe(&dir);
+    for (tag, plan) in [
+        (
+            "synonly",
+            StagePlan {
+                initial: InitialTransform::Identity,
+                linear: Vec::new(),
+                syn: Some(syn.clone()),
+                winsorize: None,
+            },
+        ),
+        (
+            "linonly",
+            StagePlan {
+                initial: InitialTransform::CentreOfMass,
+                linear: vec![linear.clone()],
+                syn: None,
+                winsorize: None,
+            },
+        ),
+    ] {
+        let out = register_stages(
+            &CpuBackend,
+            &CpuLinearEngine,
+            &plan,
+            &fixed,
+            &moving,
+            None,
+            &SynOptions::default(),
+        )
+        .unwrap();
+        let prefix = dir.join(format!("{tag}_"));
+        let files = write_stage_outputs(&prefix, &out, OutputLayout::Both, false).unwrap();
+        let mut tokens = Vec::new();
+        if out.deformable {
+            tokens.extend(t(&dir.join(format!("{tag}_1Warp.nii.gz"))));
+            assert_eq!(files.len(), 5);
+        } else {
+            assert_eq!(files.len(), 3);
+        }
+        tokens.extend(t(&dir.join(format!("{tag}_0GenericAffine.mat"))));
+        let split = run_ants(&probe, &dir, &format!("{tag}_split"), &tokens);
+        let err = max_error(&probe, &split, &out.pair.forward);
+        assert!(err < TOL_MM, "{tag} split files: max error {err} mm");
+        let comp = run_ants(
+            &probe,
+            &dir,
+            &format!("{tag}_comp"),
+            &t(&with_suffix(&prefix, COMPOSITE_SUFFIX)),
+        );
+        let err = max_error(&probe, &comp, &out.pair.forward);
+        assert!(err < TOL_MM, "{tag} Composite.h5: max error {err} mm");
+    }
+    let _ = std::fs::remove_dir_all(&dir);
+}

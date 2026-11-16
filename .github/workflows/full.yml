@@ -82,6 +82,9 @@ jobs:
           path: ${{ env.ANTS_DIR }}
           key: ${{ steps.ants-cache.outputs.cache-primary-key }}
 
+      - name: Mesa Vulkan software driver (lavapipe)
+        run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
+
       - run: rustup toolchain install
 
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
@@ -96,7 +99,30 @@ jobs:
         env:
           CARGO_PROFILE_DEV_OPT_LEVEL: "1"
           ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS: "4"
+          WGPU_FORCE_FALLBACK_ADAPTER: "1"
+          FASTWARP_GPU_ALLOW_SOFTWARE: "1"
+          FASTWARP_GPU_REQUIRE_ADAPTER: "1"
         run: >-
           FASTWARP_ANTS_DIR="$ANTS_DIR"
-          cargo nextest run --locked -p fastwarp-reg --profile ci --run-ignored only
-          -E 'binary_id(fastwarp-reg::ants_compat) | binary_id(fastwarp-reg::coreg_metric) | binary_id(fastwarp-reg::n4_ants)'
+          cargo nextest run --locked -p fastwarp-reg -p fastwarp-cli --features fastwarp-gpu/dev-tools --profile ci
+          --run-ignored only
+          -E 'binary_id(fastwarp-reg::ants_compat) | binary_id(fastwarp-reg::coreg_metric) | binary_id(fastwarp-reg::n4_ants)
+          | (binary_id(fastwarp-cli::cli) & test(=ants_apply_transforms_reads_the_registration))
+          | binary_id(fastwarp-cli::ants_mode)'
+
+  installer-windows:
+    name: install.ps1 on Windows PowerShell 5.1 and PowerShell 7
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Windows PowerShell 5.1
+        shell: powershell
+        run: ./ci/test-install.ps1 -Shell powershell -Program (Get-Command gh).Source
+      - name: PowerShell 7
+        shell: pwsh
+        run: ./ci/test-install.ps1 -Shell pwsh -Program (Get-Command gh).Source

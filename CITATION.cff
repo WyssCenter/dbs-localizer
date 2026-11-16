@@ -15,7 +15,7 @@ authors:
     given-names: "Wolf-Julian"
     affiliation: "Wyss Center for Bio and Neuroengineering; Charité – Universitätsmedizin Berlin"
     orcid: "https://orcid.org/0000-0002-6758-9708"
-version: "0.1.0"
+version: "0.2.0"
 license: Apache-2.0
 repository-code: "https://github.com/WyssCenter/fastwarp"
 abstract: >-
