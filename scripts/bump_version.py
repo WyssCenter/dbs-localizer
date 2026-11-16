@@ -11,7 +11,8 @@ touching any file when nothing is listed under Unreleased), rewrites `version`
 under [workspace.package] in Cargo.toml, `version` in pyproject.toml and
 crates/dbsloc-pipeline/pyproject.toml and `__version__` in dbsloc/__init__.py (every new
 text is computed before any file is written), refreshes Cargo.lock (`cargo update
---workspace`) and uv.lock (`uv lock`), checks that the release notes can be extracted, and prints the git commands that make the release. It never commits.
+--workspace`) and uv.lock (`uv lock`), checks that the release notes can be extracted,
+and prints the git commands that make the release. It never commits.
 """
 
 from __future__ import annotations
