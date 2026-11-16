@@ -3,8 +3,13 @@
 
 """Smoke tests for package import and version."""
 
+import tomllib
+from pathlib import Path
+
 import dbsloc
 
 
-def test_version_defined() -> None:
-    assert dbsloc.__version__ == "0.1.0"
+def test_version_matches_pyproject() -> None:
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    with pyproject.open("rb") as f:
+        assert dbsloc.__version__ == tomllib.load(f)["project"]["version"]
