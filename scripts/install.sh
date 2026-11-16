@@ -252,6 +252,9 @@ if [ ! -d "$NEW_DIR/bin" ] || [ ! -d "$NEW_DIR/resources" ]; then
 fi
 chmod +x "$NEW_DIR/bin/"* || true
 chmod +x "$NEW_DIR/resources/ants/$PLATFORM/"* "$NEW_DIR/resources/dcm2niix/$PLATFORM/"* 2>/dev/null || true
+if [ "$PLATFORM" = "mac" ] && command -v xattr >/dev/null 2>&1; then
+  xattr -dr com.apple.quarantine "$NEW_DIR" >/dev/null 2>&1 || true
+fi
 
 # Verify the new release before replacing the installed one
 echo -e "${YELLOW}Verifying the new release...${NC}"
@@ -391,8 +394,6 @@ if [ "$PLATFORM" = "linux" ]; then
   else
     echo -e "${YELLOW}⚠ Menu entry skipped: icon or desktop template not in this release${NC}"
   fi
-elif [ "$PLATFORM" = "mac" ] && command -v xattr >/dev/null 2>&1; then
-  xattr -dr com.apple.quarantine "$LIB_DIR" >/dev/null 2>&1 || true
 fi
 
 echo -e "\n${GREEN}Installation complete!${NC}"

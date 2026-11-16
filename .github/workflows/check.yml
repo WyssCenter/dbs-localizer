@@ -50,8 +50,8 @@ jobs:
 
       - name: Ruff
         run: |
-          uv run ruff check dbsloc/ tests/ scripts/
-          uv run ruff format --check dbsloc/ tests/ scripts/
+          uv run ruff check dbsloc/ tests/ scripts/ docs/conf.py
+          uv run ruff format --check dbsloc/ tests/ scripts/ docs/conf.py
 
       - name: ty
         run: uv run ty check dbsloc/
