@@ -3,6 +3,8 @@
 [![Check](https://github.com/WyssCenter/dbs-localizer/actions/workflows/check.yml/badge.svg)](https://github.com/WyssCenter/dbs-localizer/actions/workflows/check.yml)
 [![Full](https://github.com/WyssCenter/dbs-localizer/actions/workflows/full.yml/badge.svg)](https://github.com/WyssCenter/dbs-localizer/actions/workflows/full.yml)
 
+<!-- The parts between docs: markers are also shown on the documentation site (docs/). -->
+<!-- docs:intro -->
 Wyss DBS Localizer finds the electrodes of a deep brain stimulation (DBS) implant in a patient's brain scans and shows where they sit relative to brain structures.
 
 It starts from an MRI taken before surgery and a CT or MRI taken after surgery. The software aligns the scans, maps them to a standard brain template (MNI space), traces each electrode lead and its contacts, and shows the result in 3D next to an atlas of deep brain structures. From there it can model the tissue that a given stimulation setting activates and compare many patients in a group analysis.
@@ -32,9 +34,11 @@ It is intended for **research** on DBS imaging: clinical neuroscientists, neuros
 - **Analyse groups**: overlap with atlas structures, sweet-spot maps, fibre filtering, network mapping and correlations with clinical scores, using normative connectomes that it can download for you.
 
 The project is young (version 0.1). Its outputs have not yet been compared number by number with Lead-DBS on every step; [`CHANGELOG.md`](CHANGELOG.md) lists what each release contains.
+<!-- /docs:intro -->
 
 ## Installation
 
+<!-- docs:install -->
 ### Requirements
 
 | | |
@@ -49,7 +53,7 @@ The project is young (version 0.1). Its outputs have not yet been compared numbe
 2. Run it. It installs for your user account only and does not need administrator rights.
 3. Windows may show a SmartScreen warning because the program is not yet code-signed: choose *More info*, then *Run anyway*.
 
-The installer adds *Wyss DBS Localizer* to the Start menu and the desktop, and makes the `dbsloc` command available in new terminal windows. Remove it again under *Settings → Apps*.
+The installer adds *DBS Localizer* to the Start menu and the desktop, and makes the `dbsloc` command available in new terminal windows. Remove it again under *Settings → Apps*.
 
 ### Debian and Ubuntu
 
@@ -71,19 +75,18 @@ tar -xzf dbsloc-linux.tar.gz
 
 The desktop application needs the system packages `gtk3`, `vulkan-icd-loader`, `libxkbcommon` and `fontconfig` (Arch names); `install.sh` prints the install command for your distribution if one is missing.
 
-### macOS (Apple silicon)
+### macOS
 
-Download `dbsloc-mac.tar.gz` from the [Releases page](https://github.com/WyssCenter/dbs-localizer/releases), then in the Terminal:
+Download `dbsloc-mac.tar.gz` (Apple silicon) from the [Releases page](https://github.com/WyssCenter/dbs-localizer/releases), then:
 
 ```bash
 tar -xzf dbsloc-mac.tar.gz
-./dbsloc-mac/install.sh        # installs for your user account
-./dbsloc-mac/install.sh -u     # removes it again
+xattr -dr com.apple.quarantine dbsloc-mac   # see below
+./dbsloc-mac/install.sh          # installs into ~/.local
+./dbsloc-mac/install.sh -u       # removes it again
 ```
 
-The programs are not notarised by Apple; `install.sh` removes the quarantine flag that macOS puts on downloaded files (`README.txt` in the archive explains it).
-
-> [`docs/RELEASING.md`](docs/RELEASING.md#installing-a-release) also describes installing from the command line, and how to check a download against its checksum and its build provenance.
+The programs are not notarised, so macOS quarantines a copy downloaded in a browser and may refuse to run it; the `xattr` line removes that flag from the extracted folder, as the archive's `README.txt` explains. Start the application with `dbs-localizer` in a terminal; if `~/.local/bin` is not on your `PATH`, `install.sh` prints the line that adds it.
 
 ### Check that it works
 
@@ -93,8 +96,13 @@ Open a new terminal and run:
 dbsloc --version     # prints the version
 dbsloc gpu probe     # shows which graphics card will be used, if any
 ```
+<!-- /docs:install -->
+
+[`docs/installation.md`](docs/installation.md) also describes installing from the command line, checking a download against its checksum and its build provenance, where the files go, and building from source.
 
 ## Getting started
+
+<!-- docs:start -->
 
 ### 1. Put your scans in a dataset
 
@@ -124,7 +132,7 @@ Results are written to `my-study/derivatives/leaddbs/sub-01/`, next to the raw d
 
 ### 2a. Use the desktop application
 
-Start *Wyss DBS Localizer* from the Start menu or application menu (or run `dbs-localizer` in a terminal).
+Start *DBS Localizer* from the Start menu or application menu (or run `dbs-localizer` in a terminal; on macOS this is the way to start it).
 
 1. Choose the input directory (the BIDS dataset) with *Browse…* (`Ctrl+O`).
 2. Select a patient in **Subjects**.
@@ -146,9 +154,11 @@ dbsloc reco show my-study 01                            # print the reconstructe
 ```
 
 `dbsloc run` prints progress to the terminal and a summary in JSON at the end. Every command explains its options with `--help`, for example `dbsloc run --help`. `dbsloc --help` lists all commands, including stimulation settings (`stim`), group analysis (`group`), connectome downloads (`connectome`) and session-report import (`report`).
+<!-- /docs:start -->
 
 ### Keyboard shortcuts
 
+<!-- docs:shortcuts -->
 Press `F1` in the application for the complete list, including the shortcuts of the registration review and the *Refine localization* view.
 
 | Keys | Action |
@@ -178,28 +188,39 @@ In the 3D Viewer:
 | `F11` | Open the viewer in its own window |
 
 The mouse works as in Lead-DBS by default; the viewer's *Mouse & touchpad* section offers an alternative layout.
+<!-- /docs:shortcuts -->
 
 ## Documentation
 
-- **User guide:** [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) explains every part of the application and the command line, step by step, with a troubleshooting section.
+The documentation in [`docs/`](docs) is a website built with Sphinx; until it is published, build it locally (below). The pages of the user guide and the reference also read as Markdown on GitHub; the overview pages use website features and show raw markup there.
+
+- **Installation and first run:** the sections above, and [`docs/installation.md`](docs/installation.md) for installing from the command line and building from source; [`docs/troubleshooting.md`](docs/troubleshooting.md) for common problems.
+- **User guide:** [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) lists its pages, which explain every part of the application and the command line, step by step.
+- **Reference:** the command line ([`docs/cli.md`](docs/cli.md)), where results are stored ([`docs/outputs.md`](docs/outputs.md)), all run options and environment variables ([`docs/RUN_REFERENCE.md`](docs/RUN_REFERENCE.md)) and a [glossary](docs/glossary.md).
 - **In the application:** `F1` for shortcuts and system information; every control has a tooltip.
 - **On the command line:** `dbsloc --help` and `dbsloc <command> --help`.
-- **All run options and environment variables:** [`docs/RUN_REFERENCE.md`](docs/RUN_REFERENCE.md).
 - **How each step works:** the specifications in [`specs/`](specs), starting with [`specs/00_overview.md`](specs/00_overview.md).
 - **What changed in each release:** [`CHANGELOG.md`](CHANGELOG.md).
 
+To build the website locally: `uv run --group docs sphinx-build -W docs docs/_build/html`, then open `docs/_build/html/index.html`.
+
 ## Accuracy
 
-The reference dataset is the Lead-DBS tutorial cohort ("Lead-Tutor", [OSF jxecg](https://osf.io/jxecg/)): 10 patients with expert reconstructions. With the default settings, the leads found by Wyss DBS Localizer lie on average **1.15 mm** from the expert reconstructions (distance at the two ends of the contact array, averaged over all 20 leads). You can check this yourself: download the tutorial data, run Wyss DBS Localizer on it and upload the result under your own user id to the Lead-DBS team's [Lead-Tutor](http://tutor.lead-dbs.org) service, which reports the distance of each lead from the expert reconstruction. The [user guide](docs/USER_GUIDE.md#17-checking-the-accuracy-yourself-with-lead-tutor) gives the commands. Details per registration step are in [`docs/gpu_syn_cohort_report.md`](docs/gpu_syn_cohort_report.md), [`docs/gpu_coreg_report.md`](docs/gpu_coreg_report.md) and [`docs/gpu_n4_report.md`](docs/gpu_n4_report.md).
+<!-- docs:accuracy -->
+The reference dataset is the Lead-DBS tutorial cohort ("Lead-Tutor", [OSF jxecg](https://osf.io/jxecg/)): 10 patients with expert reconstructions. With the default settings, the leads found by Wyss DBS Localizer lie on average **1.15 mm** from the expert reconstructions (distance at the two ends of the contact array, averaged over all 20 leads). You can check this yourself: download the tutorial data, run Wyss DBS Localizer on it and upload the result under your own user id to the Lead-DBS team's [Lead-Tutor](http://tutor.lead-dbs.org) service, which reports the distance of each lead from the expert reconstruction. The [user guide](docs/guide/lead-tutor.md#checking-the-accuracy-yourself) gives the commands. Details per registration step are in [`docs/gpu_syn_cohort_report.md`](docs/gpu_syn_cohort_report.md), [`docs/gpu_coreg_report.md`](docs/gpu_coreg_report.md) and [`docs/gpu_n4_report.md`](docs/gpu_n4_report.md).
+<!-- /docs:accuracy -->
 
 ## Getting help and reporting problems
 
+<!-- docs:help -->
 - **Questions and bug reports:** open an issue on the [issue tracker](https://github.com/WyssCenter/dbs-localizer/issues). For questions you do not want to ask in public, write to the maintainer, Richard Köhler (<richard.koehler@wysscenter.ch>). Please include the version (`dbsloc --version`), your operating system and graphics card (`dbsloc gpu probe`), what you did and what happened.
-- **Log files:** the application writes a log for every session, which helps us find the cause of a problem. You find it in `%APPDATA%\dbsloc\logs` on Windows, `~/.config/dbsloc/logs` on Linux and `~/Library/Application Support/dbsloc/logs` on macOS; `F1` shows the exact path. Check that a log contains no patient information before you attach it.
+- **Log files:** the application writes a log for every session, which helps us find the cause of a problem. You find it in `%APPDATA%\dbsloc\logs` on Windows, `~/.config/dbsloc/logs` on Linux and `~/Library/Application Support/dbsloc/logs` on macOS; `F1` shows the exact path and has an *Open log folder* button. Check that a log contains no patient information before you attach it.
 - **Contributing:** bug fixes, new features, documentation and test data are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) explains how to build the software from source, run the tests and propose a change. Everyone taking part in the project follows our [Code of Conduct](CODE_OF_CONDUCT.md).
+<!-- /docs:help -->
 
 ## Citing
 
+<!-- docs:citing -->
 If you use Wyss DBS Localizer in your research, please cite the software (name, version from `dbsloc --version`, and this repository) and the methods it builds on:
 
 - Horn A. et al. (2019). Lead-DBS v2: Towards a comprehensive pipeline for deep brain stimulation imaging. *NeuroImage* 184, 293–316.
@@ -207,13 +228,18 @@ If you use Wyss DBS Localizer in your research, please cite the software (name, 
 - Avants B. B. et al. (2008). Symmetric diffeomorphic image registration with cross-correlation. *Medical Image Analysis* 12(1), 26–41.
 
 The atlases, templates and connectomes have their own citations: the application shows them where you choose an atlas, backdrop or connectome, and [`NOTICE`](NOTICE) lists those of the bundled data.
+<!-- /docs:citing -->
 
 ## License
 
+<!-- docs:license -->
 Copyright © 2026 Wyss Center for Bio and Neuroengineering. Wyss DBS Localizer is free software under the GNU General Public License, version 3 only (`GPL-3.0-only`); see [`LICENSE`](LICENSE). It comes without any warranty. The Wyss Center name and logo are trademarks and are not covered by that licence. The registration engine (`fastwarp/crates/fastwarp-core`, `fastwarp-niftiio`, `fastwarp-matfile`, `fastwarp-reg`, `fastwarp-gpu`: the in-process replacement for ANTs registration and N4, on CPU and GPU) is licensed under the Apache License 2.0. The PaCER electrode reconstruction (`crates/dbsloc-pacer`, an independent implementation written from the specifications and the PaCER paper) is licensed under the GNU Affero General Public License, version 3 only (`AGPL-3.0-only`), like the original PaCER; it is an optional component behind the cargo feature `pacer`, which the default build and the release packages include, so those builds are a combination of GPL-3.0-only and AGPL-3.0-only code and the AGPL's network-use condition applies to them. `cargo build --release -p dbsloc-cli -p dbsloc-app --no-default-features` builds a GPL-3.0-only version without PaCER. Every source file names its licence in an SPDX header; [`docs/LICENSING.md`](docs/LICENSING.md) maps the licences to the directories.
 
 The software includes third-party programs and data under their own licences: ANTs (Apache-2.0), dcm2niix (BSD), the MNI152 templates, and the DISTAL Minimal (GPL-3) and AHEAD atlases. [`NOTICE`](NOTICE) lists each with its licence.
+<!-- /docs:license -->
 
 ## Acknowledgements
 
+<!-- docs:ack -->
 The workflow follows [Lead-DBS](https://www.lead-dbs.org) by Andreas Horn and colleagues. Registration follows [ANTs](https://github.com/ANTsX/ANTs); DICOM conversion uses [dcm2niix](https://github.com/rordenlab/dcm2niix). Wyss DBS Localizer is developed at the Wyss Center for Bio and Neuroengineering, Geneva.
+<!-- /docs:ack -->

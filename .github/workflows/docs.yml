@@ -1,0 +1,96 @@
+# Builds the Sphinx documentation the way Read the Docs does (.readthedocs.yaml), warnings as
+# errors, after checking that docs/requirements.txt is the export of uv.lock (check.yml runs
+# ruff on docs/conf.py). The link check depends on every linked site, so it runs weekly and on demand only.
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "README.md"
+      - "CHANGELOG.md"
+      - "CODE_OF_CONDUCT.md"
+      - "CONTRIBUTING.md"
+      - "LICENSE"
+      - "NOTICE"
+      - "Cargo.toml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "crates/dbsloc-viz/assets/**"
+      - ".readthedocs.yaml"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "README.md"
+      - "CHANGELOG.md"
+      - "CODE_OF_CONDUCT.md"
+      - "CONTRIBUTING.md"
+      - "LICENSE"
+      - "NOTICE"
+      - "Cargo.toml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "crates/dbsloc-viz/assets/**"
+      - ".readthedocs.yaml"
+      - ".github/workflows/docs.yml"
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  html:
+    name: HTML build
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.6"
+
+      - name: docs/requirements.txt matches uv.lock
+        run: |
+          uv export --locked --only-group docs --no-emit-project --format requirements-txt -o docs/requirements.txt
+          git diff --exit-code docs/requirements.txt
+
+      - name: Install the pinned documentation requirements
+        run: |
+          uv venv --python 3.14 "$RUNNER_TEMP/docs-venv"
+          uv pip install --python "$RUNNER_TEMP/docs-venv" --require-hashes --only-binary :all: -r docs/requirements.txt
+
+      - run: '"$RUNNER_TEMP/docs-venv/bin/python" -m sphinx -W --keep-going -b html docs "$RUNNER_TEMP/html"'
+
+  linkcheck:
+    name: Link check
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.6"
+
+      - name: Install the pinned documentation requirements
+        run: |
+          uv venv --python 3.14 "$RUNNER_TEMP/docs-venv"
+          uv pip install --python "$RUNNER_TEMP/docs-venv" --require-hashes --only-binary :all: -r docs/requirements.txt
+
+      - run: '"$RUNNER_TEMP/docs-venv/bin/python" -m sphinx -W --keep-going -b linkcheck docs "$RUNNER_TEMP/linkcheck"'

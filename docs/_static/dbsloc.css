@@ -1,0 +1,115 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Wyss Center for Bio and Neuroengineering
+ * SPDX-License-Identifier: GPL-3.0-only
+ *
+ * Colours are the tokens of docs/BRAND.md (crates/dbsloc-viz/src/ui_tokens.rs);
+ * the IBM Plex Sans files are copied from crates/dbsloc-viz/assets/fonts by conf.py.
+ */
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("IBMPlexSans-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("IBMPlexSans-Medium.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 600 700;
+  font-display: swap;
+  src: url("IBMPlexSans-SemiBold.ttf") format("truetype");
+}
+
+html {
+  --pst-font-family-base: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Noto Sans", Helvetica, Arial, sans-serif;
+  --pst-font-family-heading: var(--pst-font-family-base);
+}
+
+html[data-theme="light"] {
+  --pst-color-primary: #0a7050;
+  --pst-color-primary-bg: #f8f8f8;
+  --pst-color-secondary: #36659b;
+  --pst-color-secondary-bg: #f8f8f8;
+  --pst-color-link: #0a7050;
+  --pst-color-link-hover: #36659b;
+  --pst-color-inline-code: #111111;
+  --pst-color-inline-code-links: #0a7050;
+  --pst-color-success: #0a7050;
+  --pst-color-info: #36659b;
+  --pst-color-warning: #8a5300;
+  --pst-color-danger: #a83605;
+  --pst-color-text-base: #111111;
+  --pst-color-text-muted: #666666;
+  --pst-color-border: #d8d8d8;
+  --pst-color-background: #ffffff;
+  --pst-color-on-background: #f8f8f8;
+}
+
+html[data-theme="dark"] {
+  --pst-color-primary: #27b386;
+  --pst-color-primary-bg: #161616;
+  --pst-color-secondary: #77b3f8;
+  --pst-color-secondary-bg: #161616;
+  --pst-color-link: #27b386;
+  --pst-color-link-hover: #77b3f8;
+  --pst-color-inline-code: #f8f8f8;
+  --pst-color-inline-code-links: #27b386;
+  --pst-color-success: #27b386;
+  --pst-color-info: #77b3f8;
+  --pst-color-warning: #d9a04a;
+  --pst-color-danger: #ff8367;
+  --pst-color-text-base: #f8f8f8;
+  --pst-color-text-muted: #949494;
+  --pst-color-border: #2e2e2e;
+  --pst-color-background: #0b0b0b;
+  --pst-color-on-background: #161616;
+}
+
+.bd-article h1 {
+  font-weight: 600;
+}
+
+.bd-article h2,
+.bd-article h3 {
+  font-weight: 500;
+}
+
+.navbar-brand img {
+  height: 1.9rem;
+}
+
+.navbar-brand p.title {
+  font-weight: 600;
+}
+
+.sd-card .sd-card-title {
+  font-weight: 600;
+}
+
+.sd-card .sd-card-title .fa-solid,
+.sd-card .sd-card-title svg {
+  color: var(--pst-color-primary);
+  margin-right: 0.35em;
+}
+
+.bd-article .sd-container-fluid {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.bd-article table td code,
+.bd-article table th code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

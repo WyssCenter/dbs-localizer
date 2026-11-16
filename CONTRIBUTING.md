@@ -99,7 +99,7 @@ uv run python scripts/package_release.py    # Windows: dist/dbsloc-win.zip; Linu
 
 ## Running the tests
 
-Two GitHub Actions workflows run the tests. [`check.yml`](.github/workflows/check.yml) (lint, fast Rust and Python tests, about ten minutes) runs on every pull request update and every push to `main`. [`full.yml`](.github/workflows/full.yml) (bundled-ANTs and software-GPU tests, the end-to-end tests on a synthetic head and the macOS jobs) runs when a pull request is not a draft, when you mark it ready for review, and nightly if `main` changed. Open a pull request as a draft while you iterate, run the checks below before you push, and push in batches; documentation-only changes start no workflow. To run the tests yourself:
+Two GitHub Actions workflows run the tests. [`check.yml`](.github/workflows/check.yml) (lint, fast Rust and Python tests, about ten minutes) runs on every pull request update and every push to `main`. [`full.yml`](.github/workflows/full.yml) (bundled-ANTs and software-GPU tests, the end-to-end tests on a synthetic head and the macOS jobs) runs when a pull request is not a draft, when you mark it ready for review, and nightly if `main` changed. Open a pull request as a draft while you iterate, run the checks below before you push, and push in batches; documentation-only changes start only [`docs.yml`](.github/workflows/docs.yml), which builds the documentation site with warnings as errors (and checks its links weekly). To run the tests yourself:
 
 ```bash
 # Rust: the application crates, then the registration engine in fastwarp/ (its own workspace), including the graphics-card kernel tests
@@ -134,8 +134,8 @@ cargo fmt --all
 cargo fmt --manifest-path fastwarp/Cargo.toml --all
 cargo clippy --workspace --all-targets -- -D warnings
 cargo clippy --manifest-path fastwarp/Cargo.toml --target-dir target --workspace --all-targets --features fastwarp-gpu/dev-tools -- -D warnings
-uv run ruff check dbsloc/ tests/ scripts/
-uv run ruff format dbsloc/ tests/ scripts/
+uv run ruff check dbsloc/ tests/ scripts/ docs/conf.py
+uv run ruff format dbsloc/ tests/ scripts/ docs/conf.py
 uv run ty check dbsloc/
 uv run pre-commit run --hook-stage manual --all-files   # slow extra checks: pytest, cargo test and a dependency audit
 ```
@@ -165,6 +165,7 @@ Further rules:
 4. Keep the documentation in step with the code:
    - behaviour that a specification fixes: update the matching file in [`specs/`](specs);
    - new or changed options: [`docs/RUN_REFERENCE.md`](docs/RUN_REFERENCE.md) and the `--help` text;
+   - anything the user guide describes: the matching page of the documentation site in [`docs/`](docs) (labels exactly as the application shows them); build it with `uv run --group docs sphinx-build -W docs docs/_build/html`, which must finish without warnings;
    - anything a user notices: a line under `## [Unreleased]` in [`CHANGELOG.md`](CHANGELOG.md) ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, written for users);
    - module status: section 12 of [`AGENTS.md`](AGENTS.md).
 5. Write commit messages in the [Conventional Commits](https://www.conventionalcommits.org) style, for example `fix(reconstruct): keep the roll of an accepted lead`.
@@ -191,7 +192,7 @@ By submitting a pull request you confirm that you wrote the code yourself, that 
 | `dbsloc/` | Python development tooling (electrode catalogue, research helpers) |
 | `tests/` | Python and end-to-end tests |
 | `specs/` | specifications: what each step must do |
-| `docs/` | reference documents, validation reports, release process |
+| `docs/` | the documentation site (Sphinx and MyST Markdown, `docs/conf.py`), reference documents, validation reports, release process |
 | `resources/` | bundled programs and data: ANTs, dcm2niix, template, atlases, licences |
 | `scripts/` | packaging, release and validation scripts |
 
