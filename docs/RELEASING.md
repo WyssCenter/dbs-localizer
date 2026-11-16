@@ -19,7 +19,7 @@ Releases are driven by git tags. Pushing a tag `vX.Y.Z` runs `.github/workflows/
    uv run python scripts/bump_version.py 0.2.0
    ```
 
-   The script turns `## [Unreleased]` in `CHANGELOG.md` into `## [0.2.0] - <today>` with a new empty `[Unreleased]` above it and updates the comparison links at the bottom (it refuses when nothing is listed under `[Unreleased]` or the version already has a section), rewrites the version lines in `Cargo.toml`, `pyproject.toml`, `crates/dbsloc-pipeline/pyproject.toml` and `dbsloc/__init__.py`, writes with LF line endings on every system, runs `cargo update --workspace` and `uv lock`, and checks the result.
+   The script turns `## [Unreleased]` in `CHANGELOG.md` into `## [0.2.0] - <today>` with a new empty `[Unreleased]` above it and updates the comparison links at the bottom (it refuses when nothing is listed under `[Unreleased]` or the version already has a section), rewrites the version lines in `Cargo.toml`, `pyproject.toml`, `crates/dbsloc-pipeline/pyproject.toml` and `dbsloc/__init__.py`, writes with LF line endings on every system, runs `cargo update --workspace`, refreshes the versions of the path crates in the separate lock file `crates/dbsloc-web/Cargo.lock` and runs `uv lock`, and checks the result.
 3. Commit and tag the same commit, then push both:
 
    ```bash
