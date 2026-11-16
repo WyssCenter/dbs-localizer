@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-16
+
 ### Added
 
 - Every release carries a `SHA256SUMS` file with the checksums of all its downloads, and a signed build provenance attestation for the installer, the packages and the archives, with which `gh attestation verify` shows that a download was built by the release workflow of this repository from the release tag (command in `docs/installation.md`, *Checking a download*).
@@ -20,13 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Wyss DBS Localizer is now free software under the GNU General Public License, version 3 (`GPL-3.0-only`); it was proprietary before. The registration engine (CPU and GPU replacement for ANTs registration and N4) stays under the Apache License 2.0. Every source file names its licence; the licence texts ship in `LICENSES/` beside `LICENSE` and `NOTICE`. The Wyss Center name and logo remain trademarks and are not covered by the licence.
 - The registration engine is FastWarp 0.2.0. A resolution level of a rigid or affine registration on the graphics card whose sample points miss the image or the mask, or see a single image value, is now skipped, where the whole registration failed before; a registration still fails when every level is skipped. The run log warns about each skipped level, and the records of the CT coregistration and of the normalization name the reason per level (`skipped`). The message for a registration grid that does not fit the memory of the graphics card now begins `the SyN stage on the registration grid`.
 - The PaCER electrode reconstruction moved into its own component, `crates/dbsloc-pacer`, licensed under the GNU Affero General Public License, version 3 only (AGPL-3.0-only), like the original PaCER. It is included by default (cargo feature `pacer`), so the programs and release packages are now distributed as a combination of GPL-3.0-only and AGPL-3.0-only code. Building with `--no-default-features` gives a GPL-3.0-only program without PaCER, in which the PaCER method is refused with a message naming the missing feature and shown as unavailable in the application. Reconstruction results are unchanged.
 - Connectomes that need your own data use agreement (PPMI 85, PPMI 74 Patients 15 Controls, MGH-USC HCP 32) are no longer downloaded by the application. Their entries show numbered steps for getting access and the archive; you then import the archive or folder.
 - The dTOR-985 connectomes are downloaded from the authors' figshare records instead of lead-dbs.org.
 - `dbsloc stim set --from` also reads a settings file saved as UTF-8 with a byte-order mark or as UTF-16 with a byte-order mark, as a redirect in Windows PowerShell writes it.
-
-- Wyss DBS Localizer is now free software under the GNU General Public License, version 3 (`GPL-3.0-only`); it was proprietary before. The registration engine (CPU and GPU replacement for ANTs registration and N4) stays under the Apache License 2.0. Every source file names its licence; the licence texts ship in `LICENSES/` beside `LICENSE` and `NOTICE`. The Wyss Center name and logo remain trademarks and are not covered by the licence.
 
 ### Fixed
 
@@ -53,11 +54,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Anonymised session reports no longer keep their true dates for about one patient in 61. For those patients the date shift was 0 days, so the birth date, implant date and session dates stayed unchanged. The shift is now never 0, and every other patient keeps the shift they had.
 - Anonymised session reports no longer store the time of the import (`source.parsed_at`), which showed the session date of a report imported on the same day. The stimulation settings derived from an anonymised report are written without their write time too. Saving such settings again later stores the time of that save.
 - What to do with reports anonymised by version 0.1.0 or earlier: first check that the anonymisation key file is the one you used before (`anonymization.key` in your user data folder, or the file you named with `--key-file` or `DBSLOC_ANONYMIZATION_KEY_FILE`); the import now warns `W_REPORT_key_created` when it has to create a new one. Then import every anonymised report again from its original PDF (anonymised imports keep no copy of the PDF) with the same key. Unaffected subjects are replaced in place (where you edited derived stimulation settings, the import adds `_2` settings instead; the write time is removed from the unedited ones, and from their `stimparameters.mat` files without changing the VTA volumes in them, or the import warns `W_REPORT_stamp_kept` on every anonymised import until the file is rewritten by running the vat step again with `--overwrite-approved` or, for a subject without VTA results, by saving the setting again with `dbsloc stim show --json` and `dbsloc stim set --from`, which writes the native `.mat` with zero volumes and is therefore only for that case). Rewriting the settings changes a file the vat step depends on: with fingerprinted locks an approved vat step becomes unapproved, so approve it again (`dbsloc lock approve <dataset_root> <subject> vat`) or run it again. For an affected subject the record is written again with shifted dates, the earlier record that had kept the true dates is removed, and the import warns `W_REPORT_superseded` with the number of stimulation label folders created from it that remain: list them with `dbsloc stim list`, delete them (renaming does not help, the earlier date is also inside the files), and create again under a new name the settings you still need (`dbsloc stim set` or the stimulation panel). Run `dbsloc report anonymize` again for files made earlier, and replace copies you already shared. The modification times of files on disk still show when a report was imported.
-- Updated bundled third-party components to versions without known security advisories (Python bindings, the browser client's TLS and root certificates, a yanked clipboard library).
+- Updated bundled third-party components to versions without known security advisories (Python bindings; a yanked clipboard library; the TLS library and root certificates of the experimental server prototype, which the release packages do not contain).
 
-## [0.1.0] - 2026-10-26
+## 0.1.0 - 2026-10-26
 
-First release, for Windows and Linux (x86_64). The binaries are not code-signed, so Windows SmartScreen warns before the installer runs.
+First release, for Windows and Linux (x86_64), made before the source code was published; this repository has no tag or download for it. The binaries are not code-signed, so Windows SmartScreen warns before the installer runs.
 
 ### Added
 
@@ -101,5 +102,5 @@ First release, for Windows and Linux (x86_64). The binaries are not code-signed,
 - Separate windows (group analysis, 3D Viewer, stimulation editor, review, refine) had a black background.
 - The *Connectomes…* window could grow wider than the screen and hide its close button.
 
-[unreleased]: https://github.com/WyssCenter/dbs-localizer/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/WyssCenter/dbs-localizer/releases/tag/v0.1.0
+[unreleased]: https://github.com/WyssCenter/dbs-localizer/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/WyssCenter/dbs-localizer/releases/tag/v0.2.0

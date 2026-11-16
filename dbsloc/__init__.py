@@ -3,7 +3,7 @@
 
 """Wyss DBS Localizer Python package: Lead-DBS–class pipeline (written from the specifications)."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from dbsloc.bundled_bin import ants_binary_or_error, which_ants_binary
 
