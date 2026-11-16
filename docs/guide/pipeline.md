@@ -22,7 +22,7 @@ them.
 *Auto (GPU when available)* uses the graphics card when it passes a short self-test at start-up,
 and the bundled ANTs on the processor otherwise. *GPU (wgpu)* insists on the graphics card; *ANTs
 (CPU)* always uses the processor. Both reach the same accuracy on the validation data; the
-graphics card is many times faster.
+graphics card is many times faster. The graphics-card engine is [FastWarp](https://fastwarp.readthedocs.io), which is also available as a standalone Python package and command line interface.
 
 ## Electrode model
 

@@ -15,6 +15,8 @@ The specifications list these references for the methods the steps use:
 - **Bias-field correction (N4):** Tustison NJ, Avants BB, Cook PA, et al. (2010) N4ITK: Improved
   N3 bias correction. *IEEE Trans Med Imaging* 29(6):1310–1320.
   [doi:10.1109/TMI.2010.2046908](https://doi.org/10.1109/TMI.2010.2046908)
+- **GPU registration engine (FastWarp):** Köhler RM, Payonk JP. FastWarp: the GPU
+  registration engine of Wyss DBS Localizer. See [Citing FastWarp](https://fastwarp.readthedocs.io/latest/citing.html).
 - **The ANTs programs:** Avants BB, Tustison NJ, Song G, Cook PA, Klein A, Gee JC (2011) A
   reproducible evaluation of ANTs similarity metric performance in brain image registration.
   *NeuroImage* 54(3):2033–2044.

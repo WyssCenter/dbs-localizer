@@ -3,6 +3,8 @@
 Wyss DBS Localizer is developed in the open on
 [GitHub](https://github.com/WyssCenter/dbs-localizer).
 
+Its registration engine, [FastWarp](https://github.com/WyssCenter/fastwarp) ([documentation](https://fastwarp.readthedocs.io)), is a separate Apache-2.0 project that runs the ANTs rigid, affine and SyN registration on the GPU. It lives in this repository under `fastwarp/` and is also published on its own as a Python package and command line interface.
+
 ```{include} ../README.md
 :start-after: <!-- docs:ack -->
 :end-before: <!-- /docs:ack -->
