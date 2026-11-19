@@ -13,14 +13,6 @@ on:
       - "NOTICE"
   pull_request:
     branches: [main]
-    paths-ignore:
-      - "**/*.md"
-      - "docs/**"
-      - "specs/**"
-      - ".claude/**"
-      - ".vscode/**"
-      - "LICENSE"
-      - "NOTICE"
   workflow_dispatch:
 
 concurrency:
@@ -34,8 +26,34 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  changes:
+    name: Changed files
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.check.outputs.code }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          CHANGED: ${{ github.event.pull_request.changed_files }}
+        run: |
+          code=true
+          if [ "$GITHUB_EVENT_NAME" = pull_request ] && [ "$CHANGED" -le 3000 ]; then
+            if other=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files?per_page=100" --jq '.[] | .filename, (.previous_filename // empty) | select(test("\\.md\\z|\\Adocs/|\\Aspecs/|\\A\\.claude/|\\A\\.vscode/|\\ALICENSE\\z|\\ANOTICE\\z") | not)') && [ -z "$other" ]; then
+              code=false
+            fi
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
   python:
     name: Python lint and tests
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -61,6 +79,8 @@ jobs:
 
   rust-lint:
     name: Rust fmt and clippy
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -96,7 +116,8 @@ jobs:
 
   rust-tests:
     name: Rust unit tests
-    needs: [python, rust-lint]
+    needs: [changes, python, rust-lint]
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' && needs.python.result == 'success' && needs.rust-lint.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
