@@ -49,7 +49,7 @@ exclude-newer = "7 days"
 
 # ty: nibabel union types are imprecise; optional native module not in env by default.
 [tool.ty.rules]
-unresolved-attribute = "ignore"
+missing-attribute = "ignore"
 
 [tool.ty.analysis]
 allowed-unresolved-imports = ["dbsloc_reconstruct", "dbsloc_reconstruct.**"]
